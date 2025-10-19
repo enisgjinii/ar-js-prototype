@@ -10,6 +10,18 @@
     "backToApp": "Back to App",
     "toggleTheme": "Toggle theme"
   },
+  "settings": {
+    "themeLabel": "Theme",
+    "languageLabel": "Language",
+    "theme": {
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "language": {
+      "en": "EN",
+      "de": "DE"
+    }
+  },
   "audio": {
     "title": "Cultural AR Experience",
     "subtitle": "Discover history through immersive audio and augmented reality",

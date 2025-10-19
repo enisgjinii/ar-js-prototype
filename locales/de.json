@@ -10,6 +10,18 @@
     "backToApp": "Zurück zur App",
     "toggleTheme": "Design wechseln"
   },
+  "settings": {
+    "themeLabel": "Design",
+    "languageLabel": "Sprache",
+    "theme": {
+      "light": "Hell",
+      "dark": "Dunkel"
+    },
+    "language": {
+      "en": "EN",
+      "de": "DE"
+    }
+  },
   "audio": {
     "title": "Kulturelles AR-Erlebnis",
     "subtitle": "Entdecke Geschichte durch immersive Audio- und Augmented-Reality",

@@ -44,7 +44,7 @@ export default function RootLayout({
       </head>
       <body className={`font-sans antialiased ${geist.className}`}>
         <LocaleProvider>
-          <ThemeProvider attribute="class" defaultTheme="bw" disableTransitionOnChange>
+          <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
             <ThemeCustomizer />
             {children}
           </ThemeProvider>

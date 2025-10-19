@@ -2,85 +2,57 @@
 
 import React from "react"
 import { useTheme } from "next-themes"
-import { useLocale } from "@/lib/locale"
+import { useLocale, useT } from "@/lib/locale"
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
+import { Select, SelectItem, SelectTrigger, SelectValue, SelectContent } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 
 export default function ThemeCustomizer() {
   const { theme, setTheme } = useTheme()
   const { locale, setLocale } = useLocale()
   const [mounted, setMounted] = React.useState(false)
-  const [open, setOpen] = React.useState(false)
-  const ref = React.useRef<HTMLDivElement | null>(null)
 
-  React.useEffect(() => {
-    setMounted(true)
-  }, [])
+  React.useEffect(() => setMounted(true), [])
 
-  // Close popover on outside click or Escape
-  React.useEffect(() => {
-    const onDoc = (e: MouseEvent) => {
-      if (!ref.current) return
-      if (!ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false)
-    }
-    document.addEventListener("mousedown", onDoc)
-    document.addEventListener("keydown", onKey)
-    return () => {
-      document.removeEventListener("mousedown", onDoc)
-      document.removeEventListener("keydown", onKey)
-    }
-  }, [])
+  const t = useT()
 
-  // Use a compact settings popover with native selects for accessibility and small footprint
   return (
-    <div ref={ref} className="fixed top-4 left-4 z-50">
-      <div className="relative">
-        <button
-          aria-expanded={open}
-          aria-label="Settings"
-          onClick={() => setOpen((s) => !s)}
-          className="inline-flex items-center justify-center h-8 w-8 rounded-full border border-border bg-background text-sm hover:bg-accent/5 focus:outline-none"
-        >
-          ⚙
-        </button>
+    <div className="fixed top-4 left-4 z-50">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label="Settings">⚙</Button>
+        </PopoverTrigger>
 
-        {open && (
-          <div className="absolute left-0 mt-2 w-44 bg-card text-card-foreground rounded-lg shadow-lg border border-border p-3 space-y-2">
+        <PopoverContent side="bottom" className="w-44">
+          <div className="space-y-3">
             <div className="flex flex-col">
-              <label className="text-xs text-muted-foreground mb-1">Theme</label>
-              <select
-                aria-label="Select theme"
-                className="w-full px-2 py-1 rounded border border-border bg-background text-sm"
-                value={mounted ? theme : ""}
-                onChange={(e) => setTheme(e.target.value)}
-              >
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-                <option value="bw">BW</option>
-              </select>
+              <label className="text-xs text-muted-foreground mb-1">{t("settings.themeLabel")}</label>
+              <Select value={mounted ? theme : ""} onValueChange={(v: string) => setTheme(v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">{t("settings.theme.light")}</SelectItem>
+                  <SelectItem value="dark">{t("settings.theme.dark")}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex flex-col">
-              <label className="text-xs text-muted-foreground mb-1">Language</label>
-              <select
-                aria-label="Select language"
-                className="w-full px-2 py-1 rounded border border-border bg-background text-sm"
-                value={locale}
-                onChange={(e) => setLocale(e.target.value as any)}
-              >
-                <option value="en">EN</option>
-                <option value="de">DE</option>
-              </select>
-            </div>
-
-            <div className="flex justify-end">
-              <button onClick={() => setOpen(false)} className="text-xs text-muted-foreground px-2 py-1">Close</button>
+              <label className="text-xs text-muted-foreground mb-1">{t("settings.languageLabel")}</label>
+              <Select value={locale} onValueChange={(v: string) => setLocale(v as any)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">{t("settings.language.en")}</SelectItem>
+                  <SelectItem value="de">{t("settings.language.de")}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-        )}
-      </div>
+        </PopoverContent>
+      </Popover>
     </div>
   )
 }

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Sun, Moon } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useT } from "@/lib/locale"
+import { Spinner } from "@/components/ui/spinner"
 
 export default function Home() {
   const [activeView, setActiveView] = useState<"audio" | "ar" | "location">("audio")
@@ -26,7 +27,10 @@ export default function Home() {
     return (
       <main className="relative w-full h-screen overflow-hidden bg-background">
         <div className="flex items-center justify-center h-full">
-          <div className="animate-pulse">{t("common.loading")}</div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Spinner className="h-5 w-5 animate-spin text-primary" />
+            <span>{t("common.loading")}</span>
+          </div>
         </div>
       </main>
     )
