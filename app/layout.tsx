@@ -32,15 +32,9 @@ export default function RootLayout({
   return (
   <html lang="en" suppressHydrationWarning>
       <head>
-        <Script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js" strategy="beforeInteractive" />
-        <Script
-          src="https://raw.githack.com/AR-js-org/AR.js/master/three.js/build/ar-threex-location-only.js"
-          strategy="beforeInteractive"
-        />
-        <Script
-          src="https://raw.githack.com/AR-js-org/AR.js/master/three.js/build/ar.js"
-          strategy="beforeInteractive"
-        />
+        {/* Use A-Frame + AR.js (A-Frame build) for GPS-based AR */}
+        <Script src="https://aframe.io/releases/1.4.0/aframe.min.js" strategy="beforeInteractive" />
+        <Script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.min.js" strategy="beforeInteractive" />
       </head>
       <body className={`font-sans antialiased ${geist.className}`}>
         <LocaleProvider>
