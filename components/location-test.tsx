@@ -4,10 +4,12 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { getCurrentPosition, isGeolocationSupported } from "@/lib/geolocation"
-import { useT } from "@/lib/locale"
+import { useT, useLocale } from "@/lib/locale"
+import { getErrorMessage } from "@/lib/geolocation"
 
 export default function LocationTest() {
   const t = useT()
+  const { locale } = useLocale()
   const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -33,8 +35,12 @@ export default function LocationTest() {
         setLoading(false)
       },
       (err) => {
+        // err is normalized in lib/geolocation
         console.error("Location error:", err)
-        setError(err.message || "An unknown error occurred while retrieving your location.")
+
+        // Prefer translated messages for known codes
+        const messageFromCode = getErrorMessage(typeof err?.code === 'number' ? err.code : -1)
+        setError(err?.message || messageFromCode || "An unknown error occurred while retrieving your location.")
         setLoading(false)
       },
       {

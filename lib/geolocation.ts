@@ -39,18 +39,33 @@ export const getCurrentPosition = (
   }
 
   // Try to get current position
-  navigator.geolocation.getCurrentPosition(
-    successCallback,
-    (error) => {
-      // Normalize error object
-      const normalizedError: GeolocationError = {
-        code: error.code,
-        message: error.message || getErrorMessage(error.code)
-      }
-      errorCallback(normalizedError)
-    },
-    finalOptions
-  )
+  try {
+    navigator.geolocation.getCurrentPosition(
+      successCallback,
+      (error: any) => {
+        // Defensive normalization: browsers may pass unexpected shapes
+        const code = typeof error?.code === "number" ? error.code : -1
+        const message = typeof error?.message === "string" && error.message
+          ? error.message
+          : getErrorMessage(code)
+
+        const normalizedError: GeolocationError = {
+          code,
+          message,
+        }
+
+        errorCallback(normalizedError)
+      },
+      finalOptions
+    )
+  } catch (err) {
+    // Unexpected synchronous failure
+    const normalizedError: GeolocationError = {
+      code: -1,
+      message: typeof err === "string" ? err : "An unknown error occurred while accessing geolocation."
+    }
+    errorCallback(normalizedError)
+  }
 }
 
 /**
@@ -79,19 +94,31 @@ export const watchPosition = (
     return null
   }
 
-  // Start watching position
-  return navigator.geolocation.watchPosition(
-    successCallback,
-    (error) => {
-      // Normalize error object
-      const normalizedError: GeolocationError = {
-        code: error.code,
-        message: error.message || getErrorMessage(error.code)
-      }
-      errorCallback(normalizedError)
-    },
-    finalOptions
-  )
+  try {
+    return navigator.geolocation.watchPosition(
+      successCallback,
+      (error: any) => {
+        const code = typeof error?.code === "number" ? error.code : -1
+        const message = typeof error?.message === "string" && error.message
+          ? error.message
+          : getErrorMessage(code)
+
+        const normalizedError: GeolocationError = {
+          code,
+          message,
+        }
+        errorCallback(normalizedError)
+      },
+      finalOptions
+    )
+  } catch (err) {
+    const normalizedError: GeolocationError = {
+      code: -1,
+      message: typeof err === "string" ? err : "An unknown error occurred while starting geolocation watch."
+    }
+    errorCallback(normalizedError)
+    return null
+  }
 }
 
 /**

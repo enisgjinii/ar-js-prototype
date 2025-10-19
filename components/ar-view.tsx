@@ -354,8 +354,8 @@ export default function ARView() {
       {/* Info Overlay */}
       {!isLoading && !error && (
         <div className="absolute top-4 left-4 right-4 z-20">
-          <Card className="bg-card/95 backdrop-blur-sm border-primary/20">
-            <div className="p-4 space-y-3">
+      <Card className="bg-card/95 backdrop-blur-sm border-primary/20">
+        <div className="p-3 md:p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-primary" />

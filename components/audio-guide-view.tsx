@@ -32,8 +32,8 @@ export default function AudioGuideView() {
   }
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 pb-24 bg-gradient-to-b from-background to-secondary/20">
-      <div className="w-full max-w-md space-y-6">
+    <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 pb-28 md:pb-24 bg-gradient-to-b from-background to-secondary/20">
+      <div className="w-full max-w-md md:max-w-lg lg:max-w-xl space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-balance">{t("audio.title")}</h1>
           <p className="text-muted-foreground text-base md:text-lg">{t("audio.subtitle")}</p>
