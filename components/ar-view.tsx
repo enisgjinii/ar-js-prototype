@@ -58,8 +58,44 @@ export default function ARView() {
   // Attach model event listeners after A-Frame is ready and element exists
   useEffect(() => {
     if (!aframeReady) return
-    const el = modelRef.current
-    if (!el) return
+
+    // Insert A-Frame scene markup into the container (avoid JSX tags for a-scene)
+    const container = sceneRef.current
+    if (!container) return
+
+    // If scene already exists, don't recreate
+    if (container.querySelector && container.querySelector("a-scene")) {
+      // pick up existing model element if present
+      const existing = container.querySelector("#dog-model")
+      if (existing) modelRef.current = existing
+      return
+    }
+
+    // Build minimal A-Frame scene string
+    const sceneHtml = `
+      <a-scene
+        vr-mode-ui="enabled: false"
+        embedded
+        renderer="logarithmicDepthBuffer: true;"
+        arjs="sourceType: webcam; gpsMinDistance: 1; debugUIEnabled: false;"
+        style="width: 100%; height: 100%;"
+      >
+        <a-camera gps-camera rotation-reader></a-camera>
+        <a-entity id="dog-model" gltf-model="/models/dog_statue.glb" gps-entity-place="latitude: ${TARGET_LAT}; longitude: ${TARGET_LON};" scale="0.8 0.8 0.8" rotation="0 180 0"></a-entity>
+      </a-scene>
+    `
+
+    container.innerHTML = sceneHtml
+
+    // set refs to created elements
+    const sceneEl = container.querySelector("a-scene") as HTMLElement | null
+    const modelEl = container.querySelector("#dog-model") as HTMLElement | null
+    modelRef.current = modelEl
+
+    if (!modelEl) {
+      setError("3D model element not found in scene")
+      return
+    }
 
     const onModelLoaded = () => {
       setIsLoaded(true)
@@ -71,12 +107,16 @@ export default function ARView() {
       setError("Failed to load 3D model")
     }
 
-    el.addEventListener("model-loaded", onModelLoaded)
-    el.addEventListener("error", onModelError)
+    modelEl.addEventListener("model-loaded", onModelLoaded)
+    modelEl.addEventListener("error", onModelError)
 
     return () => {
-      el.removeEventListener("model-loaded", onModelLoaded)
-      el.removeEventListener("error", onModelError)
+      try {
+        modelEl.removeEventListener("model-loaded", onModelLoaded)
+        modelEl.removeEventListener("error", onModelError)
+      } catch (e) {
+        // ignore
+      }
     }
   }, [aframeReady])
 
