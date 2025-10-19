@@ -318,6 +318,35 @@ export default function ARView() {
         const label = createLabel()
         scene.add(label)
 
+        // Try to wire the model into AR.js GPS-based placement (THREEx.LocationBased)
+        let locationBased: any = null
+        try {
+          if ((window as any).THREEx && (window as any).THREEx.LocationBased) {
+            try {
+              locationBased = new (window as any).THREEx.LocationBased(scene, camera, {
+                // optional settings: keep initialPositionAsOrigin=false so world coords are absolute
+                initialPositionAsOrigin: false,
+              })
+
+              // AR.js expects (object, longitude, latitude, altitude?)
+              if (monument) {
+                // Use target lon/lat defined above
+                locationBased.add(monument, TARGET_LON, TARGET_LAT, 0)
+              }
+
+              // start the internal GPS watcher (AR.js will call navigator.geolocation.watchPosition)
+              locationBased.startGps()
+            } catch (err) {
+              console.warn("THREEx.LocationBased init failed:", err)
+              locationBased = null
+            }
+          } else {
+            console.warn("THREEx.LocationBased is not available on window.THREEx")
+          }
+        } catch (e) {
+          console.warn("Error while initializing AR.js location-based:", e)
+        }
+
         let animationId: number
         const animate = () => {
           animationId = requestAnimationFrame(animate)
