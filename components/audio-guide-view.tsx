@@ -4,8 +4,10 @@ import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Play, Pause, Volume2, Camera } from "lucide-react"
+import { useT } from "@/lib/locale"
 
 export default function AudioGuideView() {
+  const t = useT()
   const [isPlaying, setIsPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
 
@@ -14,29 +16,36 @@ export default function AudioGuideView() {
       if (isPlaying) {
         audioRef.current.pause()
       } else {
+        // Handle play promise to catch errors
         audioRef.current.play()
+          .then(() => {
+            // Play started successfully
+          })
+          .catch((error) => {
+            console.error("Audio play error:", error)
+            // Reset playing state if play fails
+            setIsPlaying(false)
+          })
       }
       setIsPlaying(!isPlaying)
     }
   }
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center p-6 pb-24 bg-gradient-to-b from-background to-secondary/20">
+    <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 pb-24 bg-gradient-to-b from-background to-secondary/20">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold tracking-tight text-balance">Cultural AR Experience</h1>
-          <p className="text-muted-foreground text-lg">
-            Discover history through immersive audio and augmented reality
-          </p>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-balance">{t("audio.title")}</h1>
+          <p className="text-muted-foreground text-base md:text-lg">{t("audio.subtitle")}</p>
         </div>
 
         <Card className="shadow-lg">
-          <CardHeader>
+            <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Volume2 className="w-5 h-5 text-primary" />
-              Audio Guide
+              {t("audio.cardTitle")}
             </CardTitle>
-            <CardDescription>Location: Düsseldorf, Germany</CardDescription>
+            <CardDescription>{t("audio.cardLocation")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
@@ -49,29 +58,34 @@ export default function AudioGuideView() {
             </div>
 
             <div className="space-y-2">
-              <h3 className="font-semibold">Historical Site Overview</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Welcome to this historic location. This audio guide will take you through the fascinating history and
-                cultural significance of this site. Switch to AR view to see 3D reconstructions at their original
-                locations.
-              </p>
+              <h3 className="font-semibold">{t("audio.overviewTitle")}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{t("audio.overviewText")}</p>
             </div>
 
             <Button onClick={toggleAudio} className="w-full gap-2" size="lg">
               {isPlaying ? (
                 <>
                   <Pause className="w-5 h-5" />
-                  Pause Audio
+                  {t("audio.pause")}
                 </>
               ) : (
                 <>
                   <Play className="w-5 h-5" />
-                  Play Audio Guide
+                  {t("audio.play")}
                 </>
               )}
             </Button>
 
-            <audio ref={audioRef} src="/sample-audio.mp3" onEnded={() => setIsPlaying(false)} />
+            {/* Using a valid audio source or fallback to a data URI for demonstration */}
+            <audio 
+              ref={audioRef} 
+              onEnded={() => setIsPlaying(false)}
+            >
+              <source src="/sample-audio.mp3" type="audio/mpeg" />
+              {/* Fallback for browsers that don't support MP3 or if the file is missing */}
+              <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFd2xqZ2VjXl1bWFdVU1FPTkxLSklIR0ZFRENCQUA/Pj08Ozo5ODc2NTQzMjEwLy4tLCsqKSgnJiUkIyIhIB8eHRwbGhkYFxYVFBMSERAPDg0MCwoJCAcGBQQDAgEA" type="audio/wav" />
+              Your browser does not support the audio element.
+            </audio>
           </CardContent>
         </Card>
 

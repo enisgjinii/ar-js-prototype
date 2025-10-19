@@ -4,12 +4,15 @@ import { useEffect, useRef, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { AlertCircle, MapPin, Loader2, NavigationIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { watchPosition, isGeolocationSupported } from "@/lib/geolocation"
+import { useT } from "@/lib/locale"
 
 // Target coordinates: 51°12'42.4"N 6°13'07.3"E (Düsseldorf)
 const TARGET_LAT = 51.211778
 const TARGET_LON = 6.218694
 
 export default function ARView() {
+  const t = useT()
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -48,40 +51,43 @@ export default function ARView() {
       } catch (err) {
         console.error("Camera permission denied:", err)
         setCameraPermission("denied")
-        setError("Camera access denied. Please enable camera permissions.")
+        setError("Camera access denied. Please enable camera permissions in your browser settings.")
         setIsLoading(false)
       }
     }
 
     const requestLocationPermission = () => {
-      if (navigator.geolocation) {
-        watchId = navigator.geolocation.watchPosition(
-          (position) => {
-            const newLocation = {
-              lat: position.coords.latitude,
-              lon: position.coords.longitude,
-            }
-            setUserLocation(newLocation)
-
-            // Calculate distance to target
-            const dist = calculateDistance(newLocation.lat, newLocation.lon, TARGET_LAT, TARGET_LON)
-            setDistance(dist)
-          },
-          (err) => {
-            console.error("Location error:", err)
-            setError("Location access denied. Please enable location services.")
-            setIsLoading(false)
-          },
-          {
-            enableHighAccuracy: true,
-            maximumAge: 0,
-            timeout: 5000,
-          },
-        )
-      } else {
+      if (!isGeolocationSupported()) {
         setError("Geolocation is not supported by your browser.")
         setIsLoading(false)
+        return
       }
+
+      // Use our utility function
+      watchId = watchPosition(
+        (position) => {
+          const newLocation = {
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+          }
+          setUserLocation(newLocation)
+
+          // Calculate distance to target
+          const dist = calculateDistance(newLocation.lat, newLocation.lon, TARGET_LAT, TARGET_LON)
+          setDistance(dist)
+          setIsLoading(false)
+        },
+        (err) => {
+          console.error("Location error:", err)
+          setError(err.message || "An unknown error occurred while retrieving your location.")
+          setIsLoading(false)
+        },
+        {
+          enableHighAccuracy: false, // Try with less accuracy first
+          maximumAge: 60000, // Use cached position up to 1 minute old
+          timeout: 15000, // 15 second timeout
+        }
+      )
     }
 
     const initAR = async () => {
@@ -253,18 +259,20 @@ export default function ARView() {
 
         // Handle window resize
         const handleResize = () => {
-          camera.aspect = window.innerWidth / window.innerHeight
-          camera.updateProjectionMatrix()
-          renderer.setSize(window.innerWidth, window.innerHeight)
+          if (cameraRef.current && rendererRef.current) {
+            cameraRef.current.aspect = window.innerWidth / window.innerHeight
+            cameraRef.current.updateProjectionMatrix()
+            rendererRef.current.setSize(window.innerWidth, window.innerHeight)
+          }
         }
         window.addEventListener("resize", handleResize)
 
         return () => {
           window.removeEventListener("resize", handleResize)
           cancelAnimationFrame(animationId)
-          if (containerRef.current && renderer.domElement) {
+          if (containerRef.current && rendererRef.current?.domElement) {
             try {
-              containerRef.current.removeChild(renderer.domElement)
+              containerRef.current.removeChild(rendererRef.current.domElement)
             } catch (e) {
               // Element already removed
             }
@@ -306,7 +314,7 @@ export default function ARView() {
   }, [])
 
   return (
-    <div className="relative w-full h-full bg-black">
+    <div className="relative w-full h-screen bg-black">
       {/* AR Scene Container */}
       <div ref={containerRef} className="ar-container w-full h-full" />
 
@@ -317,8 +325,8 @@ export default function ARView() {
             <div className="flex flex-col items-center gap-4 text-center">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
               <div className="space-y-2">
-                <h3 className="font-semibold">Initializing AR View</h3>
-                <p className="text-sm text-muted-foreground">Please allow camera and location access</p>
+                <h3 className="font-semibold">{t("ar.initializing")}</h3>
+                <p className="text-sm text-muted-foreground">{t("ar.allow")}</p>
               </div>
             </div>
           </Card>
@@ -332,11 +340,11 @@ export default function ARView() {
             <div className="flex flex-col items-center gap-4 text-center">
               <AlertCircle className="w-8 h-8 text-destructive" />
               <div className="space-y-2">
-                <h3 className="font-semibold">AR Unavailable</h3>
+                <h3 className="font-semibold">{t("ar.unavailableTitle")}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{error}</p>
               </div>
               <Button onClick={() => window.location.reload()} variant="outline" size="sm" className="mt-2">
-                Retry
+                {t("ar.retry")}
               </Button>
             </div>
           </Card>
@@ -350,9 +358,9 @@ export default function ARView() {
             <div className="p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-semibold">Target Location</span>
-                </div>
+                    <MapPin className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-semibold">{t("ar.targetLocation")}</span>
+                  </div>
                 {distance !== null && (
                   <div className="flex items-center gap-1 text-xs font-medium text-primary">
                     <NavigationIcon className="w-3 h-3" />
@@ -361,11 +369,8 @@ export default function ARView() {
                 )}
               </div>
               <div className="text-xs text-muted-foreground space-y-1">
-                <p className="font-mono">51°12'42.4"N 6°13'07.3"E</p>
-                <p className="leading-relaxed">
-                  Point your camera around to see the 3D monument. The model appears at the GPS coordinates in
-                  Düsseldorf.
-                </p>
+                <p className="font-mono">{t("ar.coords")}</p>
+                <p className="leading-relaxed">{t("ar.pointHint")}</p>
               </div>
             </div>
           </Card>

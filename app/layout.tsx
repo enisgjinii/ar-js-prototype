@@ -1,18 +1,27 @@
 import type React from "react"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import Script from "next/script"
+import { ThemeProvider } from "@/components/theme-provider"
+import { LocaleProvider } from "@/lib/locale"
+import ThemeCustomizer from "@/components/theme-customizer"
 
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
+const geist = Geist({ subsets: ["latin"] })
+const geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "AR Cultural Guide",
   description: "Immersive AR experience with audio guides and geolocation-based 3D content",
   generator: "v0.app",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({
@@ -21,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+  <html lang="en" suppressHydrationWarning>
       <head>
         <Script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js" strategy="beforeInteractive" />
         <Script
@@ -33,8 +42,13 @@ export default function RootLayout({
           strategy="beforeInteractive"
         />
       </head>
-      <body className={`font-sans antialiased`}>
-        {children}
+      <body className={`font-sans antialiased ${geist.className}`}>
+        <LocaleProvider>
+          <ThemeProvider attribute="class" defaultTheme="bw" disableTransitionOnChange>
+            <ThemeCustomizer />
+            {children}
+          </ThemeProvider>
+        </LocaleProvider>
         <Analytics />
       </body>
     </html>

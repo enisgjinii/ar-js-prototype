@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "audio": "Audio Guide",
+    "ar": "AR View",
+    "location": "Location"
+  },
+  "common": {
+    "loading": "Loading...",
+    "testLocation": "Test Location",
+    "backToApp": "Back to App",
+    "toggleTheme": "Toggle theme"
+  },
+  "audio": {
+    "title": "Cultural AR Experience",
+    "subtitle": "Discover history through immersive audio and augmented reality",
+    "cardTitle": "Audio Guide",
+    "cardLocation": "Location: Düsseldorf, Germany",
+    "overviewTitle": "Historical Site Overview",
+    "overviewText": "Welcome to this historic location. This audio guide will take you through the fascinating history and cultural significance of this site. Switch to AR view to see 3D reconstructions at their original locations.",
+    "play": "Play Audio Guide",
+    "pause": "Pause Audio",
+    "readyForARTitle": "Ready for AR?",
+    "readyForARText": "Switch to AR View to see 3D models placed at real-world coordinates. Make sure to allow camera and location permissions."
+  },
+  "ar": {
+    "initializing": "Initializing AR View",
+    "allow": "Please allow camera and location access",
+    "unavailableTitle": "AR Unavailable",
+    "retry": "Retry",
+    "targetLocation": "Target Location",
+    "pointHint": "Point your camera around to see the 3D monument. The model appears at the GPS coordinates in Düsseldorf.",
+    "coords": "51°12'42.4\"N 6°13'07.3\"E"
+  },
+  "locationTest": {
+    "title": "Location Test",
+    "description": "Test geolocation functionality",
+    "getLocation": "Get My Location",
+    "getting": "Getting Location...",
+    "locationFound": "Location Found",
+    "error": "Error",
+    "tipsTitle": "Troubleshooting tips:",
+    "tips": [
+      "Ensure location services are enabled on your device",
+      "Check that your browser has location permissions",
+      "Try refreshing the page and granting permissions when prompted",
+      "If using a mobile device, try enabling GPS"
+    ]
+  }
+}
