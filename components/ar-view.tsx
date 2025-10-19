@@ -16,6 +16,8 @@ export default function ARView() {
   const [isLoaded, setIsLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [aframeReady, setAframeReady] = useState(false)
+  const [cameraEnabled, setCameraEnabled] = useState(false)
+  const [placingMode, setPlacingMode] = useState(false)
 
   // Dynamically load A-Frame and AR.js (A-Frame build) on client
   useEffect(() => {
@@ -158,6 +160,173 @@ export default function ARView() {
     }
   }
 
+  // Place model on an estimated horizontal surface using a ray from the camera.
+  // Uses A-Frame's THREE when available to compute intersection with an estimated floor plane.
+  const placeOnSurface = async () => {
+    try {
+      const el = modelRef.current as any
+      const container = sceneRef.current
+      if (!el || !container) return
+
+      const sceneEl = container.querySelector && container.querySelector("a-scene")
+      const cam = sceneEl && (sceneEl.querySelector("a-camera") || sceneEl.querySelector("[camera]"))
+      if (!cam) {
+        console.warn("Camera element not found; falling back to placeInFront")
+        placeInFront()
+        return
+      }
+
+      const THREE = (window as any).AFRAME && (window as any).AFRAME.THREE
+      if (!THREE) {
+        console.warn("THREE not available on AFRAME; falling back to placeInFront")
+        placeInFront()
+        return
+      }
+
+      // Ensure model has an object3D (wait briefly if model is still loading)
+      await new Promise<void>((resolve) => {
+        if (el.object3D) return resolve()
+        const onLoaded = () => resolve()
+        el.addEventListener("model-loaded", onLoaded, { once: true })
+        // safety timeout
+        setTimeout(() => resolve(), 1500)
+      })
+
+      const camObj = (cam as any).object3D
+      const origin = new THREE.Vector3()
+      camObj.getWorldPosition(origin)
+      const dir = new THREE.Vector3()
+      camObj.getWorldDirection(dir)
+
+      // Estimate floor plane as 1.5m below the camera (tweakable)
+      const estimatedFloorOffset = 1.5
+      let t
+      if (Math.abs(dir.y) < 1e-3) {
+        t = estimatedFloorOffset
+      } else {
+        const planeY = origin.y - estimatedFloorOffset
+        t = (planeY - origin.y) / dir.y
+        if (t <= 0) t = estimatedFloorOffset
+      }
+
+      const point = origin.clone().add(dir.clone().multiplyScalar(t))
+
+      // Ensure model is attached to the scene (not camera)
+      const parent = el.parentElement
+      if (parent && (parent.tagName === "A-CAMERA" || parent.hasAttribute("camera"))) {
+        sceneEl.appendChild(el)
+      }
+
+      // Remove gps placement and set world position
+      el.removeAttribute("gps-entity-place")
+      // Use object3D when available to set exact world position
+      if (el.object3D) {
+        el.object3D.position.copy(point)
+      } else {
+        el.setAttribute("position", `${point.x} ${point.y} ${point.z}`)
+      }
+
+      // Face the camera on the Y axis
+      const camPos = origin
+      const look = camPos.clone().sub(point)
+      const yaw = Math.atan2(look.x, look.z) * (180 / Math.PI)
+      el.setAttribute("rotation", `0 ${yaw} 0`)
+      el.setAttribute("scale", "0.8 0.8 0.8")
+    } catch (e) {
+      console.error("placeOnSurface error:", e)
+    }
+  }
+
+  // Request camera permission explicitly (prompts user). We stop tracks immediately — AR.js/A-Frame will open camera when needed,
+  // but calling getUserMedia first helps trigger the permission prompt on some browsers.
+  const requestCameraPermission = async () => {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setError("Camera not supported in this browser")
+        return false
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      // stop tracks immediately; this was only to trigger permission prompt
+      stream.getTracks().forEach((t) => t.stop())
+      setCameraEnabled(true)
+      return true
+    } catch (e) {
+      console.warn("Camera permission denied or unavailable:", e)
+      setError("Camera permission denied or unavailable")
+      return false
+    }
+  }
+
+  // Placement mode: add pointer listener and compute world point from screen coordinates
+  useEffect(() => {
+    if (!placingMode) return
+    const container = sceneRef.current
+    if (!container) return
+    const sceneEl = container.querySelector && container.querySelector("a-scene")
+    const cam = sceneEl && (sceneEl.querySelector("a-camera") || sceneEl.querySelector("[camera]"))
+    if (!cam) {
+      console.warn("No camera found for placement mode")
+      return
+    }
+
+    const onPointer = (ev: PointerEvent) => {
+      try {
+        const rect = (container as HTMLElement).getBoundingClientRect()
+        const clientX = ev.clientX - rect.left
+        const clientY = ev.clientY - rect.top
+        const ndcX = (clientX / rect.width) * 2 - 1
+        const ndcY = -((clientY / rect.height) * 2 - 1)
+
+        const THREE = (window as any).AFRAME && (window as any).AFRAME.THREE
+        if (!THREE) return
+
+        // A-Frame camera's underlying THREE camera is accessible via getObject3D('camera')
+        const threeCam = (cam as any).getObject3D && (cam as any).getObject3D('camera')
+        if (!threeCam) return
+
+        const mouse = new THREE.Vector2(ndcX, ndcY)
+        const raycaster = new THREE.Raycaster()
+        raycaster.setFromCamera(mouse, threeCam)
+        const origin = raycaster.ray.origin
+        const dir = raycaster.ray.direction
+
+        // Estimate floor Y position as camera Y - 1.5m
+        const estimatedFloorOffset = 1.5
+        const planeY = origin.y - estimatedFloorOffset
+        let t = (planeY - origin.y) / dir.y
+        if (t <= 0) t = estimatedFloorOffset
+        const point = origin.clone().add(dir.clone().multiplyScalar(t))
+
+        // Place model at computed point
+        const el = modelRef.current as any
+        if (!el) return
+        const sceneElDom = sceneEl as HTMLElement
+        // ensure model is child of scene
+        if (el.parentElement && (el.parentElement.tagName === 'A-CAMERA' || el.parentElement.hasAttribute('camera'))) {
+          sceneElDom.appendChild(el)
+        }
+        el.removeAttribute('gps-entity-place')
+        if (el.object3D) {
+          el.object3D.position.copy(point)
+        } else {
+          el.setAttribute('position', `${point.x} ${point.y} ${point.z}`)
+        }
+        // Rotate to face camera
+        const look = origin.clone().sub(point)
+        const yaw = Math.atan2(look.x, look.z) * (180 / Math.PI)
+        el.setAttribute('rotation', `0 ${yaw} 0`)
+
+        // Optionally exit placement mode after one placement
+        setPlacingMode(false)
+      } catch (e) {
+        console.error('placement pointer error', e)
+      }
+    }
+
+    container.addEventListener('pointerdown', onPointer)
+    return () => container.removeEventListener('pointerdown', onPointer)
+  }, [placingMode])
+
   // If A-Frame failed to load, show error
   if (error) {
     return (
@@ -219,8 +388,17 @@ export default function ARView() {
       {/* Debug controls */}
       <div className="absolute bottom-6 left-4 z-30">
         <div className="flex flex-col gap-2">
+          <Button size="sm" variant={cameraEnabled ? "secondary" : "outline"} onClick={requestCameraPermission}>
+            {cameraEnabled ? "Camera enabled" : "Enable camera"}
+          </Button>
+          <Button size="sm" variant={placingMode ? "secondary" : "outline"} onClick={() => setPlacingMode((s) => !s)}>
+            {placingMode ? "Exit placement mode" : "Tap to place"}
+          </Button>
           <Button size="sm" variant="outline" onClick={placeInFront}>
             Place model in front
+          </Button>
+          <Button size="sm" variant="outline" onClick={placeOnSurface}>
+            Place on surface
           </Button>
           <Button size="sm" variant="outline" onClick={simulateGPS}>
             Simulate GPS at target
