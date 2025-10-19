@@ -23,6 +23,8 @@ export default function ARView() {
   const cameraRef = useRef<any>(null)
   const rendererRef = useRef<any>(null)
   const arLocationRef = useRef<any>(null)
+  const locationBasedRef = useRef<any>(null)
+  const monumentRef = useRef<any>(null)
 
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
     const R = 6371e3 // Earth's radius in meters
@@ -215,11 +217,12 @@ export default function ARView() {
         }
 
         // Attempt to load the GLB model; fallback to procedural monument if it fails
-        let monument: any = null
+  let monument: any = null
         try {
           const gltf = await loadExternalModel("/models/dog_statue.glb")
-          if (gltf && gltf.scene) {
+            if (gltf && gltf.scene) {
             monument = gltf.scene
+            monumentRef.current = monument
             // Adjust position and scale so model appears in front of camera
             monument.position.set(0, 0, -6)
             monument.scale.set(0.8, 0.8, 0.8)
@@ -288,6 +291,7 @@ export default function ARView() {
           fallback.scale.set(1.5, 1.5, 1.5)
           scene.add(fallback)
           monument = fallback
+          monumentRef.current = fallback
         }
 
         const createLabel = () => {
@@ -327,6 +331,8 @@ export default function ARView() {
                 // optional settings: keep initialPositionAsOrigin=false so world coords are absolute
                 initialPositionAsOrigin: false,
               })
+              // store for debug controls
+              locationBasedRef.current = locationBased
 
               // AR.js expects (object, longitude, latitude, altitude?)
               if (monument) {
@@ -479,6 +485,55 @@ export default function ARView() {
               </div>
             </div>
           </Card>
+        </div>
+      )}
+
+      {/* Debug controls: place model in front (useful for indoor testing) */}
+      {!isLoading && (
+        <div className="absolute bottom-6 left-4 z-30">
+          <div className="flex flex-col gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                try {
+                  const m = monumentRef.current
+                  if (!m) return
+                  // Place 1.5 meters in front of camera
+                  if (cameraRef.current) {
+                    m.position.set(0, 0, -1.5)
+                    m.scale.set(0.8, 0.8, 0.8)
+                    cameraRef.current.add(m)
+                  }
+                } catch (e) {
+                  console.error("Place-in-front failed:", e)
+                }
+              }}
+            >
+              Place model in front
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                try {
+                  const loc = locationBasedRef.current
+                  if (loc && typeof loc.fakeGps === "function") {
+                    // fakeGps(lon, lat, elevation?, accuracy?) - AR.js location-only exposes fakeGps
+                    loc.fakeGps(TARGET_LON, TARGET_LAT, 0, 0)
+                  } else if ((window as any).THREEx && (window as any).THREEx.LocationBased) {
+                    // If we couldn't capture locationBasedRef, try to setWorldOrigin via constructor instance
+                    console.warn("locationBased instance not available to fake GPS; ensure AR.js LocationBased started")
+                  }
+                } catch (e) {
+                  console.error("Simulate GPS failed:", e)
+                }
+              }}
+            >
+              Simulate GPS at target
+            </Button>
+          </div>
         </div>
       )}
 
