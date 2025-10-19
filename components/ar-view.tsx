@@ -18,6 +18,7 @@ export default function ARView() {
   const [aframeReady, setAframeReady] = useState(false)
   const [cameraEnabled, setCameraEnabled] = useState(false)
   const [placingMode, setPlacingMode] = useState(false)
+  const placedAutomatically = useRef(false)
 
   // Dynamically load A-Frame and AR.js (A-Frame build) on client
   useEffect(() => {
@@ -122,6 +123,30 @@ export default function ARView() {
     }
   }, [aframeReady])
 
+  // When A-Frame is ready, prompt for camera permission automatically (best-effort)
+  useEffect(() => {
+    if (!aframeReady) return
+    // Fire-and-forget; permissions may require user interaction on some browsers
+    ;(async () => {
+      try {
+        await requestCameraPermission()
+      } catch (e) {
+        // ignore
+      }
+    })()
+  }, [aframeReady])
+
+  // Once the model is loaded, place it automatically on the surface one time
+  useEffect(() => {
+    if (!isLoaded) return
+    if (placedAutomatically.current) return
+    placedAutomatically.current = true
+    // small delay to allow camera stream to stabilize
+    setTimeout(() => {
+      placeOnSurface()
+    }, 600)
+  }, [isLoaded])
+
   // Place the model 1.5m in front of the camera (indoor test helper)
   const placeInFront = () => {
     try {
@@ -167,6 +192,10 @@ export default function ARView() {
       const el = modelRef.current as any
       const container = sceneRef.current
       if (!el || !container) return
+
+      // Try WebXR hit-test first on capable devices
+      const didPlaceWithWebXR = await tryWebXRHitTest(el)
+      if (didPlaceWithWebXR) return
 
       const sceneEl = container.querySelector && container.querySelector("a-scene")
       const cam = sceneEl && (sceneEl.querySelector("a-camera") || sceneEl.querySelector("[camera]"))
@@ -234,6 +263,88 @@ export default function ARView() {
       el.setAttribute("scale", "0.8 0.8 0.8")
     } catch (e) {
       console.error("placeOnSurface error:", e)
+    }
+  }
+
+  // Try to perform a WebXR hit-test (immersive-ar) and place the given model element on the first hit.
+  // Returns true if placed using WebXR, false otherwise.
+  const tryWebXRHitTest = async (el: any): Promise<boolean> => {
+    try {
+      const nav = navigator as any
+      if (!nav.xr || !nav.xr.isSessionSupported) return false
+      const supported = await nav.xr.isSessionSupported("immersive-ar")
+      if (!supported) return false
+
+      // Request an immersive AR session with hit-test
+      const session: any = await nav.xr.requestSession("immersive-ar", {
+        requiredFeatures: ["hit-test", "local-floor"],
+      })
+
+      // Create an offscreen canvas and WebGL context compatible with XR
+      const canvas = document.createElement("canvas")
+      const gl = (canvas.getContext("webgl", { xrCompatible: true }) || canvas.getContext("experimental-webgl")) as any
+      if (!gl) {
+        await session.end()
+        return false
+      }
+
+      if (gl.makeXRCompatible) await gl.makeXRCompatible()
+
+      // @ts-ignore - XRWebGLLayer may not be typed here
+      session.updateRenderState({ baseLayer: new (window as any).XRWebGLLayer(session, gl) })
+
+      const viewerSpace = await session.requestReferenceSpace("viewer")
+      const refSpace = await session.requestReferenceSpace("local-floor").catch(() => session.requestReferenceSpace("local"))
+      const hitSource = await session.requestHitTestSource({ space: viewerSpace })
+
+      return await new Promise<boolean>((resolve) => {
+        let done = false
+        const onFrame = (time: any, frame: any) => {
+          if (done) return
+          const results = frame.getHitTestResults(hitSource)
+          if (results && results.length) {
+            const pose = results[0].getPose(refSpace)
+            if (pose) {
+              const p = pose.transform.position
+              const o = pose.transform.orientation
+              // Place model in world coordinates
+              try {
+                if (el.object3D) {
+                  el.object3D.position.set(p.x, p.y, p.z)
+                  el.object3D.quaternion.set(o.x, o.y, o.z, o.w)
+                } else {
+                  el.setAttribute("position", `${p.x} ${p.y} ${p.z}`)
+                  // approximate rotation from quaternion
+                  el.setAttribute("rotation", `0 0 0`)
+                }
+              } catch (e) {
+                console.warn("WebXR placement applied but failed to set object3D", e)
+              }
+
+              done = true
+              // end hit test and session
+              try {
+                hitSource.cancel && hitSource.cancel()
+              } catch (e) {}
+              session.end().then(() => resolve(true)).catch(() => resolve(true))
+              return
+            }
+          }
+          session.requestAnimationFrame(onFrame)
+        }
+
+        session.requestAnimationFrame(onFrame)
+
+        // safety timeout
+        setTimeout(() => {
+          if (done) return
+          done = true
+          session.end().then(() => resolve(false)).catch(() => resolve(false))
+        }, 8000)
+      })
+    } catch (e) {
+      console.warn("WebXR hit-test not available or failed:", e)
+      return false
     }
   }
 
@@ -385,24 +496,45 @@ export default function ARView() {
         </div>
       )}
 
-      {/* Debug controls */}
-      <div className="absolute bottom-6 left-4 z-30">
-        <div className="flex flex-col gap-2">
-          <Button size="sm" variant={cameraEnabled ? "secondary" : "outline"} onClick={requestCameraPermission}>
-            {cameraEnabled ? "Camera enabled" : "Enable camera"}
-          </Button>
-          <Button size="sm" variant={placingMode ? "secondary" : "outline"} onClick={() => setPlacingMode((s) => !s)}>
-            {placingMode ? "Exit placement mode" : "Tap to place"}
-          </Button>
-          <Button size="sm" variant="outline" onClick={placeInFront}>
-            Place model in front
-          </Button>
-          <Button size="sm" variant="outline" onClick={placeOnSurface}>
-            Place on surface
-          </Button>
-          <Button size="sm" variant="outline" onClick={simulateGPS}>
-            Simulate GPS at target
-          </Button>
+      {/* Mobile-friendly bottom control bar */}
+      <div className="fixed left-0 right-0 bottom-0 z-40 p-4 pb-safe bg-gradient-to-t from-black/70 via-black/30 to-transparent backdrop-blur-sm">
+        <div className="mx-auto max-w-3xl">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex-1">
+              <div className="text-xs text-muted-foreground mb-2">{isLoaded ? "Model loaded" : "Initializing AR…"}</div>
+              <div className="flex gap-2">
+                <Button className="flex-1 py-3 text-sm" size="sm" variant={cameraEnabled ? "secondary" : "outline"} onClick={requestCameraPermission}>
+                  {cameraEnabled ? "Camera" : "Enable camera"}
+                </Button>
+                <Button className="flex-1 py-3 text-sm" size="sm" variant={placingMode ? "secondary" : "outline"} onClick={() => setPlacingMode((s) => !s)}>
+                  {placingMode ? "Exit" : "Tap to place"}
+                </Button>
+              </div>
+            </div>
+            <div className="ml-3 hidden sm:flex sm:flex-col sm:gap-2">
+              <Button size="sm" className="py-3" variant="outline" onClick={placeInFront}>
+                In front
+              </Button>
+              <Button size="sm" className="py-3" variant="outline" onClick={placeOnSurface}>
+                Surface
+              </Button>
+            </div>
+          </div>
+          <div className="mt-3 flex gap-2 sm:hidden">
+            <Button className="flex-1 py-3 text-sm" size="sm" variant="outline" onClick={placeInFront}>
+              In front
+            </Button>
+            <Button className="flex-1 py-3 text-sm" size="sm" variant="outline" onClick={placeOnSurface}>
+              Surface
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Instruction overlay for mobile users */}
+      <div className="pointer-events-none fixed top-4 left-4 right-4 z-30 flex justify-center">
+        <div className="bg-black/60 text-white rounded-md px-3 py-2 text-sm backdrop-blur-sm">
+          Tap screen to focus and allow camera & location. Use "Tap to place" to drop the model.
         </div>
       </div>
 
