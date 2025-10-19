@@ -23,7 +23,7 @@ export const getCurrentPosition = (
   // Default options
   const defaultOptions: PositionOptions = {
     enableHighAccuracy: false,
-    timeout: 15000,
+    timeout: 30000, // increased timeout to reduce false timeouts on slow devices
     maximumAge: 600000 // 10 minutes
   }
 
@@ -36,6 +36,27 @@ export const getCurrentPosition = (
       message: "Geolocation is not supported by this browser"
     })
     return
+  }
+
+  // If Permissions API is available, try to pre-check permission state
+  try {
+    if ((navigator as any).permissions && typeof (navigator as any).permissions.query === "function") {
+      // Note: the Permissions API may not include 'geolocation' in all browsers
+      ;(navigator as any).permissions
+        .query({ name: "geolocation" })
+        .then((status: any) => {
+          // possible states: 'granted', 'prompt', 'denied'
+          if (status.state === "denied") {
+            errorCallback({ code: 1, message: "Location access denied. Please enable location permissions in your browser settings." })
+            return
+          }
+        })
+        .catch(() => {
+          // ignore permission check failures
+        })
+    }
+  } catch (e) {
+    // ignore
   }
 
   // Try to get current position

@@ -43,16 +43,18 @@ export default function ARView() {
 
     let watchId: number | null = null
 
-    const requestCameraPermission = async () => {
+    const requestCameraPermission = async (): Promise<boolean> => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true })
         stream.getTracks().forEach((track) => track.stop())
         setCameraPermission("granted")
+        return true
       } catch (err) {
         console.error("Camera permission denied:", err)
         setCameraPermission("denied")
         setError("Camera access denied. Please enable camera permissions in your browser settings.")
         setIsLoading(false)
+        return false
       }
     }
 
@@ -78,8 +80,13 @@ export default function ARView() {
           setIsLoading(false)
         },
         (err) => {
-          console.error("Location error:", err)
-          setError(err.message || "An unknown error occurred while retrieving your location.")
+          // err should be our normalized GeolocationError from lib/geolocation
+          try {
+            console.error("Location error:", JSON.stringify(err))
+          } catch (e) {
+            console.error("Location error (unserializable):", err)
+          }
+          setError((err && (err as any).message) || "An unknown error occurred while retrieving your location.")
           setIsLoading(false)
         },
         {
@@ -158,63 +165,130 @@ export default function ARView() {
         const hemisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.5)
         scene.add(hemisphereLight)
 
-        const createMonument = () => {
-          const group = new THREE.Group()
+        // Helper to dynamically load three.js examples loader (non-module) if needed
+        const ensureGLTFLoader = async () => {
+          // If GLTFLoader already exists on THREE, we're good
+          if ((THREE as any).GLTFLoader) return
 
-          // Base platform
-          const baseGeometry = new THREE.CylinderGeometry(3, 3.5, 0.5, 8)
-          const baseMaterial = new THREE.MeshStandardMaterial({
-            color: 0x8b7355,
-            metalness: 0.2,
-            roughness: 0.8,
+          // Otherwise dynamically append the non-module GLTFLoader which attaches to THREE
+          const loaderUrl = `https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js`
+
+          await new Promise<void>((resolve, reject) => {
+            // Check again in case it was injected by another component
+            if ((THREE as any).GLTFLoader) return resolve()
+
+            const script = document.createElement("script")
+            script.src = loaderUrl
+            script.async = true
+            script.onload = () => {
+              // Give the loader a moment to attach
+              setTimeout(() => {
+                if ((THREE as any).GLTFLoader) resolve()
+                else reject(new Error("GLTFLoader failed to attach to THREE"))
+              }, 20)
+            }
+            script.onerror = () => reject(new Error("Failed to load GLTFLoader script"))
+            document.head.appendChild(script)
           })
-          const base = new THREE.Mesh(baseGeometry, baseMaterial)
-          base.position.y = 0.25
-          group.add(base)
-
-          // Main column
-          const columnGeometry = new THREE.CylinderGeometry(1.5, 1.5, 8, 12)
-          const columnMaterial = new THREE.MeshStandardMaterial({
-            color: 0xd4af37,
-            metalness: 0.6,
-            roughness: 0.3,
-          })
-          const column = new THREE.Mesh(columnGeometry, columnMaterial)
-          column.position.y = 4.5
-          group.add(column)
-
-          // Top sphere (decorative element)
-          const sphereGeometry = new THREE.SphereGeometry(1.2, 16, 16)
-          const sphereMaterial = new THREE.MeshStandardMaterial({
-            color: 0x2d7a4f,
-            metalness: 0.7,
-            roughness: 0.2,
-          })
-          const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial)
-          sphere.position.y = 9.2
-          group.add(sphere)
-
-          // Add decorative rings
-          for (let i = 0; i < 3; i++) {
-            const ringGeometry = new THREE.TorusGeometry(1.7, 0.1, 8, 16)
-            const ringMaterial = new THREE.MeshStandardMaterial({
-              color: 0xc0c0c0,
-              metalness: 0.8,
-              roughness: 0.2,
-            })
-            const ring = new THREE.Mesh(ringGeometry, ringMaterial)
-            ring.position.y = 2 + i * 2.5
-            ring.rotation.x = Math.PI / 2
-            group.add(ring)
-          }
-
-          return group
         }
 
-        const monument = createMonument()
-        monument.position.set(0, 0, -20) // Position in front of camera
-        monument.scale.set(1.5, 1.5, 1.5)
-        scene.add(monument)
+        // Try to load external GLB model from public folder
+        const loadExternalModel = async (url: string) => {
+          try {
+            await ensureGLTFLoader()
+            const LoaderClass = (THREE as any).GLTFLoader
+            if (!LoaderClass) throw new Error("GLTFLoader not available on THREE")
+
+            return await new Promise<any>((resolve, reject) => {
+              const gltfLoader = new LoaderClass()
+              gltfLoader.load(
+                url,
+                (gltf: any) => resolve(gltf),
+                undefined,
+                (err: any) => reject(err)
+              )
+            })
+          } catch (err) {
+            console.error("Model load failed:", err)
+            return null
+          }
+        }
+
+        // Attempt to load the GLB model; fallback to procedural monument if it fails
+        let monument: any = null
+        try {
+          const gltf = await loadExternalModel("/models/dog_statue.glb")
+          if (gltf && gltf.scene) {
+            monument = gltf.scene
+            // Adjust position and scale so model appears in front of camera
+            monument.position.set(0, 0, -6)
+            monument.scale.set(0.8, 0.8, 0.8)
+            scene.add(monument)
+          }
+        } catch (e) {
+          console.warn("Error while loading GLB model, falling back to procedural monument", e)
+        }
+
+        if (!monument) {
+          const createMonument = () => {
+            const group = new THREE.Group()
+
+            // Base platform
+            const baseGeometry = new THREE.CylinderGeometry(3, 3.5, 0.5, 8)
+            const baseMaterial = new THREE.MeshStandardMaterial({
+              color: 0x8b7355,
+              metalness: 0.2,
+              roughness: 0.8,
+            })
+            const base = new THREE.Mesh(baseGeometry, baseMaterial)
+            base.position.y = 0.25
+            group.add(base)
+
+            // Main column
+            const columnGeometry = new THREE.CylinderGeometry(1.5, 1.5, 8, 12)
+            const columnMaterial = new THREE.MeshStandardMaterial({
+              color: 0xd4af37,
+              metalness: 0.6,
+              roughness: 0.3,
+            })
+            const column = new THREE.Mesh(columnGeometry, columnMaterial)
+            column.position.y = 4.5
+            group.add(column)
+
+            // Top sphere (decorative element)
+            const sphereGeometry = new THREE.SphereGeometry(1.2, 16, 16)
+            const sphereMaterial = new THREE.MeshStandardMaterial({
+              color: 0x2d7a4f,
+              metalness: 0.7,
+              roughness: 0.2,
+            })
+            const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial)
+            sphere.position.y = 9.2
+            group.add(sphere)
+
+            // Add decorative rings
+            for (let i = 0; i < 3; i++) {
+              const ringGeometry = new THREE.TorusGeometry(1.7, 0.1, 8, 16)
+              const ringMaterial = new THREE.MeshStandardMaterial({
+                color: 0xc0c0c0,
+                metalness: 0.8,
+                roughness: 0.2,
+              })
+              const ring = new THREE.Mesh(ringGeometry, ringMaterial)
+              ring.position.y = 2 + i * 2.5
+              ring.rotation.x = Math.PI / 2
+              group.add(ring)
+            }
+
+            return group
+          }
+
+          const fallback = createMonument()
+          fallback.position.set(0, 0, -20) // Position in front of camera
+          fallback.scale.set(1.5, 1.5, 1.5)
+          scene.add(fallback)
+          monument = fallback
+        }
 
         const createLabel = () => {
           const canvas = document.createElement("canvas")
@@ -290,12 +364,14 @@ export default function ARView() {
     }
 
     // Start initialization sequence
-    requestCameraPermission().then(() => {
-      if (cameraPermission !== "denied") {
-        requestLocationPermission()
-        initAR()
-      }
-    })
+    ;(async () => {
+      const cameraOk = await requestCameraPermission()
+      if (!cameraOk) return
+
+      // Only start location and AR if camera permission was granted
+      requestLocationPermission()
+      initAR()
+    })()
 
     return () => {
       // Cleanup location watch

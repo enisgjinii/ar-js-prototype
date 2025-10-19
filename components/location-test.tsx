@@ -35,12 +35,38 @@ export default function LocationTest() {
         setLoading(false)
       },
       (err) => {
-        // err is normalized in lib/geolocation
-        console.error("Location error:", err)
+        // Defensive normalization: ensure we have a predictable object
+        let normalized: { code: number; message: string }
+        try {
+          if (err && typeof err === "object") {
+            const code = typeof (err as any).code === "number" ? (err as any).code : -1
+            const message = typeof (err as any).message === "string" && (err as any).message
+              ? (err as any).message
+              : getErrorMessage(code)
+            normalized = { code, message }
+          } else {
+            normalized = { code: -1, message: String(err || "An unknown error occurred") }
+          }
+        } catch (e) {
+          normalized = { code: -1, message: "An unknown error occurred while handling location error." }
+        }
 
-        // Prefer translated messages for known codes
-        const messageFromCode = getErrorMessage(typeof err?.code === 'number' ? err.code : -1)
-        setError(err?.message || messageFromCode || "An unknown error occurred while retrieving your location.")
+        // Log both structured and raw error for debugging
+        try {
+          const normStr = JSON.stringify(normalized)
+          let rawStr = ""
+          try {
+            rawStr = JSON.stringify(err)
+          } catch (e) {
+            rawStr = String(err)
+          }
+          console.error(`Location error: ${normStr} raw: ${rawStr}`)
+        } catch (e) {
+          console.error("Location error (unserializable):", String(err))
+        }
+
+        // Show friendly message (prefer normalized.message)
+        setError(normalized.message || "An unknown error occurred while retrieving your location.")
         setLoading(false)
       },
       {
