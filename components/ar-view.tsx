@@ -88,11 +88,11 @@ export default function ARView() {
       </a-scene>
     `
 
-    container.innerHTML = sceneHtml
+  container.innerHTML = sceneHtml
 
-    // set refs to created elements
-    const sceneEl = container.querySelector("a-scene") as HTMLElement | null
-    const modelEl = container.querySelector("#dog-model") as HTMLElement | null
+  // set refs to created elements
+  const sceneEl = container.querySelector("a-scene") as HTMLElement | null
+  const modelEl = container.querySelector("#dog-model") as HTMLElement | null
     modelRef.current = modelEl
 
     if (!modelEl) {
@@ -112,6 +112,78 @@ export default function ARView() {
 
     modelEl.addEventListener("model-loaded", onModelLoaded)
     modelEl.addEventListener("error", onModelError)
+
+    // Inject a small A-Frame component to provide a performHitTest method that other code can call.
+    // This keeps WebXR integration accessible from within the A-Frame scene.
+    try {
+      const existing = document.getElementById("aframe-webxr-hit-component")
+      if (!existing) {
+        const compScript = document.createElement("script")
+        compScript.id = "aframe-webxr-hit-component"
+        compScript.type = "text/javascript"
+        compScript.textContent = `
+          (function(){
+            if (!window.AFRAME) return;
+            AFRAME.registerComponent('webxr-hit', {
+              init: function(){
+                const self = this;
+                self.performHitTest = async function(targetEl){
+                  try {
+                    const nav = navigator;
+                    if (!nav.xr || !nav.xr.isSessionSupported) return false;
+                    const supported = await nav.xr.isSessionSupported('immersive-ar');
+                    if (!supported) return false;
+
+                    const session = await nav.xr.requestSession('immersive-ar', { requiredFeatures: ['hit-test', 'local-floor'] });
+                    const canvas = document.createElement('canvas');
+                    const gl = canvas.getContext('webgl', { xrCompatible: true }) || canvas.getContext('experimental-webgl');
+                    if (!gl) { await session.end(); return false; }
+                    if (gl.makeXRCompatible) await gl.makeXRCompatible();
+                    session.updateRenderState({ baseLayer: new XRWebGLLayer(session, gl) });
+                    const viewerSpace = await session.requestReferenceSpace('viewer');
+                    const refSpace = await session.requestReferenceSpace('local-floor').catch(()=> session.requestReferenceSpace('local'));
+                    const hitSource = await session.requestHitTestSource({ space: viewerSpace });
+
+                    return await new Promise((resolve)=>{
+                      let done=false;
+                      const onFrame = (time, frame)=>{
+                        if(done) return;
+                        const results = frame.getHitTestResults(hitSource);
+                        if(results && results.length){
+                          const pose = results[0].getPose(refSpace);
+                          if(pose){
+                            const p = pose.transform.position;
+                            const o = pose.transform.orientation;
+                            try{
+                              if(targetEl && targetEl.object3D){
+                                targetEl.object3D.position.set(p.x,p.y,p.z);
+                                targetEl.object3D.quaternion.set(o.x,o.y,o.z,o.w);
+                              } else if(targetEl){
+                                targetEl.setAttribute('position', p.x+' '+p.y+' '+p.z);
+                              }
+                            }catch(e){/* ignore */}
+                            done=true;
+                            try{ hitSource.cancel && hitSource.cancel(); }catch(e){}
+                            session.end().then(()=>resolve(true)).catch(()=>resolve(true));
+                            return;
+                          }
+                        }
+                        session.requestAnimationFrame(onFrame);
+                      };
+                      session.requestAnimationFrame(onFrame);
+                      setTimeout(()=>{ if(done) return; done=true; session.end().then(()=>resolve(false)).catch(()=>resolve(false)); }, 8000);
+                    });
+                  } catch(e) { return false; }
+                };
+              }
+            });
+          })();
+        `
+        document.head.appendChild(compScript)
+      }
+    } catch (e) {
+      console.warn('Failed to inject aframe webxr component', e)
+    }
 
     return () => {
       try {
@@ -270,29 +342,35 @@ export default function ARView() {
   // Returns true if placed using WebXR, false otherwise.
   const tryWebXRHitTest = async (el: any): Promise<boolean> => {
     try {
+      const container = sceneRef.current
+      const sceneEl = container && container.querySelector && container.querySelector('a-scene')
+      if (sceneEl) {
+        const comp = (sceneEl as any).__aframeInst && (sceneEl as any).components && (sceneEl as any).components['webxr-hit']
+        // In many A-Frame builds components are stored on element.components
+        const compAlt = (sceneEl as any).components && (sceneEl as any).components['webxr-hit']
+        const performer = comp?.performHitTest || compAlt?.performHitTest
+        if (performer && typeof performer === 'function') {
+          try {
+            const ok = await performer(el)
+            return Boolean(ok)
+          } catch (e) {
+            // fallthrough to native low-level approach
+          }
+        }
+      }
+
+      // Fallback: attempt low-level WebXR usage as before
       const nav = navigator as any
       if (!nav.xr || !nav.xr.isSessionSupported) return false
       const supported = await nav.xr.isSessionSupported("immersive-ar")
       if (!supported) return false
 
-      // Request an immersive AR session with hit-test
-      const session: any = await nav.xr.requestSession("immersive-ar", {
-        requiredFeatures: ["hit-test", "local-floor"],
-      })
-
-      // Create an offscreen canvas and WebGL context compatible with XR
+      const session: any = await nav.xr.requestSession("immersive-ar", { requiredFeatures: ["hit-test", "local-floor"] })
       const canvas = document.createElement("canvas")
       const gl = (canvas.getContext("webgl", { xrCompatible: true }) || canvas.getContext("experimental-webgl")) as any
-      if (!gl) {
-        await session.end()
-        return false
-      }
-
+      if (!gl) { await session.end(); return false }
       if (gl.makeXRCompatible) await gl.makeXRCompatible()
-
-      // @ts-ignore - XRWebGLLayer may not be typed here
       session.updateRenderState({ baseLayer: new (window as any).XRWebGLLayer(session, gl) })
-
       const viewerSpace = await session.requestReferenceSpace("viewer")
       const refSpace = await session.requestReferenceSpace("local-floor").catch(() => session.requestReferenceSpace("local"))
       const hitSource = await session.requestHitTestSource({ space: viewerSpace })
@@ -307,43 +385,29 @@ export default function ARView() {
             if (pose) {
               const p = pose.transform.position
               const o = pose.transform.orientation
-              // Place model in world coordinates
               try {
                 if (el.object3D) {
                   el.object3D.position.set(p.x, p.y, p.z)
                   el.object3D.quaternion.set(o.x, o.y, o.z, o.w)
                 } else {
                   el.setAttribute("position", `${p.x} ${p.y} ${p.z}`)
-                  // approximate rotation from quaternion
-                  el.setAttribute("rotation", `0 0 0`)
                 }
               } catch (e) {
                 console.warn("WebXR placement applied but failed to set object3D", e)
               }
-
               done = true
-              // end hit test and session
-              try {
-                hitSource.cancel && hitSource.cancel()
-              } catch (e) {}
+              try { hitSource.cancel && hitSource.cancel() } catch (e) {}
               session.end().then(() => resolve(true)).catch(() => resolve(true))
               return
             }
           }
           session.requestAnimationFrame(onFrame)
         }
-
         session.requestAnimationFrame(onFrame)
-
-        // safety timeout
-        setTimeout(() => {
-          if (done) return
-          done = true
-          session.end().then(() => resolve(false)).catch(() => resolve(false))
-        }, 8000)
+        setTimeout(() => { if (done) return; done = true; session.end().then(() => resolve(false)).catch(() => resolve(false)) }, 8000)
       })
     } catch (e) {
-      console.warn("WebXR hit-test not available or failed:", e)
+      console.warn('WebXR hit-test integration failed', e)
       return false
     }
   }
