@@ -6,7 +6,6 @@
   },
   "common": {
     "loading": "Loading...",
-    "testLocation": "Test Location",
     "backToApp": "Back to App",
     "toggleTheme": "Toggle theme"
   },
@@ -33,13 +32,14 @@
     "pause": "Pause Audio",
     "readyForARTitle": "Ready for AR?",
     "readyForARText": "Switch to AR View to see 3D models placed at real-world coordinates. Make sure to allow camera and location permissions."
+    ,"sampleContent": "Sample audio guide content"
+    ,"audioFallback": "Your browser does not support the audio element."
   },
   "ar": {
     "initializing": "Initializing AR View",
     "allow": "Please allow camera and location access",
     "unavailableTitle": "AR Unavailable",
     "retry": "Retry",
-    "targetLocation": "Target Location",
     "pointHint": "Point your camera around to see the 3D monument. The model appears at the GPS coordinates in Düsseldorf.",
     "coords": "51°12'42.4\"N 6°13'07.3\"E"
   },
@@ -57,5 +57,11 @@
       "Try refreshing the page and granting permissions when prompted",
       "If using a mobile device, try enabling GPS"
     ]
+    ,"tipsFallback": [
+      "Ensure location services are enabled on your device",
+      "Check that your browser has location permissions"
+    ]
   }
+
+  ,"arInfo": "AR Information"
 }

@@ -28,3 +28,20 @@ Continue building your app on:
 2. Deploy your chats from the v0 interface
 3. Changes are automatically pushed to this repository
 4. Vercel deploys the latest version from this repository
+
+## Cesium (local dev)
+
+This project uses Cesium/Resium for a globe overlay. Cesium expects some static
+assets (workers, images, terrain metadata) to be served from a base URL. To make
+those assets available in development, copy Cesium's Build files into
+`public/cesium` once after installing dependencies:
+
+```bash
+# install deps (pnpm is recommended if npm cache is problematic)
+pnpm install
+pnpm run copy-cesium-assets
+```
+
+This will populate `public/cesium` so the dev server can serve files from
+`/cesium/*` and avoid file:// requests. The `components/cesium-map.tsx` sets
+`window.CESIUM_BASE_URL = '/cesium'` before dynamically loading Cesium.

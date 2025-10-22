@@ -65,7 +65,7 @@ export default function AudioGuideView() {
                   <Volume2 className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  Sample audio guide content
+                  {t('audio.sampleContent')}
                 </p>
               </div>
             </div>
@@ -99,7 +99,7 @@ export default function AudioGuideView() {
                 src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFd2xqZ2VjXl1bWFdVU1FPTkxLSklIR0ZFRENCQUA/Pj08Ozo5ODc2NTQzMjEwLy4tLCsqKSgnJiUkIyIhIB8eHRwbGhkYFxYVFBMSERAPDg0MCwoJCAcGBQQDAgEA"
                 type="audio/wav"
               />
-              Your browser does not support the audio element.
+              {t('audio.audioFallback')}
             </audio>
           </CardContent>
         </Card>

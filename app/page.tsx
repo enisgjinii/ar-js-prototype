@@ -72,22 +72,7 @@ export default function Home() {
 
       {/* Top right buttons */}
       <div className="fixed top-4 right-4 z-50 flex gap-2 items-center">
-        {activeView !== 'location' && (
-          <button
-            onClick={() => setActiveView('location')}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-1 rounded-full text-sm transition-colors hidden sm:block"
-          >
-            {t('common.testLocation')}
-          </button>
-        )}
-        {activeView === 'location' && (
-          <button
-            onClick={() => setActiveView('audio')}
-            className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-full text-sm transition-colors hidden sm:block"
-          >
-            {t('common.backToApp')}
-          </button>
-        )}
+        {/* Test Location / Back to App buttons removed */}
 
         {/* AR Info Tooltip */}
         <Popover>
@@ -98,7 +83,7 @@ export default function Home() {
               className="bg-background/80 backdrop-blur-sm border border-border"
             >
               <Info className="h-4 w-4" />
-              <span className="sr-only">AR Information</span>
+              <span className="sr-only">{t('arInfo')}</span>
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-80">

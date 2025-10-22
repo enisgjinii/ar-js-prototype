@@ -110,7 +110,7 @@ export default function LocationTest() {
         {location && (
           <div className="p-4 bg-green-50 rounded-lg dark:bg-green-950">
             <h3 className="font-medium text-green-800 dark:text-green-200 text-base sm:text-lg">
-              Location Found
+              {t('locationTest.locationFound')}
             </h3>
             <p className="text-sm text-green-700 dark:text-green-300 mt-1">
               Latitude: {location.lat.toFixed(6)}
@@ -124,7 +124,7 @@ export default function LocationTest() {
         {error && (
           <div className="p-4 bg-red-50 rounded-lg dark:bg-red-950">
             <h3 className="font-medium text-red-800 dark:text-red-200 text-base sm:text-lg">
-              Error
+              {t('locationTest.error')}
             </h3>
             <p className="text-sm text-red-700 dark:text-red-300 mt-1">
               {error}
@@ -142,10 +142,8 @@ export default function LocationTest() {
                   <li key={i} className="text-xs sm:text-sm">{tip}</li>
                 ))
               : // Fallback if translation function can't return arrays
-                [
-                  'Ensure location services are enabled on your device',
-                  'Check that your browser has location permissions',
-                ].map((tip, i) => <li key={i} className="text-xs sm:text-sm">{tip}</li>)}
+                ((t as any)('locationTest.tipsFallback') as string[])
+                  .map((tip, i) => <li key={i} className="text-xs sm:text-sm">{tip}</li>)}
           </ul>
         </div>
       </CardContent>

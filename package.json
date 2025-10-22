@@ -12,7 +12,8 @@
     "type-check": "tsc --noEmit",
     "check": "pnpm run format:check && pnpm run lint && pnpm run type-check",
     "fix": "pnpm run format && pnpm run lint:fix",
-    "start": "next start"
+    "start": "next start",
+    "copy-cesium-assets": "node ./scripts/copy-cesium-assets.js"
   },
   "dependencies": {
     "@babylonjs/core": "^8.32.2",
@@ -49,7 +50,6 @@
     "@vercel/analytics": "latest",
     "autoprefixer": "^10.4.20",
     "cesium": "^1.134.1",
-  "resium": "1.19.0-beta.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
@@ -65,6 +65,7 @@
     "react-hook-form": "^7.60.0",
     "react-resizable-panels": "^2.1.7",
     "recharts": "2.15.4",
+    "resium": "^1.19.0-beta.1",
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
