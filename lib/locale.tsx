@@ -54,7 +54,13 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
 
   const t = useMemo(() => {
     return (key: string) => {
-      if (!messages) return key;
+      if (!messages) {
+        // Fallback for common translations if messages aren't loaded yet
+        if (key === 'common.loading') return 'Loading...';
+        if (key === 'common.backToApp') return 'Back to App';
+        if (key === 'common.toggleTheme') return 'Toggle theme';
+        return key;
+      }
       const parts = key.split('.');
       let cur: any = messages;
       for (const p of parts) {

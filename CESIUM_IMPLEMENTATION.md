@@ -30,7 +30,6 @@ The component implements:
 
 4. **UI Controls**
    - Dropdown menu for model selection
-   - Custom "New Button" for additional functionality
    - Responsive design with backdrop blur effect
 
 ## Key Features
@@ -51,7 +50,6 @@ The component implements:
 - Clean, modern interface with backdrop blur effect
 - Responsive design that works on mobile and desktop
 - Intuitive model selection dropdown
-- Custom button for additional functionality
 
 ### 4. Performance Considerations
 - Proper cleanup of Cesium viewer on component unmount
@@ -82,7 +80,6 @@ To use the Cesium AR view:
 1. Navigate to the "Cesium" tab in the application
 2. Select a model from the dropdown menu
 3. The model will appear on the globe and the camera will track it
-4. Use the "New Button" for additional functionality (currently shows an alert)
 
 ## Customization
 
@@ -99,17 +96,9 @@ const options: ModelOption[] = [
     },
   },
 ];
-```
 
-### Customizing the "New Button"
-Modify the `handleNewButtonClick` function to implement custom functionality:
-
-```typescript
-const handleNewButtonClick = () => {
-  // Your custom functionality here
-  console.log("New button clicked!");
-};
-```
+### Customizing Model Selection
+Each model option can be customized by modifying the `onselect` function to implement specific behavior when that model is selected.
 
 ## Technical Details
 
