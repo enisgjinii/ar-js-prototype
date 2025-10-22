@@ -7,6 +7,8 @@ import { Camera, Square, Circle } from 'lucide-react';
 import { useT } from '@/lib/locale';
 import { getCurrentPosition } from '@/lib/geolocation';
 import { computeOffsetMeters, offsetToBabylonCoords } from '@/lib/geolocation';
+import dynamic from 'next/dynamic';
+const CesiumMap = dynamic(() => import('./cesium-map'), { ssr: false });
 
 // Babylon.js imports
 import * as BABYLON from '@babylonjs/core';
@@ -28,6 +30,7 @@ export default function BabylonARView() {
   const [placingMode, setPlacingMode] = useState(false);
   const [detectionMode, setDetectionMode] = useState<'floor' | 'wall' | 'object' | null>(null);
   const [xrReady, setXrReady] = useState(false);
+  const [showMap, setShowMap] = useState(false);
   const placedAutomatically = useRef(false);
   const lastFloorPoseRef = useRef<BABYLON.Vector3 | null>(null);
   const modelBaseHeightRef = useRef<number>(0.1);
@@ -560,6 +563,16 @@ export default function BabylonARView() {
               title="Object detection guide"
             >
               <Circle className="w-5 h-5" />
+            </Button>
+            <Button
+              className="w-12 h-12 p-0 font-medium border-2 border-white/30"
+              variant={showMap ? 'secondary' : 'default'}
+              onClick={() => setShowMap(s => !s)}
+              title="Toggle map overlay"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M13 5v6h6" />
+              </svg>
             </Button>
             <Button
               className="w-12 h-12 p-0 font-medium border-2 border-white/30"
