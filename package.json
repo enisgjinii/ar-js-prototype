@@ -1,6 +1,7 @@
 {
-  "name": "my-v0-project",
+  "name": "ar-js-cultural-experience",
   "version": "0.1.0",
+  "description": "An immersive cultural experience combining audio guides with augmented reality and geolocation services",
   "private": true,
   "scripts": {
     "build": "next build",
