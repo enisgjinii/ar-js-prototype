@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import AudioGuideView from '@/components/audio-guide-view';
 import CesiumARView from '@/components/cesium-ar-view';
 import Navigation from '@/components/navigation';
 import { Button } from '@/components/ui/button';
-import { Sun, Moon, Languages } from 'lucide-react';
+import { Sun, Moon, Languages, Play, Pause, RotateCcw } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useT, useLocale } from '@/lib/locale';
 import { Spinner } from '@/components/ui/spinner';
@@ -22,6 +22,8 @@ export default function Home() {
   const { theme, setTheme } = useTheme();
   const { locale, setLocale } = useLocale();
   const [mounted, setMounted] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   // useEffect only runs on the client, so now we can safely show the UI
   useEffect(() => {
@@ -29,6 +31,41 @@ export default function Home() {
   }, []);
 
   const t = useT();
+
+  // Handle view change without automatically pausing audio
+  const handleViewChange = (view: 'audio' | 'cesium') => {
+    // Audio will continue playing in the background
+    // Users can control it through the navigation controls
+    setActiveView(view);
+  };
+
+  const handleAudioPlay = () => {
+    if (audioRef.current) {
+      audioRef.current.play()
+        .then(() => {
+          setIsAudioPlaying(true);
+        })
+        .catch(error => {
+          console.error('Audio play error:', error);
+          setIsAudioPlaying(false);
+        });
+    }
+  };
+
+  const handleAudioPause = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      setIsAudioPlaying(false);
+    }
+  };
+
+  const handleAudioReset = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      setIsAudioPlaying(false);
+    }
+  };
 
   if (!mounted) {
     return (
@@ -45,13 +82,32 @@ export default function Home() {
 
   return (
     <main className="relative w-full min-h-screen bg-background">
+      {/* Persistent audio element that survives tab switches */}
+      <audio 
+        ref={audioRef} 
+        onEnded={() => setIsAudioPlaying(false)}
+      >
+        <source src="/sample-audio.mp3" type="audio/mpeg" />
+        {/* Fallback for browsers that don't support MP3 or if the file is missing */}
+        <source
+          src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFd2xqZ2VjXl1bWFdVU1FPTkxLSklIR0ZFRENCQUA/Pj08Ozo5ODc2NTQzMjEwLy4tLCsqKSgnJiUkIyIhIB8eHRwbGhkYFxYVFBMSERAPDg0MCwoJCAcGBQQDAgEA"
+          type="audio/wav"
+        />
+        {t('audio.audioFallback')}
+      </audio>
+
       {activeView === 'audio' ? (
-        <AudioGuideView />
+        <AudioGuideView 
+          isPlaying={isAudioPlaying}
+          onPlay={handleAudioPlay}
+          onPause={handleAudioPause}
+          onStop={handleAudioReset}
+        />
       ) : (
         <CesiumARView />
       )}
 
-      {/* Middle left sidebar for theme and language switchers */}
+      {/* Middle left sidebar for theme, language switchers, and audio controls */}
       <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-50 flex flex-col gap-3 items-center">
         {/* Theme Switcher */}
         <Button
@@ -104,11 +160,45 @@ export default function Home() {
             {t('settings.languageLabel')}
           </div>
         </div>
+        
+        {/* Audio Controls in Sidebar */}
+        <div className="flex flex-col gap-2 bg-background/80 backdrop-blur-sm border border-border rounded-lg p-2 shadow-lg">
+          {!isAudioPlaying ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleAudioPlay}
+              className="w-10 h-10"
+              title={t('audio.play')}
+            >
+              <Play className="h-5 w-5" />
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleAudioPause}
+              className="w-10 h-10"
+              title={t('audio.pause')}
+            >
+              <Pause className="h-5 w-5" />
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleAudioReset}
+            className="w-10 h-10"
+            title={t('common.reset')}
+          >
+            <RotateCcw className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
 
       <Navigation
         activeView={activeView}
-        onViewChange={setActiveView}
+        onViewChange={handleViewChange}
       />
     </main>
   );

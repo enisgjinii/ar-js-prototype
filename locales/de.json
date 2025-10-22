@@ -5,7 +5,9 @@
   "common": {
     "loading": "Laden...",
     "backToApp": "Zurück zur App",
-    "toggleTheme": "Design wechseln"
+    "toggleTheme": "Design wechseln",
+    "stop": "Stopp",
+    "reset": "Zurücksetzen"
   },
   "settings": {
     "themeLabel": "Design",

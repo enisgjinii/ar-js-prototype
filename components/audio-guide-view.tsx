@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -9,33 +8,34 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Play, Pause, Volume2 } from 'lucide-react';
+import { Play, Pause, Volume2, Square } from 'lucide-react';
 import { useT } from '@/lib/locale';
 
-export default function AudioGuideView() {
+interface AudioGuideViewProps {
+  onPause?: () => void;
+  onStop?: () => void;
+  onPlay?: () => void;
+  isPlaying?: boolean;
+}
+
+export default function AudioGuideView({
+  onPause,
+  onStop,
+  onPlay,
+  isPlaying = false
+}: AudioGuideViewProps) {
   const t = useT();
-  const [isPlaying, setIsPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement>(null);
 
   const toggleAudio = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        // Handle play promise to catch errors
-        audioRef.current
-          .play()
-          .then(() => {
-            // Play started successfully
-          })
-          .catch(error => {
-            console.error('Audio play error:', error);
-            // Reset playing state if play fails
-            setIsPlaying(false);
-          });
-      }
-      setIsPlaying(!isPlaying);
+    if (isPlaying) {
+      onPause && onPause();
+    } else {
+      onPlay && onPlay();
     }
+  };
+  
+  const stopAudio = () => {
+    onStop && onStop();
   };
 
   return (
@@ -77,30 +77,28 @@ export default function AudioGuideView() {
               </p>
             </div>
 
-            <Button onClick={toggleAudio} className="w-full gap-2" size="lg">
-              {isPlaying ? (
-                <>
-                  <Pause className="w-5 h-5" />
-                  <span className="text-sm sm:text-base">{t('audio.pause')}</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-5 h-5" />
-                  <span className="text-sm sm:text-base">{t('audio.play')}</span>
-                </>
+            <div className="flex gap-2">
+              <Button onClick={toggleAudio} className="flex-1 gap-2" size="lg">
+                {isPlaying ? (
+                  <>
+                    <Pause className="w-5 h-5" />
+                    <span className="text-sm sm:text-base">{t('audio.pause')}</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-5 h-5" />
+                    <span className="text-sm sm:text-base">{t('audio.play')}</span>
+                  </>
+                )}
+              </Button>
+              
+              {isPlaying && (
+                <Button onClick={stopAudio} variant="outline" size="lg" className="gap-2">
+                  <Square className="w-5 h-5" />
+                  <span className="sr-only sm:not-sr-only text-sm sm:text-base">{t('common.stop')}</span>
+                </Button>
               )}
-            </Button>
-
-            {/* Using a valid audio source or fallback to a data URI for demonstration */}
-            <audio ref={audioRef} onEnded={() => setIsPlaying(false)}>
-              <source src="/sample-audio.mp3" type="audio/mpeg" />
-              {/* Fallback for browsers that don't support MP3 or if the file is missing */}
-              <source
-                src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFd2xqZ2VjXl1bWFdVU1FPTkxLSklIR0ZFRENCQUA/Pj08Ozo5ODc2NTQzMjEwLy4tLCsqKSgnJiUkIyIhIB8eHRwbGhkYFxYVFBMSERAPDg0MCwoJCAcGBQQDAgEA"
-                type="audio/wav"
-              />
-              {t('audio.audioFallback')}
-            </audio>
+            </div>
           </CardContent>
         </Card>
       </div>

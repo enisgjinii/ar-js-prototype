@@ -14,13 +14,20 @@ export default function Navigation({
   onViewChange,
 }: NavigationProps) {
   const t = useT();
+  
+  const handleViewChange = (view: 'audio' | 'cesium') => {
+    // Audio will continue playing in the background
+    // Users can control it through the sidebar controls
+    onViewChange(view);
+  };
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border sm:bottom-4 sm:left-1/2 sm:right-auto sm:transform sm:-translate-x-1/2 sm:w-[calc(100%-2rem)] sm:max-w-md md:max-w-lg lg:max-w-xl sm:rounded-full sm:border">
       <div className="flex items-center justify-around p-2 sm:p-3">
         <Button
           variant={activeView === 'audio' ? 'default' : 'ghost'}
           size="lg"
-          onClick={() => onViewChange('audio')}
+          onClick={() => handleViewChange('audio')}
           className="flex-1 mx-1 gap-2 min-w-0 py-2 sm:py-3 sm:rounded-full"
         >
           <Headphones className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -30,7 +37,7 @@ export default function Navigation({
         <Button
           variant={activeView === 'cesium' ? 'default' : 'ghost'}
           size="lg"
-          onClick={() => onViewChange('cesium')}
+          onClick={() => handleViewChange('cesium')}
           className="flex-1 mx-1 gap-2 min-w-0 py-2 sm:py-3 sm:rounded-full"
         >
           <Globe className="w-5 h-5 sm:w-6 sm:h-6" />

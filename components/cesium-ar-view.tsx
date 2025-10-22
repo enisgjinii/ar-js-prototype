@@ -27,7 +27,11 @@ interface ModelOption {
   onselect: () => void;
 }
 
-export default function CesiumARView() {
+interface CesiumARViewProps {
+  onAudioPause?: () => void;
+}
+
+export default function CesiumARView({ onAudioPause }: CesiumARViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Cesium.Viewer | null>(null);
   const [selectedModel, setSelectedModel] = useState<string>("2"); // Set default to Ground Vehicle (index 2)
@@ -72,6 +76,9 @@ export default function CesiumARView() {
       }
     };
   }, []);
+
+  // Removed automatic audio pausing when Cesium view is mounted
+  // Audio will now continue playing in the background
 
   function createModel(url: string, height: number) {
     const viewer = viewerRef.current;

@@ -5,7 +5,9 @@
   "common": {
     "loading": "Loading...",
     "backToApp": "Back to App",
-    "toggleTheme": "Toggle theme"
+    "toggleTheme": "Toggle theme",
+    "stop": "Stop",
+    "reset": "Reset"
   },
   "settings": {
     "themeLabel": "Theme",
