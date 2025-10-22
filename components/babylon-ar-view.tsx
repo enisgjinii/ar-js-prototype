@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Camera, Scan, Square, Circle } from 'lucide-react';
+import { Camera, Square, Circle } from 'lucide-react';
 import { useT } from '@/lib/locale';
 
 // Babylon.js imports
@@ -11,6 +11,7 @@ import * as BABYLON from '@babylonjs/core';
 import '@babylonjs/loaders/glTF';
 import '@babylonjs/loaders';
 import '@babylonjs/materials';
+import '@babylonjs/core/XR/features/WebXRPlaneDetector';
 
 export default function BabylonARView() {
   const t = useT();
@@ -26,6 +27,10 @@ export default function BabylonARView() {
   const [detectionMode, setDetectionMode] = useState<'floor' | 'wall' | 'object' | null>(null);
   const [xrReady, setXrReady] = useState(false);
   const placedAutomatically = useRef(false);
+  const lastFloorPoseRef = useRef<BABYLON.Vector3 | null>(null);
+  const modelBaseHeightRef = useRef<number>(0.1);
+  const planeDetectorRef = useRef<BABYLON.WebXRPlaneDetector | null>(null);
+  const planeMeshesRootRef = useRef<BABYLON.TransformNode | null>(null);
 
   // Initialize Babylon.js engine and scene
   useEffect(() => {
@@ -78,17 +83,38 @@ export default function BabylonARView() {
             "Duck.glb",
             scene
           );
-          
+
           // Get the root mesh of the loaded model
           const model = result.meshes[0];
           modelRef.current = model;
-          
+
+          // Remove floor mesh if present
+          const removeEmbeddedFloor = () => {
+            // Try to find meshes that look like a floor by name or flatness
+            const candidateMeshes = result.meshes.filter(child => child !== model);
+            candidateMeshes.forEach(mesh => {
+              const nameLooksLikeFloor = mesh.name.toLowerCase().includes('floor');
+              const boundingInfo = mesh.getBoundingInfo?.();
+              const size = boundingInfo?.boundingBox.extendSize;
+              const isFlatHorizontal =
+                !!size && size.y < 0.01 && size.x > 0.1 && size.z > 0.1;
+
+              if (nameLooksLikeFloor || isFlatHorizontal) {
+                mesh.setEnabled(false);
+                mesh.dispose();
+              }
+            });
+          };
+          removeEmbeddedFloor();
+
           // Scale the model to a reasonable size
           model.scaling.scaleInPlace(0.5);
-          
+
           // Position the model above the ground
           model.position.y = 1;
-          
+          const boundingHeight = model.getBoundingInfo()?.boundingBox.extendSize.y ?? 0.1;
+          modelBaseHeightRef.current = Math.max(boundingHeight, 0.05);
+
           console.log("Model loaded successfully");
         } catch (loadModelError) {
           console.error("Failed to load model:", loadModelError);
@@ -99,6 +125,7 @@ export default function BabylonARView() {
           model.material = modelMaterial;
           model.position.y = 1;
           modelRef.current = model;
+          modelBaseHeightRef.current = 0.25;
         }
 
         // Initialize WebXR
@@ -115,8 +142,92 @@ export default function BabylonARView() {
           
           // Enable plane detection if available
           if (xr && xr.baseExperience) {
-            // Plane detection is typically enabled through session features
-            console.log("WebXR initialized, plane detection available through session");
+            const featuresManager = xr.baseExperience.featuresManager;
+            const planeMeshesRoot = new BABYLON.TransformNode('xr-plane-root', scene);
+            planeMeshesRootRef.current = planeMeshesRoot;
+            const planeDetector = featuresManager.enableFeature(
+              BABYLON.WebXRFeatureName.PLANE_DETECTION,
+              'latest',
+              {
+                worldParentNode: planeMeshesRoot
+              }
+            ) as BABYLON.WebXRPlaneDetector | null;
+            planeDetectorRef.current = planeDetector;
+
+            const up = BABYLON.Vector3.Up();
+            const computeWorldCenter = (plane: BABYLON.IWebXRPlane) => {
+              const poly = plane.polygonDefinition;
+              if (!poly || poly.length === 0 || !plane.transformationMatrix) {
+                return null;
+              }
+              let sum = new BABYLON.Vector3(0, 0, 0);
+              for (const point of poly) {
+                sum = sum.add(point);
+              }
+              const average = sum.scale(1 / poly.length);
+              return BABYLON.Vector3.TransformCoordinates(average, plane.transformationMatrix);
+            };
+            const getWorldNormal = (plane: BABYLON.IWebXRPlane) => {
+              if (!plane.transformationMatrix) {
+                return null;
+              }
+              const normal = BABYLON.Vector3.TransformNormal(
+                BABYLON.Axis.Y,
+                plane.transformationMatrix
+              ).normalize();
+              return normal;
+            };
+            const isLargeEnough = (plane: BABYLON.IWebXRPlane) => {
+              const poly = plane.polygonDefinition;
+              if (!poly || poly.length < 3) {
+                return false;
+              }
+              const area = Math.abs(
+                poly.reduce((acc, point, index) => {
+                  const next = poly[(index + 1) % poly.length];
+                  return acc + point.x * next.z - point.z * next.x;
+                }, 0) * 0.5
+              );
+              return area >= 0.1;
+            };
+
+            planeDetector?.onPlaneAddedObservable.add((plane: BABYLON.IWebXRPlane) => {
+              const normal = getWorldNormal(plane);
+              if (!normal) return;
+              const orientation = Math.abs(BABYLON.Vector3.Dot(normal, up));
+              if (orientation > 0.9 && isLargeEnough(plane)) {
+                const center = computeWorldCenter(plane);
+                if (!center) return;
+
+                lastFloorPoseRef.current = center.clone();
+
+                if (!placedAutomatically.current && modelRef.current) {
+                  modelRef.current.position.set(center.x, center.y + modelBaseHeightRef.current, center.z);
+                  placedAutomatically.current = true;
+                }
+              }
+            });
+
+            planeDetector?.onPlaneUpdatedObservable.add((plane: BABYLON.IWebXRPlane) => {
+              const normal = getWorldNormal(plane);
+              if (!normal) return;
+              const orientation = Math.abs(BABYLON.Vector3.Dot(normal, up));
+              if (orientation > 0.9 && isLargeEnough(plane)) {
+                const center = computeWorldCenter(plane);
+                if (!center) return;
+                lastFloorPoseRef.current = center.clone();
+              }
+            });
+
+            planeDetector?.onPlaneRemovedObservable.add((plane: BABYLON.IWebXRPlane) => {
+              const normal = getWorldNormal(plane);
+              if (!normal) return;
+              const orientation = Math.abs(BABYLON.Vector3.Dot(normal, up));
+              if (orientation > 0.9) {
+                lastFloorPoseRef.current = null;
+                placedAutomatically.current = false;
+              }
+            });
           }
         } catch (xrError) {
           console.warn("WebXR not available:", xrError);
@@ -137,6 +248,10 @@ export default function BabylonARView() {
 
         return () => {
           window.removeEventListener('resize', resize);
+          planeDetectorRef.current?.dispose();
+          planeDetectorRef.current = null;
+          planeMeshesRootRef.current?.dispose(false, true);
+          planeMeshesRootRef.current = null;
           engine.dispose();
         };
       } catch (e) {
@@ -152,6 +267,15 @@ export default function BabylonARView() {
   const placeOnSurface = async () => {
     if (!xrRef.current || !modelRef.current || !sceneRef.current) return;
 
+    if (lastFloorPoseRef.current) {
+      modelRef.current.position.set(
+        lastFloorPoseRef.current.x,
+        lastFloorPoseRef.current.y + modelBaseHeightRef.current,
+        lastFloorPoseRef.current.z
+      );
+      return;
+    }
+
     try {
       // Try WebXR hit-test for placement
       const xr = xrRef.current;
@@ -165,18 +289,18 @@ export default function BabylonARView() {
           const results = frame.getHitTestResults(hitTestSource);
           if (results.length > 0) {
             const pose = results[0].getPose(frame.getViewerPose(viewerSpace)!.transform);
-            if (pose) {
-              // Position model at hit point
-              modelRef.current!.position.x = pose.transform.position.x;
-              modelRef.current!.position.y = pose.transform.position.y;
-              modelRef.current!.position.z = pose.transform.position.z;
-              return;
+              if (pose) {
+                // Position model at hit point
+                modelRef.current!.position.x = pose.transform.position.x;
+                modelRef.current!.position.y = pose.transform.position.y + modelBaseHeightRef.current;
+                modelRef.current!.position.z = pose.transform.position.z;
+                return;
+              }
             }
-          }
-          
+            
           // Fallback to default position
           if (modelRef.current) {
-            modelRef.current.position.set(0, 0, -1.5);
+            modelRef.current.position.set(0, modelBaseHeightRef.current, -1.5);
           }
         });
       }
@@ -184,7 +308,7 @@ export default function BabylonARView() {
       console.error('placeOnSurface error:', e);
       // Fallback to default position
       if (modelRef.current) {
-        modelRef.current.position.set(0, 0, -1.5);
+        modelRef.current.position.set(0, modelBaseHeightRef.current, -1.5);
       }
     }
   };
@@ -192,7 +316,7 @@ export default function BabylonARView() {
   // Place model in front of camera
   const placeInFront = () => {
     if (modelRef.current) {
-      modelRef.current.position.set(0, 0, 1.5);
+      modelRef.current.position.set(0, modelBaseHeightRef.current, 1.5);
     }
   };
 
