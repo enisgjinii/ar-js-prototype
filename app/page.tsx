@@ -8,19 +8,27 @@ import LocationTest from '@/components/location-test';
 import { Button } from '@/components/ui/button';
 import { Sun, Moon, Info } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { useT } from '@/lib/locale';
+import { useT, useLocale } from '@/lib/locale';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export default function Home() {
   const [activeView, setActiveView] = useState<'audio' | 'ar' | 'location'>(
     'audio'
   );
   const { theme, setTheme } = useTheme();
+  const { locale, setLocale } = useLocale();
   const [mounted, setMounted] = useState(false);
 
   // useEffect only runs on the client, so now we can safely show the UI
@@ -103,6 +111,33 @@ export default function Home() {
             </div>
           </PopoverContent>
         </Popover>
+
+        {/* Language Switcher with Flags */}
+        <Select value={locale} onValueChange={(v: string) => setLocale(v as any)}>
+          <SelectTrigger className="w-12 bg-background/80 backdrop-blur-sm border border-border p-0 flex items-center justify-center mx-1">
+            <SelectValue>
+              {locale === 'en' ? (
+                <span className="text-lg">🇺🇸</span>
+              ) : (
+                <span className="text-lg">🇩🇪</span>
+              )}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="en">
+              <span className="flex items-center gap-2">
+                <span>🇺🇸</span>
+                <span>English</span>
+              </span>
+            </SelectItem>
+            <SelectItem value="de">
+              <span className="flex items-center gap-2">
+                <span>🇩🇪</span>
+                <span>Deutsch</span>
+              </span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
 
         <Button
           variant="outline"

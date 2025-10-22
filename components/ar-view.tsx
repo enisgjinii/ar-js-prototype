@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Camera } from 'lucide-react';
 import { useT } from '@/lib/locale';
 
 // Target coordinates: 51°12'42.4"N 6°13'07.3"E (Düsseldorf)
@@ -644,51 +645,48 @@ export default function ARView() {
         </div>
       )}
 
-      {/* Mobile-friendly bottom control bar */}
-      <div className="fixed left-0 right-0 bottom-0 z-40 p-4 pb-safe bg-gradient-to-t from-black/80 via-black/50 to-transparent backdrop-blur-md">
-        <div className="mx-auto max-w-3xl">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex-1">
-              <div className="text-xs text-white mb-2 text-center sm:text-left font-medium">
-                {isLoaded ? 'Model loaded' : 'Initializing AR…'}
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button
-                  className="flex-1 py-3 text-sm font-medium border-2 border-white/30"
-                  size="sm"
-                  variant={cameraEnabled ? 'secondary' : 'default'}
-                  onClick={requestCameraPermission}
-                >
-                  {cameraEnabled ? 'Camera' : 'Enable camera'}
-                </Button>
-                <Button
-                  className="flex-1 py-3 text-sm font-medium border-2 border-white/30"
-                  size="sm"
-                  variant={placingMode ? 'secondary' : 'default'}
-                  onClick={() => setPlacingMode(s => !s)}
-                >
-                  {placingMode ? 'Exit' : 'Tap to place'}
-                </Button>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                className="flex-1 py-3 text-sm font-medium border-2 border-white/30"
-                size="sm"
-                variant="default"
-                onClick={placeInFront}
-              >
-                In front
-              </Button>
-              <Button
-                className="flex-1 py-3 text-sm font-medium border-2 border-white/30"
-                size="sm"
-                variant="default"
-                onClick={placeOnSurface}
-              >
-                Surface
-              </Button>
-            </div>
+      {/* Right sidebar control panel */}
+      <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-40 flex flex-col gap-2">
+        <div className="bg-black/60 backdrop-blur-md rounded-xl p-2 border border-white/20 shadow-lg">
+          <div className="flex flex-col gap-2">
+            <Button
+              className="w-12 h-12 p-0 font-medium border-2 border-white/30"
+              variant={cameraEnabled ? 'secondary' : 'default'}
+              onClick={requestCameraPermission}
+              title={cameraEnabled ? 'Camera enabled' : 'Enable camera'}
+            >
+              <Camera className="w-5 h-5" />
+            </Button>
+            <Button
+              className="w-12 h-12 p-0 font-medium border-2 border-white/30"
+              variant={placingMode ? 'secondary' : 'default'}
+              onClick={() => setPlacingMode(s => !s)}
+              title={placingMode ? 'Exit placement mode' : 'Tap to place model'}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </Button>
+            <Button
+              className="w-12 h-12 p-0 font-medium border-2 border-white/30"
+              variant="default"
+              onClick={placeInFront}
+              title="Place model in front of camera"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+              </svg>
+            </Button>
+            <Button
+              className="w-12 h-12 p-0 font-medium border-2 border-white/30"
+              variant="default"
+              onClick={placeOnSurface}
+              title="Place model on surface"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+              </svg>
+            </Button>
           </div>
         </div>
       </div>
@@ -696,11 +694,11 @@ export default function ARView() {
       {/* Instruction overlay for mobile users */}
       <div className="pointer-events-none fixed top-4 left-4 right-4 z-30 flex justify-center">
         <div className="bg-black/80 text-white rounded-md px-4 py-3 text-sm sm:text-base backdrop-blur-sm max-w-md font-medium shadow-lg border border-white/20">
-          Tap screen to focus and allow camera & location. Use "Tap to place" to
-          drop the model.
+          Tap screen to focus and allow camera & location. Use sidebar buttons to control AR model.
         </div>
       </div>
 
+      {/* Add padding to prevent content from being hidden behind navigation */}
       <div className="h-24" />
     </div>
   );

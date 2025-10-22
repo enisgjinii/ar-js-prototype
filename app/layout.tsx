@@ -6,7 +6,7 @@ import './globals.css';
 import Script from 'next/script';
 import { ThemeProvider } from '@/components/theme-provider';
 import { LocaleProvider } from '@/lib/locale';
-import ThemeCustomizer from '@/components/theme-customizer';
+// Removed ThemeCustomizer import
 
 const geist = Geist({ subsets: ['latin'] });
 const geistMono = Geist_Mono({ subsets: ['latin'] });
@@ -50,7 +50,7 @@ export default function RootLayout({
             defaultTheme="light"
             disableTransitionOnChange
           >
-            <ThemeCustomizer />
+            {/* Removed ThemeCustomizer */}
             <div className="min-h-screen w-full">
               {children}
             </div>

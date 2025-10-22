@@ -9,13 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Play, Pause, Volume2, Info } from 'lucide-react';
+import { Play, Pause, Volume2 } from 'lucide-react';
 import { useT } from '@/lib/locale';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 
 export default function AudioGuideView() {
   const t = useT();
