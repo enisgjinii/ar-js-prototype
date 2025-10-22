@@ -3,13 +3,13 @@
  */
 
 export interface LocationData {
-  lat: number
-  lon: number
+  lat: number;
+  lon: number;
 }
 
 export interface GeolocationError {
-  code: number
-  message: string
+  code: number;
+  message: string;
 }
 
 /**
@@ -24,36 +24,43 @@ export const getCurrentPosition = (
   const defaultOptions: PositionOptions = {
     enableHighAccuracy: false,
     timeout: 30000, // increased timeout to reduce false timeouts on slow devices
-    maximumAge: 600000 // 10 minutes
-  }
+    maximumAge: 600000, // 10 minutes
+  };
 
-  const finalOptions = { ...defaultOptions, ...options }
+  const finalOptions = { ...defaultOptions, ...options };
 
   // Check if geolocation is supported
   if (!navigator.geolocation) {
     errorCallback({
       code: 0,
-      message: "Geolocation is not supported by this browser"
-    })
-    return
+      message: 'Geolocation is not supported by this browser',
+    });
+    return;
   }
 
   // If Permissions API is available, try to pre-check permission state
   try {
-    if ((navigator as any).permissions && typeof (navigator as any).permissions.query === "function") {
+    if (
+      (navigator as any).permissions &&
+      typeof (navigator as any).permissions.query === 'function'
+    ) {
       // Note: the Permissions API may not include 'geolocation' in all browsers
-      ;(navigator as any).permissions
-        .query({ name: "geolocation" })
+      (navigator as any).permissions
+        .query({ name: 'geolocation' })
         .then((status: any) => {
           // possible states: 'granted', 'prompt', 'denied'
-          if (status.state === "denied") {
-            errorCallback({ code: 1, message: "Location access denied. Please enable location permissions in your browser settings." })
-            return
+          if (status.state === 'denied') {
+            errorCallback({
+              code: 1,
+              message:
+                'Location access denied. Please enable location permissions in your browser settings.',
+            });
+            return;
           }
         })
         .catch(() => {
           // ignore permission check failures
-        })
+        });
     }
   } catch (e) {
     // ignore
@@ -65,29 +72,33 @@ export const getCurrentPosition = (
       successCallback,
       (error: any) => {
         // Defensive normalization: browsers may pass unexpected shapes
-        const code = typeof error?.code === "number" ? error.code : -1
-        const message = typeof error?.message === "string" && error.message
-          ? error.message
-          : getErrorMessage(code)
+        const code = typeof error?.code === 'number' ? error.code : -1;
+        const message =
+          typeof error?.message === 'string' && error.message
+            ? error.message
+            : getErrorMessage(code);
 
         const normalizedError: GeolocationError = {
           code,
           message,
-        }
+        };
 
-        errorCallback(normalizedError)
+        errorCallback(normalizedError);
       },
       finalOptions
-    )
+    );
   } catch (err) {
     // Unexpected synchronous failure
     const normalizedError: GeolocationError = {
       code: -1,
-      message: typeof err === "string" ? err : "An unknown error occurred while accessing geolocation."
-    }
-    errorCallback(normalizedError)
+      message:
+        typeof err === 'string'
+          ? err
+          : 'An unknown error occurred while accessing geolocation.',
+    };
+    errorCallback(normalizedError);
   }
-}
+};
 
 /**
  * Watch position with improved error handling
@@ -101,46 +112,50 @@ export const watchPosition = (
   const defaultOptions: PositionOptions = {
     enableHighAccuracy: false,
     timeout: 15000,
-    maximumAge: 600000 // 10 minutes
-  }
+    maximumAge: 600000, // 10 minutes
+  };
 
-  const finalOptions = { ...defaultOptions, ...options }
+  const finalOptions = { ...defaultOptions, ...options };
 
   // Check if geolocation is supported
   if (!navigator.geolocation) {
     errorCallback({
       code: 0,
-      message: "Geolocation is not supported by this browser"
-    })
-    return null
+      message: 'Geolocation is not supported by this browser',
+    });
+    return null;
   }
 
   try {
     return navigator.geolocation.watchPosition(
       successCallback,
       (error: any) => {
-        const code = typeof error?.code === "number" ? error.code : -1
-        const message = typeof error?.message === "string" && error.message
-          ? error.message
-          : getErrorMessage(code)
+        const code = typeof error?.code === 'number' ? error.code : -1;
+        const message =
+          typeof error?.message === 'string' && error.message
+            ? error.message
+            : getErrorMessage(code);
 
         const normalizedError: GeolocationError = {
           code,
           message,
-        }
-        errorCallback(normalizedError)
+        };
+        errorCallback(normalizedError);
       },
       finalOptions
-    )
+    );
   } catch (err) {
     const normalizedError: GeolocationError = {
       code: -1,
-      message: typeof err === "string" ? err : "An unknown error occurred while starting geolocation watch."
-    }
-    errorCallback(normalizedError)
-    return null
+      message:
+        typeof err === 'string'
+          ? err
+          : 'An unknown error occurred while starting geolocation watch.',
+    };
+    errorCallback(normalizedError);
+    return null;
   }
-}
+};
 
 /**
  * Get user-friendly error message based on error code
@@ -148,19 +163,19 @@ export const watchPosition = (
 export const getErrorMessage = (errorCode: number): string => {
   switch (errorCode) {
     case 1: // PERMISSION_DENIED
-      return "Location access denied. Please enable location permissions in your browser settings."
+      return 'Location access denied. Please enable location permissions in your browser settings.';
     case 2: // POSITION_UNAVAILABLE
-      return "Location information is unavailable. Please check your device settings."
+      return 'Location information is unavailable. Please check your device settings.';
     case 3: // TIMEOUT
-      return "The request to get your location timed out. Please try again."
+      return 'The request to get your location timed out. Please try again.';
     default:
-      return "An unknown error occurred while retrieving your location."
+      return 'An unknown error occurred while retrieving your location.';
   }
-}
+};
 
 /**
  * Check if geolocation is supported
  */
 export const isGeolocationSupported = (): boolean => {
-  return !!navigator.geolocation
-}
+  return !!navigator.geolocation;
+};

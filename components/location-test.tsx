@@ -1,96 +1,117 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { getCurrentPosition, isGeolocationSupported } from "@/lib/geolocation"
-import { useT, useLocale } from "@/lib/locale"
-import { getErrorMessage } from "@/lib/geolocation"
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { getCurrentPosition, isGeolocationSupported } from '@/lib/geolocation';
+import { useT, useLocale } from '@/lib/locale';
+import { getErrorMessage } from '@/lib/geolocation';
 
 export default function LocationTest() {
-  const t = useT()
-  const { locale } = useLocale()
-  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const t = useT();
+  const { locale } = useLocale();
+  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(
+    null
+  );
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const getLocation = () => {
-    setLoading(true)
-    setError(null)
-    
+    setLoading(true);
+    setError(null);
+
     // Check if geolocation is available
     if (!isGeolocationSupported()) {
-      setError("Geolocation is not supported by your browser")
-      setLoading(false)
-      return
+      setError('Geolocation is not supported by your browser');
+      setLoading(false);
+      return;
     }
 
     // Use our utility function
     getCurrentPosition(
-      (position) => {
+      position => {
         setLocation({
           lat: position.coords.latitude,
           lon: position.coords.longitude,
-        })
-        setLoading(false)
+        });
+        setLoading(false);
       },
-      (err) => {
+      err => {
         // Defensive normalization: ensure we have a predictable object
-        let normalized: { code: number; message: string }
+        let normalized: { code: number; message: string };
         try {
-          if (err && typeof err === "object") {
-            const code = typeof (err as any).code === "number" ? (err as any).code : -1
-            const message = typeof (err as any).message === "string" && (err as any).message
-              ? (err as any).message
-              : getErrorMessage(code)
-            normalized = { code, message }
+          if (err && typeof err === 'object') {
+            const code =
+              typeof (err as any).code === 'number' ? (err as any).code : -1;
+            const message =
+              typeof (err as any).message === 'string' && (err as any).message
+                ? (err as any).message
+                : getErrorMessage(code);
+            normalized = { code, message };
           } else {
-            normalized = { code: -1, message: String(err || "An unknown error occurred") }
+            normalized = {
+              code: -1,
+              message: String(err || 'An unknown error occurred'),
+            };
           }
         } catch (e) {
-          normalized = { code: -1, message: "An unknown error occurred while handling location error." }
+          normalized = {
+            code: -1,
+            message: 'An unknown error occurred while handling location error.',
+          };
         }
 
         // Log both structured and raw error for debugging
         try {
-          const normStr = JSON.stringify(normalized)
-          let rawStr = ""
+          const normStr = JSON.stringify(normalized);
+          let rawStr = '';
           try {
-            rawStr = JSON.stringify(err)
+            rawStr = JSON.stringify(err);
           } catch (e) {
-            rawStr = String(err)
+            rawStr = String(err);
           }
-          console.error(`Location error: ${normStr} raw: ${rawStr}`)
+          console.error(`Location error: ${normStr} raw: ${rawStr}`);
         } catch (e) {
-          console.error("Location error (unserializable):", String(err))
+          console.error('Location error (unserializable):', String(err));
         }
 
         // Show friendly message (prefer normalized.message)
-        setError(normalized.message || "An unknown error occurred while retrieving your location.")
-        setLoading(false)
+        setError(
+          normalized.message ||
+            'An unknown error occurred while retrieving your location.'
+        );
+        setLoading(false);
       },
       {
         enableHighAccuracy: false, // Try with less accuracy first
         timeout: 15000, // 15 second timeout
-        maximumAge: 600000 // Accept positions up to 10 minutes old
+        maximumAge: 600000, // Accept positions up to 10 minutes old
       }
-    )
-  }
+    );
+  };
 
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle>{t("locationTest.title")}</CardTitle>
-        <CardDescription>{t("locationTest.description")}</CardDescription>
+        <CardTitle className="text-lg sm:text-xl">{t('locationTest.title')}</CardTitle>
+        <CardDescription className="text-sm sm:text-base">{t('locationTest.description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Button onClick={getLocation} disabled={loading} className="w-full">
-          {loading ? t("locationTest.getting") : t("locationTest.getLocation")}
+        <Button onClick={getLocation} disabled={loading} className="w-full py-3">
+          {loading ? t('locationTest.getting') : t('locationTest.getLocation')}
         </Button>
-        
+
         {location && (
           <div className="p-4 bg-green-50 rounded-lg dark:bg-green-950">
-            <h3 className="font-medium text-green-800 dark:text-green-200">Location Found</h3>
+            <h3 className="font-medium text-green-800 dark:text-green-200 text-base sm:text-lg">
+              Location Found
+            </h3>
             <p className="text-sm text-green-700 dark:text-green-300 mt-1">
               Latitude: {location.lat.toFixed(6)}
             </p>
@@ -99,28 +120,35 @@ export default function LocationTest() {
             </p>
           </div>
         )}
-        
+
         {error && (
           <div className="p-4 bg-red-50 rounded-lg dark:bg-red-950">
-            <h3 className="font-medium text-red-800 dark:text-red-200">Error</h3>
-            <p className="text-sm text-red-700 dark:text-red-300 mt-1">{error}</p>
+            <h3 className="font-medium text-red-800 dark:text-red-200 text-base sm:text-lg">
+              Error
+            </h3>
+            <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+              {error}
+            </p>
           </div>
         )}
-        
-        <div className="text-xs text-muted-foreground space-y-2">
-          <p><strong>{t("locationTest.tipsTitle")}</strong></p>
+
+        <div className="text-xs sm:text-sm text-muted-foreground space-y-2">
+          <p>
+            <strong className="text-sm">{t('locationTest.tipsTitle')}</strong>
+          </p>
           <ul className="list-disc pl-5 space-y-1">
-            {Array.isArray((t as any)("locationTest.tips"))
-              ? ((t as any)("locationTest.tips") as string[]).map((tip, i) => (
-                  <li key={i}>{tip}</li>
+            {Array.isArray((t as any)('locationTest.tips'))
+              ? ((t as any)('locationTest.tips') as string[]).map((tip, i) => (
+                  <li key={i} className="text-xs sm:text-sm">{tip}</li>
                 ))
               : // Fallback if translation function can't return arrays
-                ["Ensure location services are enabled on your device", "Check that your browser has location permissions"].map((tip, i) => (
-                  <li key={i}>{tip}</li>
-                ))}
+                [
+                  'Ensure location services are enabled on your device',
+                  'Check that your browser has location permissions',
+                ].map((tip, i) => <li key={i} className="text-xs sm:text-sm">{tip}</li>)}
           </ul>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

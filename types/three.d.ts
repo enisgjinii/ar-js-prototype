@@ -1,8 +1,8 @@
 declare global {
   interface Window {
-    THREE: any
-    THREEx: any
+    THREE: any;
+    THREEx: any;
   }
 }
 
-export {}
+export {};
