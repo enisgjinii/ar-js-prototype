@@ -41,7 +41,7 @@ export default function Navigation({
           className="flex-1 mx-1 gap-2 min-w-0 py-2 sm:py-3 sm:rounded-full"
         >
           <Globe className="w-5 h-5 sm:w-6 sm:h-6" />
-          <span className="font-medium truncate">Cesium</span>
+          <span className="font-medium truncate">{t('nav.ar')}</span>
         </Button>
       </div>
     </nav>

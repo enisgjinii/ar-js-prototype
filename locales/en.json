@@ -1,6 +1,7 @@
 {
   "nav": {
-    "audio": "Audio Guide"
+    "audio": "Audio Guide",
+    "ar": "AR view"
   },
   "common": {
     "loading": "Loading...",
