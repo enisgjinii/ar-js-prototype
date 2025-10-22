@@ -103,10 +103,9 @@ export default function Home() {
           </PopoverTrigger>
           <PopoverContent className="w-80">
             <div className="space-y-2">
-              <h4 className="font-medium leading-none">Ready for AR?</h4>
+              <h4 className="font-medium leading-none">{t('audio.readyForARTitle')}</h4>
               <p className="text-sm text-muted-foreground">
-                Switch to AR View to see 3D models placed at real-world coordinates. 
-                Make sure to allow camera and location permissions.
+                {t('audio.readyForARText')}
               </p>
             </div>
           </PopoverContent>

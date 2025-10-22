@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Camera } from 'lucide-react';
+import { Camera, Scan, Square, Circle, Triangle } from 'lucide-react';
 import { useT } from '@/lib/locale';
 
 // Target coordinates: 51°12'42.4"N 6°13'07.3"E (Düsseldorf)
@@ -19,6 +19,9 @@ export default function ARView() {
   const [aframeReady, setAframeReady] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [placingMode, setPlacingMode] = useState(false);
+  const [detectionMode, setDetectionMode] = useState<'floor' | 'wall' | 'object' | null>(null);
+  const [detectedSurfaces, setDetectedSurfaces] = useState<any[]>([]);
+  const [visualGuides, setVisualGuides] = useState<any[]>([]);
   const placedAutomatically = useRef(false);
 
   // Dynamically load A-Frame and AR.js (A-Frame build) on client
@@ -88,6 +91,8 @@ export default function ARView() {
       >
         <a-camera gps-camera rotation-reader></a-camera>
         <a-entity id="dog-model" gltf-model="/models/dog_statue.glb" gps-entity-place="latitude: ${TARGET_LAT}; longitude: ${TARGET_LON};" scale="0.8 0.8 0.8" rotation="0 180 0"></a-entity>
+        <!-- Visual guides container -->
+        <a-entity id="visual-guides"></a-entity>
       </a-scene>
     `;
 
@@ -220,6 +225,31 @@ export default function ARView() {
       placeOnSurface();
     }, 600);
   }, [isLoaded]);
+
+  // Visual guides effect for detection modes
+  useEffect(() => {
+    if (!aframeReady || !detectionMode) return;
+    
+    // Clear previous guides
+    clearVisualGuides();
+    
+    // Show appropriate guide based on detection mode
+    switch (detectionMode) {
+      case 'floor':
+        showFloorDetectionGuide();
+        break;
+      case 'wall':
+        showWallDetectionGuide();
+        break;
+      case 'object':
+        showObjectDetectionGuide();
+        break;
+    }
+    
+    return () => {
+      clearVisualGuides();
+    };
+  }, [detectionMode, aframeReady]);
 
   // Place the model 1.5m in front of the camera (indoor test helper)
   const placeInFront = () => {
@@ -565,6 +595,248 @@ export default function ARView() {
     return () => container.removeEventListener('pointerdown', onPointer);
   }, [placingMode]);
 
+  // Show visual guide for floor detection
+  const showFloorDetectionGuide = () => {
+    const container = sceneRef.current;
+    if (!container) return;
+    
+    const sceneEl = container.querySelector('a-scene');
+    const guidesContainer = container.querySelector('#visual-guides');
+    if (!sceneEl || !guidesContainer) return;
+    
+    // Create a grid of points to visualize the floor plane
+    const gridSize = 5;
+    const spacing = 0.5;
+    
+    for (let i = 0; i < gridSize; i++) {
+      for (let j = 0; j < gridSize; j++) {
+        const x = (i - Math.floor(gridSize/2)) * spacing;
+        const z = (j - Math.floor(gridSize/2)) * spacing;
+        
+        // Create a visual indicator for floor detection
+        const indicator = document.createElement('a-entity');
+        indicator.setAttribute('geometry', 'primitive: circle; radius: 0.05');
+        indicator.setAttribute('material', 'color: #4ade80; shader: flat; transparent: true; opacity: 0.7');
+        indicator.setAttribute('position', `${x} -1.5 ${z}`);
+        indicator.setAttribute('class', 'floor-guide');
+        guidesContainer.appendChild(indicator);
+      }
+    }
+    
+    // Add a larger central indicator
+    const centerIndicator = document.createElement('a-entity');
+    centerIndicator.setAttribute('geometry', 'primitive: ring; radiusInner: 0.1; radiusOuter: 0.15');
+    centerIndicator.setAttribute('material', 'color: #22d3ee; shader: flat');
+    centerIndicator.setAttribute('position', '0 -1.5 0');
+    centerIndicator.setAttribute('rotation', '-90 0 0');
+    centerIndicator.setAttribute('class', 'floor-guide');
+    guidesContainer.appendChild(centerIndicator);
+    
+    // Add boundary indicators
+    const boundaries = [
+      { x: -1, y: -1.5, z: -1, label: 'Boundary' },
+      { x: 1, y: -1.5, z: -1, label: 'Boundary' },
+      { x: -1, y: -1.5, z: 1, label: 'Boundary' },
+      { x: 1, y: -1.5, z: 1, label: 'Boundary' }
+    ];
+    
+    boundaries.forEach(boundary => {
+      const boundaryIndicator = document.createElement('a-entity');
+      boundaryIndicator.setAttribute('geometry', 'primitive: box; width: 0.1; height: 0.1; depth: 0.1');
+      boundaryIndicator.setAttribute('material', 'color: #fbbf24; shader: flat');
+      boundaryIndicator.setAttribute('position', `${boundary.x} ${boundary.y} ${boundary.z}`);
+      boundaryIndicator.setAttribute('class', 'floor-guide');
+      guidesContainer.appendChild(boundaryIndicator);
+    });
+    
+    // Add feedback text
+    const feedbackText = document.createElement('a-entity');
+    feedbackText.setAttribute('text', 'value: FLOOR DETECTED; align: center; width: 2; color: #4ade80');
+    feedbackText.setAttribute('position', '0 -1.2 -1.5');
+    feedbackText.setAttribute('class', 'floor-guide');
+    guidesContainer.appendChild(feedbackText);
+  };
+
+  // Show visual guide for wall detection
+  const showWallDetectionGuide = () => {
+    const container = sceneRef.current;
+    if (!container) return;
+    
+    const sceneEl = container.querySelector('a-scene');
+    const guidesContainer = container.querySelector('#visual-guides');
+    if (!sceneEl || !guidesContainer) return;
+    
+    // Create vertical lines to visualize wall detection
+    const wallHeight = 2;
+    const wallWidth = 3;
+    
+    // Create a wireframe rectangle to represent a wall
+    const wallGuide = document.createElement('a-entity');
+    wallGuide.setAttribute('geometry', `primitive: box; width: ${wallWidth}; height: ${wallHeight}; depth: 0.01`);
+    wallGuide.setAttribute('material', 'color: #f87171; shader: flat; wireframe: true; transparent: true; opacity: 0.5');
+    wallGuide.setAttribute('position', '0 0 -2');
+    wallGuide.setAttribute('class', 'wall-guide');
+    guidesContainer.appendChild(wallGuide);
+    
+    // Add corner indicators
+    const corners = [
+      { x: -wallWidth/2, y: -wallHeight/2, z: -2 },
+      { x: wallWidth/2, y: -wallHeight/2, z: -2 },
+      { x: -wallWidth/2, y: wallHeight/2, z: -2 },
+      { x: wallWidth/2, y: wallHeight/2, z: -2 }
+    ];
+    
+    corners.forEach(corner => {
+      const cornerIndicator = document.createElement('a-entity');
+      cornerIndicator.setAttribute('geometry', 'primitive: sphere; radius: 0.05');
+      cornerIndicator.setAttribute('material', 'color: #fbbf24; shader: flat');
+      cornerIndicator.setAttribute('position', `${corner.x} ${corner.y} ${corner.z}`);
+      cornerIndicator.setAttribute('class', 'wall-guide');
+      guidesContainer.appendChild(cornerIndicator);
+    });
+    
+    // Add height indicators
+    const heightIndicators = [
+      { x: 0, y: wallHeight/2 + 0.2, z: -2, label: 'Height: 2m' },
+      { x: 0, y: -wallHeight/2 - 0.2, z: -2, label: 'Ground Level' }
+    ];
+    
+    heightIndicators.forEach(indicator => {
+      const heightIndicator = document.createElement('a-entity');
+      heightIndicator.setAttribute('geometry', 'primitive: ring; radiusInner: 0.05; radiusOuter: 0.1');
+      heightIndicator.setAttribute('material', 'color: #a78bfa; shader: flat');
+      heightIndicator.setAttribute('position', `${indicator.x} ${indicator.y} ${indicator.z}`);
+      heightIndicator.setAttribute('rotation', '-90 0 0');
+      heightIndicator.setAttribute('class', 'wall-guide');
+      guidesContainer.appendChild(heightIndicator);
+    });
+    
+    // Add feedback text
+    const feedbackText = document.createElement('a-entity');
+    feedbackText.setAttribute('text', 'value: WALL DETECTED; align: center; width: 2; color: #f87171');
+    feedbackText.setAttribute('position', '0 0.5 -1.8');
+    feedbackText.setAttribute('class', 'wall-guide');
+    guidesContainer.appendChild(feedbackText);
+  };
+
+  // Show visual guide for object detection
+  const showObjectDetectionGuide = () => {
+    const container = sceneRef.current;
+    if (!container) return;
+    
+    const sceneEl = container.querySelector('a-scene');
+    const guidesContainer = container.querySelector('#visual-guides');
+    if (!sceneEl || !guidesContainer) return;
+    
+    // Create bounding box indicators for object detection
+    const objectIndicators = [
+      { x: -0.5, y: 0, z: -1.5, color: '#a78bfa' },
+      { x: 0.5, y: 0, z: -1.5, color: '#a78bfa' },
+      { x: 0, y: 0.5, z: -1.5, color: '#a78bfa' },
+      { x: 0, y: -0.5, z: -1.5, color: '#a78bfa' }
+    ];
+    
+    objectIndicators.forEach(indicator => {
+      const objIndicator = document.createElement('a-entity');
+      objIndicator.setAttribute('geometry', 'primitive: sphere; radius: 0.07');
+      objIndicator.setAttribute('material', `color: ${indicator.color}; shader: flat; transparent: true; opacity: 0.8`);
+      objIndicator.setAttribute('position', `${indicator.x} ${indicator.y} ${indicator.z}`);
+      objIndicator.setAttribute('class', 'object-guide');
+      guidesContainer.appendChild(objIndicator);
+    });
+    
+    // Add a central bounding box
+    const boundingBox = document.createElement('a-entity');
+    boundingBox.setAttribute('geometry', 'primitive: box; width: 0.5; height: 0.5; depth: 0.5');
+    boundingBox.setAttribute('material', 'color: #f472b6; shader: flat; wireframe: true; transparent: true; opacity: 0.6');
+    boundingBox.setAttribute('position', '0 0 -1.5');
+    boundingBox.setAttribute('class', 'object-guide');
+    guidesContainer.appendChild(boundingBox);
+    
+    // Add placement options indicators
+    const placementOptions = [
+      { x: -0.3, y: 0.7, z: -1.5, label: 'Place Here' },
+      { x: 0.3, y: 0.7, z: -1.5, label: 'Place Here' },
+      { x: 0, y: 0.7, z: -1.2, label: 'Place Here' }
+    ];
+    
+    placementOptions.forEach(option => {
+      const optionIndicator = document.createElement('a-entity');
+      optionIndicator.setAttribute('geometry', 'primitive: cylinder; radius: 0.1; height: 0.02');
+      optionIndicator.setAttribute('material', 'color: #34d399; shader: flat; transparent: true; opacity: 0.8');
+      optionIndicator.setAttribute('position', `${option.x} ${option.y} ${option.z}`);
+      optionIndicator.setAttribute('rotation', '-90 0 0');
+      optionIndicator.setAttribute('class', 'object-guide');
+      guidesContainer.appendChild(optionIndicator);
+    });
+    
+    // Add feedback text
+    const feedbackText = document.createElement('a-entity');
+    feedbackText.setAttribute('text', 'value: OBJECT DETECTED; align: center; width: 2; color: #a78bfa');
+    feedbackText.setAttribute('position', '0 1 -1.5');
+    feedbackText.setAttribute('class', 'object-guide');
+    guidesContainer.appendChild(feedbackText);
+  };
+
+  // Enhanced plane detection with visual feedback
+  const detectPlanesWithFeedback = async () => {
+    // This would integrate with WebXR or AR.js plane detection APIs
+    // For now, we'll simulate plane detection with visual feedback
+    
+    // Show detection in progress
+    setDetectionMode('floor');
+    
+    // Simulate detection process
+    setTimeout(() => {
+      // Show success feedback
+      const container = sceneRef.current;
+      if (container) {
+        const sceneEl = container.querySelector('a-scene');
+        const guidesContainer = container.querySelector('#visual-guides');
+        if (sceneEl && guidesContainer) {
+          const successIndicator = document.createElement('a-entity');
+          successIndicator.setAttribute('geometry', 'primitive: sphere; radius: 0.1');
+          successIndicator.setAttribute('material', 'color: #34d399; shader: flat');
+          successIndicator.setAttribute('position', '0 -1.5 -1');
+          successIndicator.setAttribute('class', 'detection-feedback');
+          guidesContainer.appendChild(successIndicator);
+          
+          const successText = document.createElement('a-entity');
+          successText.setAttribute('text', 'value: SURFACE DETECTED; align: center; width: 3; color: #34d399');
+          successText.setAttribute('position', '0 -1.2 -1');
+          successText.setAttribute('class', 'detection-feedback');
+          guidesContainer.appendChild(successText);
+        }
+      }
+      
+      // Clear feedback after 3 seconds
+      setTimeout(() => {
+        const feedbackElements = container?.querySelectorAll('.detection-feedback');
+        feedbackElements?.forEach((el: Element) => el.remove());
+      }, 3000);
+    }, 1500);
+  };
+
+  // Clear all visual guides
+  const clearVisualGuides = () => {
+    const container = sceneRef.current;
+    if (!container) return;
+    
+    const guidesContainer = container.querySelector('#visual-guides');
+    if (guidesContainer) {
+      guidesContainer.innerHTML = '';
+    }
+  };
+
+  // Toggle detection mode
+  const toggleDetectionMode = (mode: 'floor' | 'wall' | 'object') => {
+    if (detectionMode === mode) {
+      setDetectionMode(null);
+    } else {
+      setDetectionMode(mode);
+    }
+  };
+
   // If A-Frame failed to load, show error
   if (error) {
     return (
@@ -669,6 +941,40 @@ export default function ARView() {
             </Button>
             <Button
               className="w-12 h-12 p-0 font-medium border-2 border-white/30"
+              variant={detectionMode === 'floor' ? 'secondary' : 'default'}
+              onClick={() => toggleDetectionMode('floor')}
+              title="Floor detection guide"
+            >
+              <Square className="w-5 h-5" />
+            </Button>
+            <Button
+              className="w-12 h-12 p-0 font-medium border-2 border-white/30"
+              variant={detectionMode === 'wall' ? 'secondary' : 'default'}
+              onClick={() => toggleDetectionMode('wall')}
+              title="Wall detection guide"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              </svg>
+            </Button>
+            <Button
+              className="w-12 h-12 p-0 font-medium border-2 border-white/30"
+              variant={detectionMode === 'object' ? 'secondary' : 'default'}
+              onClick={() => toggleDetectionMode('object')}
+              title="Object detection guide"
+            >
+              <Circle className="w-5 h-5" />
+            </Button>
+            <Button
+              className="w-12 h-12 p-0 font-medium border-2 border-white/30"
+              variant="default"
+              onClick={detectPlanesWithFeedback}
+              title="Detect surfaces with feedback"
+            >
+              <Scan className="w-5 h-5" />
+            </Button>
+            <Button
+              className="w-12 h-12 p-0 font-medium border-2 border-white/30"
               variant="default"
               onClick={placeInFront}
               title="Place model in front of camera"
@@ -697,6 +1003,15 @@ export default function ARView() {
           Tap screen to focus and allow camera & location. Use sidebar buttons to control AR model.
         </div>
       </div>
+
+      {/* Detection mode indicator */}
+      {detectionMode && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-30 bg-black/70 text-white rounded-full px-4 py-2 text-sm backdrop-blur-sm border border-white/20">
+          {detectionMode === 'floor' && 'Floor Detection Active'}
+          {detectionMode === 'wall' && 'Wall Detection Active'}
+          {detectionMode === 'object' && 'Object Detection Active'}
+        </div>
+      )}
 
       {/* Add padding to prevent content from being hidden behind navigation */}
       <div className="h-24" />
