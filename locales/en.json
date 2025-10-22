@@ -1,8 +1,6 @@
 {
   "nav": {
-    "audio": "Audio Guide",
-    "ar": "AR View",
-    "location": "Location"
+    "audio": "Audio Guide"
   },
   "common": {
     "loading": "Loading...",
@@ -27,13 +25,11 @@
     "cardTitle": "Audio Guide",
     "cardLocation": "Location: Düsseldorf, Germany",
     "overviewTitle": "Historical Site Overview",
-    "overviewText": "Welcome to this historic location. This audio guide will take you through the fascinating history and cultural significance of this site. Switch to AR view to see 3D reconstructions at their original locations.",
+    "overviewText": "Welcome to this historic location. This audio guide will take you through the fascinating history and cultural significance of this site.",
     "play": "Play Audio Guide",
     "pause": "Pause Audio",
-    "readyForARTitle": "Ready for AR?",
-    "readyForARText": "Switch to AR View to see 3D models placed at real-world coordinates. Make sure to allow camera and location permissions."
-    ,"sampleContent": "Sample audio guide content"
-    ,"audioFallback": "Your browser does not support the audio element."
+    "sampleContent": "Sample audio guide content",
+    "audioFallback": "Your browser does not support the audio element."
   },
   "ar": {
     "initializing": "Initializing AR View",

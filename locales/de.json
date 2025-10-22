@@ -1,12 +1,9 @@
 {
   "nav": {
-    "audio": "Audioguide",
-    "ar": "AR Ansicht",
-    "location": "Ort"
+    "audio": "Audioguide"
   },
   "common": {
     "loading": "Laden...",
-    "testLocation": "Standort testen",
     "backToApp": "Zurück zur App",
     "toggleTheme": "Design wechseln"
   },
@@ -28,42 +25,10 @@
     "cardTitle": "Audioguide",
     "cardLocation": "Ort: Düsseldorf, Deutschland",
     "overviewTitle": "Übersicht der historischen Stätte",
-    "overviewText": "Willkommen an diesem historischen Ort. Dieser Audioguide führt dich durch die faszinierende Geschichte und kulturelle Bedeutung dieses Ortes. Wechsle zur AR-Ansicht, um 3D-Rekonstruktionen an ihren Originalstandorten zu sehen.",
+    "overviewText": "Willkommen an diesem historischen Ort. Dieser Audioguide führt dich durch die faszinierende Geschichte und kulturelle Bedeutung dieses Ortes.",
     "play": "Audioguide abspielen",
     "pause": "Audio pausieren",
-    "readyForARTitle": "Bereit für AR?",
-    "readyForARText": "Wechsle zur AR-Ansicht, um 3D-Modelle an realen Koordinaten zu sehen. Stelle sicher, dass Kamera- und Standortberechtigungen erlaubt sind."
-    ,"sampleContent": "Beispielinhalt des Audioguides"
-    ,"audioFallback": "Dein Browser unterstützt das Audio-Element nicht."
-  },
-  "ar": {
-    "initializing": "AR-Ansicht wird initialisiert",
-    "allow": "Bitte erlaube Kamera- und Standortzugriff",
-    "unavailableTitle": "AR nicht verfügbar",
-    "retry": "Erneut versuchen",
-    "targetLocation": "Zielort",
-    "pointHint": "Richte deine Kamera umher, um das 3D-Denkmal zu sehen. Das Modell erscheint an den GPS-Koordinaten in Düsseldorf.",
-    "coords": "51°12'42.4\"N 6°13'07.3\"E"
-  },
-  "locationTest": {
-    "title": "Standort-Test",
-    "description": "Geolokalisierung prüfen",
-    "getLocation": "Meinen Standort abrufen",
-    "getting": "Standort wird ermittelt...",
-    "locationFound": "Standort gefunden",
-    "error": "Fehler",
-    "tipsTitle": "Fehlerbehebung:",
-    "tips": [
-      "Stelle sicher, dass die Standortdienste auf deinem Gerät aktiviert sind",
-      "Überprüfe, ob dein Browser Standortberechtigungen hat",
-      "Versuche die Seite zu aktualisieren und Berechtigungen zu erteilen, wenn du dazu aufgefordert wirst",
-      "Aktiviere auf mobilen Geräten GPS"
-    ]
-    ,"tipsFallback": [
-      "Stelle sicher, dass die Standortdienste auf deinem Gerät aktiviert sind",
-      "Überprüfe, ob dein Browser Standortberechtigungen hat"
-    ]
+    "sampleContent": "Beispielinhalt des Audioguides",
+    "audioFallback": "Dein Browser unterstützt das Audio-Element nicht."
   }
-
-  ,"arInfo": "AR-Information"
 }
