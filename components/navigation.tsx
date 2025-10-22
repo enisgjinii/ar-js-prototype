@@ -1,12 +1,12 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Headphones, Camera, MapPin } from 'lucide-react';
+import { Headphones, Globe } from 'lucide-react';
 import { useT } from '@/lib/locale';
 
 interface NavigationProps {
-  activeView: 'audio' | 'ar' | 'location';
-  onViewChange: (view: 'audio' | 'ar' | 'location') => void;
+  activeView: 'audio' | 'cesium';
+  onViewChange: (view: 'audio' | 'cesium') => void;
 }
 
 export default function Navigation({
@@ -24,27 +24,17 @@ export default function Navigation({
           className="flex-1 mx-1 gap-2 min-w-0 py-2 sm:py-3 sm:rounded-full"
         >
           <Headphones className="w-5 h-5 sm:w-6 sm:h-6" />
-          <span className="font-medium truncate hidden sm:block">{t('nav.audio')}</span>
+          <span className="font-medium truncate">{t('nav.audio')}</span>
         </Button>
 
         <Button
-          variant={activeView === 'ar' ? 'default' : 'ghost'}
+          variant={activeView === 'cesium' ? 'default' : 'ghost'}
           size="lg"
-          onClick={() => onViewChange('ar')}
+          onClick={() => onViewChange('cesium')}
           className="flex-1 mx-1 gap-2 min-w-0 py-2 sm:py-3 sm:rounded-full"
         >
-          <Camera className="w-5 h-5 sm:w-6 sm:h-6" />
-          <span className="font-medium truncate hidden sm:block">{t('nav.ar')}</span>
-        </Button>
-
-        <Button
-          variant={activeView === 'location' ? 'default' : 'ghost'}
-          size="lg"
-          onClick={() => onViewChange('location')}
-          className="flex-1 mx-1 gap-2 min-w-0 py-2 sm:py-3 sm:rounded-full sm:hidden"
-        >
-          <MapPin className="w-5 h-5 sm:w-6 sm:h-6" />
-          <span className="font-medium truncate">{t('nav.location')}</span>
+          <Globe className="w-5 h-5 sm:w-6 sm:h-6" />
+          <span className="font-medium truncate">Cesium</span>
         </Button>
       </div>
     </nav>

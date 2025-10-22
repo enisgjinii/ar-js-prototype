@@ -2,19 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import AudioGuideView from '@/components/audio-guide-view';
-import BabylonARView from '@/components/babylon-ar-view';
+import CesiumARView from '@/components/cesium-ar-view';
 import Navigation from '@/components/navigation';
-import LocationTest from '@/components/location-test';
 import { Button } from '@/components/ui/button';
-import { Sun, Moon, Info } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useT, useLocale } from '@/lib/locale';
 import { Spinner } from '@/components/ui/spinner';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -24,9 +18,7 @@ import {
 } from '@/components/ui/select';
 
 export default function Home() {
-  const [activeView, setActiveView] = useState<'audio' | 'ar' | 'location'>(
-    'audio'
-  );
+  const [activeView, setActiveView] = useState<'audio' | 'cesium'>('audio');
   const { theme, setTheme } = useTheme();
   const { locale, setLocale } = useLocale();
   const [mounted, setMounted] = useState(false);
@@ -55,47 +47,17 @@ export default function Home() {
     <main className="relative w-full min-h-screen bg-background">
       {activeView === 'audio' ? (
         <AudioGuideView />
-      ) : activeView === 'ar' ? (
-        <BabylonARView />
       ) : (
-        <div className="flex items-center justify-center min-h-screen p-4 sm:p-6 md:p-8">
-          <div className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl">
-            <LocationTest />
-          </div>
-        </div>
+        <CesiumARView />
       )}
 
       <Navigation
-        activeView={activeView === 'location' ? 'audio' : activeView}
+        activeView={activeView}
         onViewChange={setActiveView}
       />
 
       {/* Top right buttons */}
       <div className="fixed top-4 right-4 z-50 flex gap-2 items-center">
-        {/* Test Location / Back to App buttons removed */}
-
-        {/* AR Info Tooltip */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="bg-background/80 backdrop-blur-sm border border-border"
-            >
-              <Info className="h-4 w-4" />
-              <span className="sr-only">{t('arInfo')}</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80">
-            <div className="space-y-2">
-              <h4 className="font-medium leading-none">{t('audio.readyForARTitle')}</h4>
-              <p className="text-sm text-muted-foreground">
-                {t('audio.readyForARText')}
-              </p>
-            </div>
-          </PopoverContent>
-        </Popover>
-
         {/* Language Switcher with Flags */}
         <Select value={locale} onValueChange={(v: string) => setLocale(v as any)}>
           <SelectTrigger className="w-12 bg-background/80 backdrop-blur-sm border border-border p-0 flex items-center justify-center mx-1">

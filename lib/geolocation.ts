@@ -13,6 +13,44 @@ export interface GeolocationError {
 }
 
 /**
+ * Get user-friendly error message based on error code
+ */
+export const getErrorMessage = (errorCode: number): string => {
+  switch (errorCode) {
+    case 1: // PERMISSION_DENIED
+      return 'Location access denied. Please enable location permissions in your browser settings.';
+    case 2: // POSITION_UNAVAILABLE
+      return 'Location information is unavailable. Please check your device settings.';
+    case 3: // TIMEOUT
+      return 'The request to get your location timed out. Please try again.';
+    default:
+      return 'An unknown error occurred while retrieving your location.';
+  }
+};
+
+/**
+ * Enhanced error message handler that provides more specific guidance
+ * for iOS CoreLocation errors
+ */
+export const getDetailedErrorMessage = (errorCode: number, errorMessage: string): string => {
+  // Handle iOS CoreLocation specific errors
+  if (errorMessage.includes('kCLErrorLocationUnknown')) {
+    return 'Location services are temporarily unavailable. This can happen due to poor GPS signal, being indoors, or device calibration issues. Please try again in an open area or restart your device.';
+  }
+  
+  if (errorMessage.includes('kCLErrorDenied')) {
+    return 'Location access has been denied. Please enable location permissions for this app in your device settings.';
+  }
+  
+  if (errorMessage.includes('kCLErrorNetwork')) {
+    return 'Location services require network connectivity. Please check your internet connection and try again.';
+  }
+  
+  // Fall back to standard error messages
+  return getErrorMessage(errorCode);
+};
+
+/**
  * Get current position with improved error handling
  */
 export const getCurrentPosition = (
@@ -78,9 +116,12 @@ export const getCurrentPosition = (
             ? error.message
             : getErrorMessage(code);
 
+        // Provide more detailed error messages for iOS CoreLocation errors
+        const detailedMessage = getDetailedErrorMessage(code, message);
+
         const normalizedError: GeolocationError = {
           code,
-          message,
+          message: detailedMessage,
         };
 
         errorCallback(normalizedError);
@@ -136,9 +177,12 @@ export const watchPosition = (
             ? error.message
             : getErrorMessage(code);
 
+        // Provide more detailed error messages for iOS CoreLocation errors
+        const detailedMessage = getDetailedErrorMessage(code, message);
+
         const normalizedError: GeolocationError = {
           code,
-          message,
+          message: detailedMessage,
         };
         errorCallback(normalizedError);
       },
@@ -154,22 +198,6 @@ export const watchPosition = (
     };
     errorCallback(normalizedError);
     return null;
-  }
-};
-
-/**
- * Get user-friendly error message based on error code
- */
-export const getErrorMessage = (errorCode: number): string => {
-  switch (errorCode) {
-    case 1: // PERMISSION_DENIED
-      return 'Location access denied. Please enable location permissions in your browser settings.';
-    case 2: // POSITION_UNAVAILABLE
-      return 'Location information is unavailable. Please check your device settings.';
-    case 3: // TIMEOUT
-      return 'The request to get your location timed out. Please try again.';
-    default:
-      return 'An unknown error occurred while retrieving your location.';
   }
 };
 

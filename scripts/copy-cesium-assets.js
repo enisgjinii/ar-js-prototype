@@ -13,28 +13,60 @@ const candidates = [
   // original pnpm flattened path (older script)
   path.join(__dirname, '..', 'node_modules', '.pnpm'),
   // direct node_modules path
-  path.join(__dirname, '..', 'node_modules', '@cesium', 'engine'),
+  path.join(__dirname, '..', 'node_modules', 'cesium'),
+  // pnpm structure
+  path.join(__dirname, '..', 'node_modules', '.pnpm', 'cesium@1.134.1', 'node_modules', 'cesium'),
+  path.join(__dirname, '..', 'node_modules', '.pnpm', 'cesium@*'),
 ];
 
 let found = null;
-for (const base of candidates) {
-  // Check for Build/Cesium
-  const buildPath = path.join(base, 'Build', 'Cesium');
-  if (fs.existsSync(buildPath)) {
-    found = { type: 'build', path: buildPath };
-    break;
-  }
 
-  // Check for Source layout
-  const sourcePath = path.join(base, 'Source');
-  if (fs.existsSync(sourcePath)) {
-    found = { type: 'source', path: sourcePath };
-    break;
+// Check for pnpm structure first
+const pnpmDir = path.join(__dirname, '..', 'node_modules', '.pnpm');
+if (fs.existsSync(pnpmDir)) {
+  const entries = fs.readdirSync(pnpmDir, { withFileTypes: true });
+  for (const entry of entries) {
+    if (entry.isDirectory() && entry.name.startsWith('cesium@')) {
+      const cesiumPath = path.join(pnpmDir, entry.name, 'node_modules', 'cesium');
+      if (fs.existsSync(cesiumPath)) {
+        // Check for Build/Cesium
+        const buildPath = path.join(cesiumPath, 'Build', 'Cesium');
+        if (fs.existsSync(buildPath)) {
+          found = { type: 'build', path: buildPath };
+          break;
+        }
+
+        // Check for Source layout
+        const sourcePath = path.join(cesiumPath, 'Source');
+        if (fs.existsSync(sourcePath)) {
+          found = { type: 'source', path: sourcePath };
+          break;
+        }
+      }
+    }
+  }
+}
+
+// If not found in pnpm, check direct node_modules
+if (!found) {
+  const directPath = path.join(__dirname, '..', 'node_modules', 'cesium');
+  if (fs.existsSync(directPath)) {
+    // Check for Build/Cesium
+    const buildPath = path.join(directPath, 'Build', 'Cesium');
+    if (fs.existsSync(buildPath)) {
+      found = { type: 'build', path: buildPath };
+    }
+
+    // Check for Source layout
+    const sourcePath = path.join(directPath, 'Source');
+    if (fs.existsSync(sourcePath)) {
+      found = { type: 'source', path: sourcePath };
+    }
   }
 }
 
 if (!found) {
-  console.error('Could not find Cesium Build or Source directory. Make sure "@cesium/engine" is installed.');
+  console.error('Could not find Cesium Build or Source directory. Make sure "cesium" is installed.');
   process.exit(1);
 }
 

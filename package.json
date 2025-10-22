@@ -4,8 +4,8 @@
   "description": "An immersive cultural experience combining audio guides with augmented reality and geolocation services",
   "private": true,
   "scripts": {
-    "build": "next build",
-    "dev": "next dev",
+    "build": "pnpm run copy-cesium-assets && next build",
+    "dev": "pnpm run copy-cesium-assets && next dev",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "format": "prettier --write .",

@@ -1,34 +1,26 @@
-import createTaskProcessorWorker from "./createTaskProcessorWorker.js";
-import defined from "../Core/defined.js";
+/**
+ * @license
+ * Cesium - https://github.com/CesiumGS/cesium
+ * Version 1.134.1
+ *
+ * Copyright 2011-2022 Cesium Contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Columbus View (Pat. Pend.)
+ *
+ * Portions licensed separately.
+ * See https://github.com/CesiumGS/cesium/blob/main/LICENSE.md for full licensing details.
+ */
 
-import { initSync, radix_sort_gaussians_indexes } from "@cesium/wasm-splats";
-
-//load built wasm modules for sorting. Ensure we can load webassembly and we support SIMD.
-async function initWorker(parameters, transferableObjects) {
-  // Require and compile WebAssembly module, or use fallback if not supported
-  const wasmConfig = parameters.webAssemblyConfig;
-  if (defined(wasmConfig) && defined(wasmConfig.wasmBinary)) {
-    initSync({ module: wasmConfig.wasmBinary });
-    return true;
-  }
-}
-
-function generateGaussianSortWorker(parameters, transferableObjects) {
-  // Handle initialization
-  const wasmConfig = parameters.webAssemblyConfig;
-  if (defined(wasmConfig)) {
-    return initWorker(parameters, transferableObjects);
-  }
-
-  const { primitive, sortType } = parameters;
-
-  if (sortType === "Index") {
-    return radix_sort_gaussians_indexes(
-      primitive.positions,
-      primitive.modelView,
-      primitive.count,
-    );
-  }
-}
-
-export default createTaskProcessorWorker(generateGaussianSortWorker);
+import{b as t,c as f}from"./chunk-IH2J72GH.js";import{a as s}from"./chunk-ZR45J7LY.js";import{e as o}from"./chunk-NVZ5L4JK.js";async function m(i,e){let n=i.webAssemblyConfig;if(o(n)&&o(n.wasmBinary))return f({module:n.wasmBinary}),!0}function c(i,e){let n=i.webAssemblyConfig;if(o(n))return m(i,e);let{primitive:r,sortType:a}=i;if(a==="Index")return t(r.positions,r.modelView,r.count)}var y=s(c);export{y as default};
