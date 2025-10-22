@@ -179,3 +179,119 @@ export const getErrorMessage = (errorCode: number): string => {
 export const isGeolocationSupported = (): boolean => {
   return !!navigator.geolocation;
 };
+
+/**
+ * Compute an approximate east/north/up offset in meters from a reference
+ * coordinate (fromLat, fromLon, fromAlt) to a target coordinate
+ * (toLat, toLon, toAlt).
+ *
+ * This uses a local flat-earth approximation (Equirectangular / small-distance)
+ * which is suitable for distances up to a few kilometers and is lightweight for
+ * client-side AR placement. For higher accuracy over larger distances use a
+ * geodetic library (geodesy) or proj4.
+ */
+export interface MetersOffset {
+  east: number; // +east (meters)
+  north: number; // +north (meters)
+  up: number; // +up (meters)
+}
+
+export const computeOffsetMeters = (
+  fromLat: number,
+  fromLon: number,
+  toLat: number,
+  toLon: number,
+  fromAlt: number = 0,
+  toAlt: number = 0
+): MetersOffset => {
+  // WGS84 mean radius in meters (approx)
+  const R = 6378137;
+
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+
+  const dLat = toRad(toLat - fromLat);
+  const dLon = toRad(toLon - fromLon);
+
+  // Use the average latitude for longitude scaling
+  const meanLat = toRad((fromLat + toLat) / 2);
+
+  // North offset (meters)
+  const north = dLat * R;
+
+  // East offset (meters)
+  const east = dLon * R * Math.cos(meanLat);
+
+  const up = toAlt - fromAlt;
+
+  return {
+    east,
+    north,
+    up,
+  };
+};
+
+/**
+ * Convert the computed offset (east,north,up) into a simple right-handed
+ * Babylon-friendly coordinate triple. Babylon's typical forward direction is
+ * -Z (camera looks towards -Z in many default setups), so we map:
+ *   x = +east
+ *   y = +up
+ *   z = -north
+ *
+ * This function is intentionally simple and deterministic; callers may tweak
+ * axes if their scene uses a different convention.
+ */
+export const offsetToBabylonCoords = (offset: MetersOffset) => {
+  return {
+    x: offset.east,
+    y: offset.up,
+    z: -offset.north,
+  };
+};
+
+/**
+ * Promise wrapper around getCurrentPosition for async/await usage.
+ */
+export const getCurrentPositionAsync = (options?: PositionOptions): Promise<GeolocationPosition> => {
+  return new Promise((resolve, reject) => {
+    getCurrentPosition(
+      (pos) => resolve(pos),
+      (err) => reject(err),
+      options
+    );
+  });
+};
+
+/**
+ * Convert lat/lon directly to Babylon coordinates given the user's known
+ * location. This is useful when you already have both positions and don't
+ * need to request browser geolocation.
+ */
+export const convertLatLonToBabylonCoords = (
+  userLat: number,
+  userLon: number,
+  targetLat: number,
+  targetLon: number,
+  userAlt: number = 0,
+  targetAlt: number = 0
+) => {
+  const offset = computeOffsetMeters(userLat, userLon, targetLat, targetLon, userAlt, targetAlt);
+  return offsetToBabylonCoords(offset);
+};
+
+/**
+ * Compute Babylon coordinates for a target lat/lon by using the device's
+ * current geolocation. Returns a promise resolving to { x, y, z }.
+ */
+export const computeBabylonCoordsForTarget = async (
+  targetLat: number,
+  targetLon: number,
+  options?: PositionOptions
+): Promise<{ x: number; y: number; z: number }> => {
+  const pos = await getCurrentPositionAsync(options);
+  const userLat = pos.coords.latitude;
+  const userLon = pos.coords.longitude;
+  const userAlt = pos.coords.altitude ?? 0;
+  const babylon = convertLatLonToBabylonCoords(userLat, userLon, targetLat, targetLon, userAlt, 0);
+  return babylon;
+};

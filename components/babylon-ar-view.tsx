@@ -5,6 +5,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Camera, Square, Circle } from 'lucide-react';
 import { useT } from '@/lib/locale';
+import { getCurrentPosition } from '@/lib/geolocation';
+import { computeOffsetMeters, offsetToBabylonCoords } from '@/lib/geolocation';
 
 // Babylon.js imports
 import * as BABYLON from '@babylonjs/core';
@@ -357,10 +359,81 @@ export default function BabylonARView() {
 
     try {
       await xrRef.current.baseExperience.enterXRAsync('immersive-ar', 'local-floor');
+      // Auto-place model at the target coordinates when AR session starts
+      // (Düsseldorf coordinates are used for the prototype)
+      placeAtGeo(51.21177778, 6.21869444);
     } catch (e) {
       console.error('Failed to enter AR mode:', e);
       setError('Failed to enter AR mode');
     }
+  };
+
+  // Place a model at target geographic coordinates (lat, lon)
+  const placeAtGeo = (
+    targetLat: number,
+    targetLon: number
+  ) => {
+    // Single-target wrapper that uses placeManyAtGeo
+    placeManyAtGeo([{ lat: targetLat, lon: targetLon, useClone: false }]);
+  };
+
+  // Place multiple models at geographic coordinates. The first target will
+  // reuse the original model; subsequent targets will clone the original mesh
+  // if possible. This performs a single geolocation request.
+  const placeManyAtGeo = (targets: Array<{ lat: number; lon: number; useClone?: boolean; name?: string }>) => {
+    if (!modelRef.current) return;
+
+    getCurrentPosition(
+      pos => {
+        const userLat = pos.coords.latitude;
+        const userLon = pos.coords.longitude;
+        const userAlt = pos.coords.altitude ?? 0;
+
+        targets.forEach((t, index) => {
+          const offset = computeOffsetMeters(userLat, userLon, t.lat, t.lon, userAlt, 0);
+          const babylon = offsetToBabylonCoords(offset);
+          const x = babylon.x;
+          const y = babylon.y + modelBaseHeightRef.current;
+          const z = babylon.z;
+
+          if (index === 0 && !t.useClone) {
+            // Place original model at first target
+            modelRef.current!.position.set(x, y, z);
+            placedAutomatically.current = true;
+          } else {
+            // Try to clone the original model for additional anchors
+            try {
+              const base = modelRef.current!;
+              // Clone the mesh and its children if possible
+              const cloneName = t.name ?? `model_clone_${index}`;
+              const clone = (base.clone as any ? (base.clone as any)(cloneName) : null) as BABYLON.AbstractMesh | null;
+              if (clone) {
+                // If clone is a mesh, set its position
+                clone.position = new BABYLON.Vector3(x, y, z);
+              } else {
+                // Fallback: create a simple box at that location
+                const scene = sceneRef.current;
+                if (scene) {
+                  const fallback = BABYLON.MeshBuilder.CreateBox(`fallback_${cloneName}`, { size: 0.5 }, scene);
+                  fallback.position.set(x, y, z);
+                }
+              }
+            } catch (e) {
+              console.error('Failed to clone model for additional geo anchor:', e);
+              const scene = sceneRef.current;
+              if (scene) {
+                const fallback = BABYLON.MeshBuilder.CreateBox(`fallback_clone_${index}`, { size: 0.5 }, scene);
+                fallback.position.set(x, y, z);
+              }
+            }
+          }
+        });
+      },
+      err => {
+        console.error('Failed to get current position for GPS placement:', err);
+      },
+      { enableHighAccuracy: true, timeout: 20000 }
+    );
   };
 
   if (error) {
@@ -506,6 +579,51 @@ export default function BabylonARView() {
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+              </svg>
+            </Button>
+            <Button
+              className="w-12 h-12 p-0 font-medium border-2 border-white/30"
+              variant="default"
+              onClick={() => placeAtGeo(42.322488, 20.804218)}
+              title="Place at provided location"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7z" />
+              </svg>
+            </Button>
+            <Button
+              className="w-12 h-12 p-0 font-medium border-2 border-white/30"
+              variant="default"
+              onClick={async () => {
+                // Place the model at the provided Düsseldorf coordinates
+                const targetLat = 51.21177778; // 51°12'42.4"N
+                const targetLon = 6.21869444;  // 6°13'07.3"E
+
+                getCurrentPosition(
+                  pos => {
+                    const userLat = pos.coords.latitude;
+                    const userLon = pos.coords.longitude;
+                    const userAlt = pos.coords.altitude ?? 0;
+
+                    const offset = computeOffsetMeters(userLat, userLon, targetLat, targetLon, userAlt, 0);
+                    const babylon = offsetToBabylonCoords(offset);
+
+                    if (modelRef.current) {
+                      modelRef.current.position.set(babylon.x, babylon.y + modelBaseHeightRef.current, babylon.z);
+                      placedAutomatically.current = true;
+                    }
+                  },
+                  err => {
+                    console.error('Failed to get current position for GPS placement:', err);
+                    alert('Unable to get current location. Make sure location is enabled.');
+                  },
+                  { enableHighAccuracy: true, timeout: 20000 }
+                );
+              }}
+              title="Place at Düsseldorf"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v4m6.364 1.636l-2.828 2.828M20 12h-4M6.464 4.636L9.293 7.464M4 12h4m-.586 5.364l2.828-2.828M18 18l-2.828-2.828M12 20v-4" />
               </svg>
             </Button>
           </div>
