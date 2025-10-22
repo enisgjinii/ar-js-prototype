@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import AudioGuideView from '@/components/audio-guide-view';
-import ARView from '@/components/ar-view';
 import BabylonARView from '@/components/babylon-ar-view';
 import Navigation from '@/components/navigation';
 import LocationTest from '@/components/location-test';
 import { Button } from '@/components/ui/button';
-import { Sun, Moon, Info, Cpu } from 'lucide-react';
+import { Sun, Moon, Info } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useT, useLocale } from '@/lib/locale';
 import { Spinner } from '@/components/ui/spinner';
@@ -28,7 +27,6 @@ export default function Home() {
   const [activeView, setActiveView] = useState<'audio' | 'ar' | 'location'>(
     'audio'
   );
-  const [arEngine, setArEngine] = useState<'aframe' | 'babylon'>('aframe');
   const { theme, setTheme } = useTheme();
   const { locale, setLocale } = useLocale();
   const [mounted, setMounted] = useState(false);
@@ -58,7 +56,7 @@ export default function Home() {
       {activeView === 'audio' ? (
         <AudioGuideView />
       ) : activeView === 'ar' ? (
-        arEngine === 'aframe' ? <ARView /> : <BabylonARView />
+        <BabylonARView />
       ) : (
         <div className="flex items-center justify-center min-h-screen p-4 sm:p-6 md:p-8">
           <div className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl">
@@ -91,20 +89,6 @@ export default function Home() {
           </button>
         )}
 
-        {/* AR Engine Toggle */}
-        {activeView === 'ar' && (
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setArEngine(engine => engine === 'aframe' ? 'babylon' : 'aframe')}
-            className="bg-background/80 backdrop-blur-sm border border-border"
-            title={`Switch to ${arEngine === 'aframe' ? 'Babylon.js' : 'A-Frame'} AR engine`}
-          >
-            <Cpu className="h-4 w-4" />
-            <span className="sr-only">Toggle AR Engine</span>
-          </Button>
-        )}
-
         {/* AR Info Tooltip */}
         <Popover>
           <PopoverTrigger asChild>
@@ -123,11 +107,6 @@ export default function Home() {
               <p className="text-sm text-muted-foreground">
                 {t('audio.readyForARText')}
               </p>
-              {activeView === 'ar' && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  Current engine: {arEngine === 'aframe' ? 'A-Frame' : 'Babylon.js'}
-                </p>
-              )}
             </div>
           </PopoverContent>
         </Popover>

@@ -8,19 +8,16 @@ import { useT } from '@/lib/locale';
 
 // Babylon.js imports
 import * as BABYLON from '@babylonjs/core';
+import '@babylonjs/loaders/glTF';
 import '@babylonjs/loaders';
 import '@babylonjs/materials';
-
-// Target coordinates: 51°12'42.4"N 6°13'07.3"E (Düsseldorf)
-const TARGET_LAT = 51.211778;
-const TARGET_LON = 6.218694;
 
 export default function BabylonARView() {
   const t = useT();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sceneRef = useRef<BABYLON.Scene | null>(null);
   const engineRef = useRef<BABYLON.Engine | null>(null);
-  const modelRef = useRef<BABYLON.Mesh | null>(null);
+  const modelRef = useRef<BABYLON.AbstractMesh | null>(null);
   const xrRef = useRef<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,14 +70,36 @@ export default function BabylonARView() {
         groundMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
         ground.material = groundMaterial;
 
-        // Create a test model (box) instead of loading external model for now
-        const model = BABYLON.MeshBuilder.CreateBox("model", { size: 0.5 }, scene);
-        const modelMaterial = new BABYLON.StandardMaterial("modelMaterial", scene);
-        modelMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.4, 0.8);
-        model.material = modelMaterial;
-        
-        model.position.y = 1;
-        modelRef.current = model;
+        // Load the Duck.glb model
+        try {
+          const result = await BABYLON.SceneLoader.ImportMeshAsync(
+            "",
+            "/models/",
+            "Duck.glb",
+            scene
+          );
+          
+          // Get the root mesh of the loaded model
+          const model = result.meshes[0];
+          modelRef.current = model;
+          
+          // Scale the model to a reasonable size
+          model.scaling.scaleInPlace(0.5);
+          
+          // Position the model above the ground
+          model.position.y = 1;
+          
+          console.log("Model loaded successfully");
+        } catch (loadModelError) {
+          console.error("Failed to load model:", loadModelError);
+          // Create a simple box as fallback
+          const model = BABYLON.MeshBuilder.CreateBox("model", { size: 0.5 }, scene);
+          const modelMaterial = new BABYLON.StandardMaterial("modelMaterial", scene);
+          modelMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.4, 0.8);
+          model.material = modelMaterial;
+          model.position.y = 1;
+          modelRef.current = model;
+        }
 
         // Initialize WebXR
         try {
