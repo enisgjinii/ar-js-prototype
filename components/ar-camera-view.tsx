@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/lib/locale';
-import { Loader2, RotateCw, HelpCircle } from 'lucide-react';
+import { Loader2, RotateCw, HelpCircle, Camera, Scan, AlertCircle, CheckCircle } from 'lucide-react';
 import ARHelpModal from '@/components/ar-help-modal';
 
 declare global {
@@ -24,22 +24,43 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
   const [error, setError] = useState<string | null>(null);
   const [isARReady, setIsARReady] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [arMode, setArMode] = useState<'marker' | 'experimental'>('marker');
+  const [cameraActive, setCameraActive] = useState(false);
+  const [markerDetected, setMarkerDetected] = useState(false);
+  const [attemptCount, setAttemptCount] = useState(0);
+  const [deviceType, setDeviceType] = useState<'mobile' | 'desktop'>('mobile');
 
   useEffect(() => {
+    // Detect device type
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    setDeviceType(isMobile ? 'mobile' : 'desktop');
+    
     if (!sceneRef.current) return;
 
-    initializeARScene();
+    // Initialize AR scene after a short delay to ensure libraries are loaded
+    const initTimer = setTimeout(() => {
+      initializeARScene();
+    }, 500);
 
     return () => {
+      clearTimeout(initTimer);
       // Clean up AR.js scene
-      if (window.AFRAME && sceneRef.current) {
-        const scene = sceneRef.current.querySelector('a-scene');
-        if (scene) {
+      cleanupARScene();
+    };
+  }, [arMode, attemptCount]);
+
+  const cleanupARScene = () => {
+    if (window.AFRAME && sceneRef.current) {
+      const scene = sceneRef.current.querySelector('a-scene');
+      if (scene) {
+        try {
           scene.remove();
+        } catch (e) {
+          console.log('Error cleaning up scene:', e);
         }
       }
-    };
-  }, []);
+    }
+  };
 
   const initializeARScene = () => {
     if (!sceneRef.current) return;
@@ -50,279 +71,237 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
         createARScene();
         setIsARReady(true);
         setIsLoading(false);
+      } else if (attemptCount < 3) {
+        // Try again after a delay
+        setAttemptCount(prev => prev + 1);
+        setTimeout(() => {
+          initializeARScene();
+        }, 2000);
       } else {
-        // Fallback to basic camera implementation
-        createBasicCameraScene();
+        setError('AR libraries not loaded. Please refresh the page.');
+        setIsLoading(false);
       }
     } catch (err) {
       console.error('AR initialization error:', err);
-      // Fallback to basic camera implementation
-      createBasicCameraScene();
+      if (attemptCount < 3) {
+        setAttemptCount(prev => prev + 1);
+        setTimeout(() => {
+          initializeARScene();
+        }, 2000);
+      } else {
+        setError('Failed to initialize AR: ' + (err as Error).message);
+        setIsLoading(false);
+      }
     }
   };
 
   const createARScene = () => {
     if (!sceneRef.current) return;
 
+    // Clean up any existing scene
+    cleanupARScene();
+
     // Clear the container
     sceneRef.current.innerHTML = '';
 
     // Create A-Frame scene with AR.js
     const scene = document.createElement('a-scene');
-    scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: false;');
-    scene.setAttribute(
-      'renderer',
-      'logarithmicDepthBuffer: true; antialias: true;'
-    );
     scene.setAttribute('vr-mode-ui', 'enabled: false');
-
+    scene.setAttribute('renderer', 'logarithmicDepthBuffer: true; antialias: true;');
+    scene.setAttribute('loading-screen', 'enabled: false');
+    
+    // Mobile-specific optimizations
+    if (deviceType === 'mobile') {
+      scene.setAttribute('webxr', 'optionalFeatures: local-floor, bounded-floor; domOverlay: true');
+    }
+    
+    // Different configuration based on mode
+    if (arMode === 'marker') {
+      scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: true; detectionMode: mono_and_matrix; matrixCodeType: 3x3;');
+    } else {
+      scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: true; detectionMode: color_and_matrix;');
+    }
+    
     // Add a marker for Hiro pattern
     const marker = document.createElement('a-marker');
     marker.setAttribute('preset', 'hiro');
-
-    // Create a box as a sample 3D object
+    marker.setAttribute('type', 'pattern');
+    
+    // Create multiple 3D objects for better visualization
+    // Main box
     const box = document.createElement('a-box');
     box.setAttribute('position', '0 0.5 0');
-    box.setAttribute(
-      'material',
-      'color: #4F46E5; metalness: 0.8; roughness: 0.2'
-    );
-
+    box.setAttribute('material', 'color: #4F46E5; metalness: 0.8; roughness: 0.2');
+    box.setAttribute('scale', '0.5 0.5 0.5');
+    
     // Add animation
     const animation = document.createElement('a-animation');
     animation.setAttribute('attribute', 'rotation');
     animation.setAttribute('to', '0 360 0');
-    animation.setAttribute('dur', '2000');
+    animation.setAttribute('dur', '3000');
     animation.setAttribute('easing', 'linear');
     animation.setAttribute('repeat', 'indefinite');
     box.appendChild(animation);
-
+    
     // Add the box to the marker
     marker.appendChild(box);
-
+    
+    // Add a sphere
+    const sphere = document.createElement('a-sphere');
+    sphere.setAttribute('position', '0.8 0.8 0');
+    sphere.setAttribute('radius', '0.25');
+    sphere.setAttribute('color', '#10B981');
+    marker.appendChild(sphere);
+    
+    // Add a cylinder
+    const cylinder = document.createElement('a-cylinder');
+    cylinder.setAttribute('position', '-0.8 0.75 0');
+    cylinder.setAttribute('radius', '0.25');
+    cylinder.setAttribute('height', '0.5');
+    cylinder.setAttribute('color', '#F59E0B');
+    marker.appendChild(cylinder);
+    
     // Add a text element
     const text = document.createElement('a-text');
-    text.setAttribute('value', 'AR Object');
+    text.setAttribute('value', 'AR Demo');
     text.setAttribute('position', '0 1.5 0');
     text.setAttribute('align', 'center');
     text.setAttribute('color', '#ffffff');
     text.setAttribute('scale', '1.5 1.5 1.5');
     marker.appendChild(text);
-
+    
     // Add marker to scene
     scene.appendChild(marker);
-
+    
     // Add a camera entity
     const camera = document.createElement('a-entity');
     camera.setAttribute('camera', '');
     scene.appendChild(camera);
-
+    
     // Add scene to container
     sceneRef.current.appendChild(scene);
-
+    
     // Handle scene loaded event
     scene.addEventListener('loaded', () => {
+      console.log('AR scene loaded successfully');
       setIsLoading(false);
+      setCameraActive(true);
     });
-  };
-
-  const createBasicCameraScene = () => {
-    if (!sceneRef.current) return;
-
-    // Clear the container
-    sceneRef.current.innerHTML = '';
-
-    // Create a container for the camera feed
-    const videoContainer = document.createElement('div');
-    videoContainer.style.position = 'absolute';
-    videoContainer.style.top = '0';
-    videoContainer.style.left = '0';
-    videoContainer.style.width = '100%';
-    videoContainer.style.height = '100%';
-    videoContainer.style.overflow = 'hidden';
-    videoContainer.style.zIndex = '1';
-
-    // Create video element for camera feed
-    const video = document.createElement('video');
-    video.style.width = '100%';
-    video.style.height = '100%';
-    video.style.objectFit = 'cover';
-    video.autoplay = true;
-    video.playsInline = true;
-    video.muted = true;
-
-    videoContainer.appendChild(video);
-    sceneRef.current.appendChild(videoContainer);
-
-    // Create overlay for AR content
-    const overlay = document.createElement('div');
-    overlay.id = 'ar-overlay';
-    overlay.style.position = 'absolute';
-    overlay.style.top = '0';
-    overlay.style.left = '0';
-    overlay.style.width = '100%';
-    overlay.style.height = '100%';
-    overlay.style.zIndex = '2';
-    overlay.style.pointerEvents = 'none';
-
-    sceneRef.current.appendChild(overlay);
-
-    // Start camera
-    startCamera(video);
-  };
-
-  const startCamera = async (video: HTMLVideoElement) => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-      });
-      video.srcObject = stream;
-      setIsLoading(false);
-    } catch (err) {
-      setError('Camera access denied: ' + (err as Error).message);
-      setIsLoading(false);
-    }
-  };
-
-  const placeObject = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isARReady) return;
-
-    const overlay = document.getElementById('ar-overlay');
-    if (!overlay) return;
-
-    // Get click position relative to the overlay
-    const rect = overlay.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-    // Create a new object
-    const objectId = `ar-object-${Date.now()}`;
-
-    // Create the visual element
-    const objectElement = document.createElement('div');
-    objectElement.id = objectId;
-    objectElement.style.position = 'absolute';
-    objectElement.style.left = `${x}%`;
-    objectElement.style.top = `${y}%`;
-    objectElement.style.transform = 'translate(-50%, -50%)';
-    objectElement.style.width = '80px';
-    objectElement.style.height = '80px';
-    objectElement.style.pointerEvents = 'auto';
-    objectElement.style.zIndex = '3';
-
-    // Create the AR object
-    const arObject = document.createElement('div');
-    arObject.style.width = '100%';
-    arObject.style.height = '100%';
-    arObject.style.backgroundColor = 'rgba(79, 70, 229, 0.9)';
-    arObject.style.borderRadius = '8px';
-    arObject.style.boxShadow = '0 0 20px rgba(79, 70, 229, 0.7)';
-    arObject.style.display = 'flex';
-    arObject.style.alignItems = 'center';
-    arObject.style.justifyContent = 'center';
-    arObject.style.color = 'white';
-    arObject.style.fontWeight = 'bold';
-    arObject.style.fontSize = '12px';
-    arObject.style.textAlign = 'center';
-    arObject.textContent = 'AR Object';
-
-    // Add animation
-    arObject.style.animation = 'pulse 2s infinite';
-
-    // Add CSS for animation if not already added
-    if (!document.getElementById('ar-animations')) {
-      const style = document.createElement('style');
-      style.id = 'ar-animations';
-      style.textContent = `
-        @keyframes pulse {
-          0% { transform: scale(1); opacity: 0.9; }
-          50% { transform: scale(1.05); opacity: 1; }
-          100% { transform: scale(1); opacity: 0.9; }
-        }
-      `;
-      document.head.appendChild(style);
-    }
-
-    // Add remove button
-    const removeButton = document.createElement('button');
-    removeButton.textContent = '×';
-    removeButton.style.position = 'absolute';
-    removeButton.style.top = '-10px';
-    removeButton.style.right = '-10px';
-    removeButton.style.width = '24px';
-    removeButton.style.height = '24px';
-    removeButton.style.borderRadius = '50%';
-    removeButton.style.backgroundColor = '#ef4444';
-    removeButton.style.color = 'white';
-    removeButton.style.border = 'none';
-    removeButton.style.cursor = 'pointer';
-    removeButton.style.fontSize = '16px';
-    removeButton.style.fontWeight = 'bold';
-    removeButton.style.display = 'flex';
-    removeButton.style.alignItems = 'center';
-    removeButton.style.justifyContent = 'center';
-    removeButton.onclick = () => {
-      objectElement.remove();
-    };
-
-    objectElement.appendChild(arObject);
-    objectElement.appendChild(removeButton);
-    overlay.appendChild(objectElement);
+    
+    // Handle marker found event
+    marker.addEventListener('markerFound', () => {
+      console.log('Marker detected!');
+      setMarkerDetected(true);
+    });
+    
+    // Handle marker lost event
+    marker.addEventListener('markerLost', () => {
+      console.log('Marker lost');
+      setMarkerDetected(false);
+    });
+    
+    // Handle render start
+    scene.addEventListener('renderstart', () => {
+      console.log('AR render started');
+    });
+    
+    // Handle AR.js initialization error
+    scene.addEventListener('arjs-error', (event: any) => {
+      console.error('AR.js error:', event.detail.error);
+      setError(`AR.js error: ${event.detail.error}`);
+    });
   };
 
   const resetARSession = () => {
     setError(null);
+    setIsLoading(true);
+    setCameraActive(false);
+    setMarkerDetected(false);
+    setAttemptCount(0);
+    
+    // Clean up and reinitialize
+    cleanupARScene();
+    
+    // Reinitialize after a short delay
+    setTimeout(() => {
+      initializeARScene();
+    }, 500);
+  };
 
-    // Clear all placed objects
-    const overlay = document.getElementById('ar-overlay');
-    if (overlay) {
-      while (overlay.firstChild) {
-        overlay.removeChild(overlay.firstChild);
-      }
-    }
+  const toggleARMode = () => {
+    setArMode(arMode === 'marker' ? 'experimental' : 'marker');
+    setAttemptCount(0);
   };
 
   return (
     <div className="w-full h-screen relative bg-black">
       {/* AR Scene Container */}
-      <div ref={sceneRef} className="w-full h-full" onClick={placeObject} />
-
+      <div 
+        ref={sceneRef} 
+        className="w-full h-full"
+      />
+      
       {/* Loading indicator */}
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-20">
-          <div className="flex flex-col items-center gap-2">
-            <Loader2 className="h-8 w-8 animate-spin text-white" />
-            <p className="text-white">{t('ar.initializing')}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Error message */}
-      {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-20">
-          <div className="bg-red-500/90 text-white p-4 rounded-lg max-w-md text-center">
-            <p className="font-bold mb-2">AR Error</p>
-            <p className="mb-4 text-sm">{error}</p>
-            <div className="flex gap-2 justify-center">
-              <Button
-                onClick={() => window.location.reload()}
-                variant="secondary"
-                size="sm"
-              >
-                {t('ar.retry')}
-              </Button>
-              <Button onClick={resetARSession} variant="secondary" size="sm">
-                <RotateCw className="h-4 w-4 mr-1" />
-                Reset
-              </Button>
+          <div className="flex flex-col items-center gap-3 p-4 bg-background/80 rounded-lg max-w-xs">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="text-center">
+              <p className="text-foreground font-medium">{t('ar.initializing')}</p>
+              <p className="text-muted-foreground text-xs mt-1">
+                {cameraActive ? 'Detecting marker...' : 'Accessing camera...'}
+              </p>
+              <p className="text-muted-foreground text-xs mt-2">
+                Attempt {attemptCount + 1} of 3
+              </p>
+              {deviceType === 'mobile' && (
+                <p className="text-muted-foreground text-xs mt-1">
+                  Mobile optimized
+                </p>
+              )}
             </div>
           </div>
         </div>
       )}
-
+      
+      {/* Error message */}
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20 p-4">
+          <div className="bg-destructive/90 text-destructive-foreground p-4 rounded-lg max-w-md w-full">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-bold mb-1">AR Error</p>
+                <p className="text-sm mb-3">{error}</p>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={resetARSession}
+                    variant="secondary"
+                    size="sm"
+                    className="flex-1"
+                  >
+                    <RotateCw className="h-4 w-4 mr-1" />
+                    Retry
+                  </Button>
+                  <Button 
+                    onClick={() => setShowHelp(true)}
+                    variant="secondary"
+                    size="sm"
+                    className="flex-1"
+                  >
+                    <HelpCircle className="h-4 w-4 mr-1" />
+                    Help
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Back Button */}
       <div className="absolute top-4 left-4 z-10">
-        <Button
+        <Button 
           onClick={onBack}
           variant="secondary"
           className="bg-background/80 backdrop-blur-sm"
@@ -330,10 +309,10 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
           {t('common.back')}
         </Button>
       </div>
-
+      
       {/* Help Button */}
-      <div className="absolute top-4 right-4 z-10">
-        <Button
+      <div className="absolute top-4 right-4 z-10 flex gap-2">
+        <Button 
           onClick={() => setShowHelp(true)}
           variant="secondary"
           size="icon"
@@ -342,44 +321,62 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
           <HelpCircle className="h-5 w-5" />
         </Button>
       </div>
-
+      
       {/* AR Controls */}
-      <div className="absolute bottom-20 left-0 right-0 z-10 flex justify-center gap-4">
-        {isARReady ? (
-          <>
-            <Button
-              onClick={resetARSession}
-              variant="secondary"
-              className="bg-background/80 backdrop-blur-sm px-6 py-3 rounded-full shadow-lg"
-            >
-              <RotateCw className="h-4 w-4 mr-1" />
-              Clear Objects
-            </Button>
-          </>
-        ) : (
-          <Button
-            onClick={() => window.location.reload()}
-            variant="default"
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-full shadow-lg"
-          >
-            Retry AR Initialization
-          </Button>
-        )}
+      <div className="absolute bottom-20 left-0 right-0 z-10 flex justify-center gap-3 px-4">
+        <Button 
+          onClick={resetARSession}
+          variant="secondary"
+          className="bg-background/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg"
+        >
+          <RotateCw className="h-4 w-4" />
+        </Button>
+        <Button 
+          onClick={toggleARMode}
+          variant="secondary"
+          className="bg-background/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg"
+        >
+          <Camera className="h-4 w-4" />
+        </Button>
       </div>
-
-      {/* Instructions */}
-      <div className="absolute bottom-4 left-0 right-0 z-10 text-center">
-        <div className="inline-block bg-background/80 backdrop-blur-sm rounded-lg p-3 mx-auto">
-          <p className="text-sm text-foreground">
-            {isARReady
-              ? 'Point camera at a Hiro marker to see AR objects'
-              : 'AR.js is initializing...'}
+      
+      {/* Status Indicator */}
+      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
+        <div className="bg-background/80 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-1">
+          {markerDetected ? (
+            <CheckCircle className="h-3 w-3 text-green-500" />
+          ) : (
+            <div className="h-3 w-3 rounded-full bg-red-500"></div>
+          )}
+          <p className="text-xs text-foreground">
+            {isARReady ? 
+              (arMode === 'marker' ? 'Marker Mode' : 'Experimental Mode') : 
+              'Initializing...'}
           </p>
         </div>
       </div>
-
+      
+      {/* Instructions */}
+      <div className="absolute bottom-4 left-0 right-0 z-10 px-4">
+        <div className="bg-background/80 backdrop-blur-sm rounded-lg p-3 mx-auto max-w-md">
+          <p className="text-xs text-foreground text-center">
+            {isARReady 
+              ? (markerDetected 
+                  ? 'Marker detected! Move camera to reposition objects' 
+                  : deviceType === 'mobile'
+                    ? 'Point camera at Hiro marker. Hold device steady 1-2ft from marker'
+                    : 'Point camera at Hiro marker to see 3D objects') 
+              : deviceType === 'mobile'
+                ? 'Make sure you\'re using latest mobile browser with camera permissions'
+                : 'Make sure you\'re using the latest browser'}
+          </p>
+        </div>
+      </div>
+      
       {/* Help Modal */}
-      {showHelp && <ARHelpModal onClose={() => setShowHelp(false)} />}
+      {showHelp && (
+        <ARHelpModal onClose={() => setShowHelp(false)} />
+      )}
     </div>
   );
 }

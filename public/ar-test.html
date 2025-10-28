@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>AR.js Test</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.min.js"></script>
+    <style>
+      .arjs-loader {
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        background-color: rgba(0, 0, 0, 0.8);
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      
+      .arjs-loader div {
+        text-align: center;
+        font-size: 1.25em;
+        color: white;
+      }
+    </style>
+  </head>
+  <body style="margin: 0; overflow: hidden;">
+    <!-- Loading indicator -->
+    <div class="arjs-loader">
+      <div>
+        Loading AR experience...<br>
+        Please allow camera access<br>
+        Point at the Hiro marker
+      </div>
+    </div>
+
+    <!-- A-Frame AR Scene -->
+    <a-scene
+      vr-mode-ui="enabled: false"
+      arjs="sourceType: webcam; debugUIEnabled: true;"
+      renderer="logarithmicDepthBuffer: true;"
+    >
+      <!-- Define the Hiro marker -->
+      <a-marker preset="hiro" type="pattern">
+        <!-- Add 3D objects to the marker -->
+        <a-box 
+          position="0 0.5 0" 
+          material="color: #4F46E5; metalness: 0.8; roughness: 0.2"
+          scale="0.5 0.5 0.5"
+        >
+          <a-animation
+            attribute="rotation"
+            to="0 360 0"
+            dur="3000"
+            easing="linear"
+            repeat="indefinite"
+          ></a-animation>
+        </a-box>
+        
+        <a-sphere
+          position="0.8 0.8 0"
+          radius="0.25"
+          color="#10B981"
+        ></a-sphere>
+        
+        <a-cylinder
+          position="-0.8 0.75 0"
+          radius="0.25"
+          height="0.5"
+          color="#F59E0B"
+        ></a-cylinder>
+        
+        <a-text
+          value="AR.js Test"
+          position="0 1.5 0"
+          align="center"
+          color="#ffffff"
+          scale="1.5 1.5 1.5"
+        ></a-text>
+      </a-marker>
+      
+      <!-- Camera -->
+      <a-entity camera></a-entity>
+    </a-scene>
+    
+    <script>
+      // Hide loader when scene is loaded
+      document.querySelector('a-scene').addEventListener('loaded', function() {
+        document.querySelector('.arjs-loader').style.display = 'none';
+      });
+    </script>
+  </body>
+</html>
