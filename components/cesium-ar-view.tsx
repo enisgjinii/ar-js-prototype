@@ -20,7 +20,8 @@ declare global {
 }
 
 // Set Cesium Ion access token
-Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI1ZDRiNDE4NS1kYjNkLTQ4ZDEtYjg0My1kYTEyOTA2MzM2ZWUiLCJpZCI6MzUzMDA0LCJpYXQiOjE3NjExMzcyOTV9.kwXu-Zgpc_9XISKeHSK2zH5SZaXvUU33MFlhhpQyiTo';
+Cesium.Ion.defaultAccessToken =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI1ZDRiNDE4NS1kYjNkLTQ4ZDEtYjg0My1kYTEyOTA2MzM2ZWUiLCJpZCI6MzUzMDA0LCJpYXQiOjE3NjExMzcyOTV9.kwXu-Zgpc_9XISKeHSK2zH5SZaXvUU33MFlhhpQyiTo';
 
 interface ModelOption {
   text: string;
@@ -34,7 +35,7 @@ interface CesiumARViewProps {
 export default function CesiumARView({ onAudioPause }: CesiumARViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Cesium.Viewer | null>(null);
-  const [selectedModel, setSelectedModel] = useState<string>("2"); // Set default to Ground Vehicle (index 2)
+  const [selectedModel, setSelectedModel] = useState<string>('2'); // Set default to Ground Vehicle (index 2)
 
   useEffect(() => {
     // Configure Cesium to use the copied assets - only in browser environment
@@ -89,7 +90,7 @@ export default function CesiumARView({ onAudioPause }: CesiumARViewProps) {
     const position = Cesium.Cartesian3.fromDegrees(
       6.2186944,
       51.2117778,
-      height,
+      height
     );
     const heading = Cesium.Math.toRadians(135);
     const pitch = 0;
@@ -97,7 +98,7 @@ export default function CesiumARView({ onAudioPause }: CesiumARViewProps) {
     const hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
     const orientation = Cesium.Transforms.headingPitchRollQuaternion(
       position,
-      hpr,
+      hpr
     );
 
     const entity = viewer.entities.add({
@@ -115,33 +116,33 @@ export default function CesiumARView({ onAudioPause }: CesiumARViewProps) {
 
   const options: ModelOption[] = [
     {
-      text: "Aircraft",
+      text: 'Aircraft',
       onselect: function () {
-        createModel("/models/Cesium_Air.glb", 5000.0);
+        createModel('/models/Cesium_Air.glb', 5000.0);
       },
     },
     {
-      text: "Drone",
+      text: 'Drone',
       onselect: function () {
-        createModel("/models/CesiumDrone.glb", 150.0);
+        createModel('/models/CesiumDrone.glb', 150.0);
       },
     },
     {
-      text: "Ground Vehicle",
+      text: 'Ground Vehicle',
       onselect: function () {
-        createModel("/models/GroundVehicle.glb", 0);
+        createModel('/models/GroundVehicle.glb', 0);
       },
     },
     {
-      text: "Hot Air Balloon",
+      text: 'Hot Air Balloon',
       onselect: function () {
-        createModel("/models/CesiumBalloon.glb", 1000.0);
+        createModel('/models/CesiumBalloon.glb', 1000.0);
       },
     },
     {
-      text: "Skinned Character",
+      text: 'Skinned Character',
       onselect: function () {
-        createModel("/models/Cesium_Man.glb", 0);
+        createModel('/models/Cesium_Man.glb', 0);
       },
     },
   ];
@@ -156,12 +157,8 @@ export default function CesiumARView({ onAudioPause }: CesiumARViewProps) {
 
   return (
     <div className="w-full h-screen relative">
-      <div 
-        ref={containerRef} 
-        id="cesiumContainer" 
-        className="w-full h-full"
-      />
-      
+      <div ref={containerRef} id="cesiumContainer" className="w-full h-full" />
+
       {/* Toolbar UI */}
       <div className="absolute top-4 left-4 z-10 bg-background/80 backdrop-blur-sm rounded-lg shadow-lg p-3">
         <div className="flex flex-col space-y-2">

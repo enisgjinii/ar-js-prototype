@@ -1,12 +1,12 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Headphones, Globe } from 'lucide-react';
+import { Headphones, Globe, Camera } from 'lucide-react';
 import { useT } from '@/lib/locale';
 
 interface NavigationProps {
-  activeView: 'audio' | 'cesium';
-  onViewChange: (view: 'audio' | 'cesium') => void;
+  activeView: 'audio' | 'cesium' | 'ar';
+  onViewChange: (view: 'audio' | 'cesium' | 'ar') => void;
 }
 
 export default function Navigation({
@@ -14,8 +14,8 @@ export default function Navigation({
   onViewChange,
 }: NavigationProps) {
   const t = useT();
-  
-  const handleViewChange = (view: 'audio' | 'cesium') => {
+
+  const handleViewChange = (view: 'audio' | 'cesium' | 'ar') => {
     // Audio will continue playing in the background
     // Users can control it through the sidebar controls
     onViewChange(view);
@@ -42,6 +42,16 @@ export default function Navigation({
         >
           <Globe className="w-5 h-5 sm:w-6 sm:h-6" />
           <span className="font-medium truncate">{t('nav.ar')}</span>
+        </Button>
+
+        <Button
+          variant={activeView === 'ar' ? 'default' : 'ghost'}
+          size="lg"
+          onClick={() => handleViewChange('ar')}
+          className="flex-1 mx-1 gap-2 min-w-0 py-2 sm:py-3 sm:rounded-full"
+        >
+          <Camera className="w-5 h-5 sm:w-6 sm:h-6" />
+          <span className="font-medium truncate">{t('nav.cameraAR')}</span>
         </Button>
       </div>
     </nav>

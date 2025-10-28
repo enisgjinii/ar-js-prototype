@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - Multilingual support for English and German
 - Audio guide functionality with immersive cultural experience
 - Augmented reality view with 3D reconstructions
@@ -17,16 +18,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive documentation (README, CONTRIBUTING, CODE_OF_CONDUCT)
 
 ### Changed
+
 - Updated project name and description in package.json
 - Enhanced README with detailed project information
 - Improved internationalization implementation
 
 ### Fixed
+
 - Various bug fixes and performance improvements
 
 ## [0.1.0] - 2025-10-23
 
 ### Added
+
 - Initial project setup with Next.js 15
 - Integration with Babylon.js for AR experiences
 - Cesium/Resium for geospatial visualization

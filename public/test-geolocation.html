@@ -1,88 +1,107 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>Geolocation Error Handling Test</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .result { margin: 10px 0; padding: 10px; border-radius: 4px; }
-        .success { background-color: #d4edda; color: #155724; }
-        .error { background-color: #f8d7da; color: #721c24; }
-        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .result {
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 4px;
+      }
+      .success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .error {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      button {
+        padding: 10px 15px;
+        margin: 5px;
+        cursor: pointer;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Geolocation Error Handling Test</h1>
-    
+
     <div>
-        <button onclick="testUnknownError()">Test kCLErrorLocationUnknown</button>
-        <button onclick="testDeniedError()">Test kCLErrorDenied</button>
-        <button onclick="testNetworkError()">Test kCLErrorNetwork</button>
-        <button onclick="testFallback()">Test Fallback Message</button>
-        <button onclick="clearResults()">Clear Results</button>
+      <button onclick="testUnknownError()">Test kCLErrorLocationUnknown</button>
+      <button onclick="testDeniedError()">Test kCLErrorDenied</button>
+      <button onclick="testNetworkError()">Test kCLErrorNetwork</button>
+      <button onclick="testFallback()">Test Fallback Message</button>
+      <button onclick="clearResults()">Clear Results</button>
     </div>
-    
+
     <div id="results"></div>
 
     <script>
-        // Mock implementation of our getDetailedErrorMessage function
-        function getDetailedErrorMessage(errorCode, errorMessage) {
-            // Handle iOS CoreLocation specific errors
-            if (errorMessage.includes('kCLErrorLocationUnknown')) {
-                return 'Location services are temporarily unavailable. This can happen due to poor GPS signal, being indoors, or device calibration issues. Please try again in an open area or restart your device.';
-            }
-            
-            if (errorMessage.includes('kCLErrorDenied')) {
-                return 'Location access has been denied. Please enable location permissions for this app in your device settings.';
-            }
-            
-            if (errorMessage.includes('kCLErrorNetwork')) {
-                return 'Location services require network connectivity. Please check your internet connection and try again.';
-            }
-            
-            // Standard error messages
-            switch (errorCode) {
-                case 1: // PERMISSION_DENIED
-                    return 'Location access denied. Please enable location permissions in your browser settings.';
-                case 2: // POSITION_UNAVAILABLE
-                    return 'Location information is unavailable. Please check your device settings.';
-                case 3: // TIMEOUT
-                    return 'The request to get your location timed out. Please try again.';
-                default:
-                    return 'An unknown error occurred while retrieving your location.';
-            }
+      // Mock implementation of our getDetailedErrorMessage function
+      function getDetailedErrorMessage(errorCode, errorMessage) {
+        // Handle iOS CoreLocation specific errors
+        if (errorMessage.includes('kCLErrorLocationUnknown')) {
+          return 'Location services are temporarily unavailable. This can happen due to poor GPS signal, being indoors, or device calibration issues. Please try again in an open area or restart your device.';
         }
 
-        function addResult(message, isSuccess = true) {
-            const resultsDiv = document.getElementById('results');
-            const resultDiv = document.createElement('div');
-            resultDiv.className = `result ${isSuccess ? 'success' : 'error'}`;
-            resultDiv.textContent = message;
-            resultsDiv.appendChild(resultDiv);
+        if (errorMessage.includes('kCLErrorDenied')) {
+          return 'Location access has been denied. Please enable location permissions for this app in your device settings.';
         }
 
-        function testUnknownError() {
-            const result = getDetailedErrorMessage(2, 'kCLErrorLocationUnknown');
-            addResult(`kCLErrorLocationUnknown: ${result}`);
+        if (errorMessage.includes('kCLErrorNetwork')) {
+          return 'Location services require network connectivity. Please check your internet connection and try again.';
         }
 
-        function testDeniedError() {
-            const result = getDetailedErrorMessage(1, 'kCLErrorDenied');
-            addResult(`kCLErrorDenied: ${result}`);
+        // Standard error messages
+        switch (errorCode) {
+          case 1: // PERMISSION_DENIED
+            return 'Location access denied. Please enable location permissions in your browser settings.';
+          case 2: // POSITION_UNAVAILABLE
+            return 'Location information is unavailable. Please check your device settings.';
+          case 3: // TIMEOUT
+            return 'The request to get your location timed out. Please try again.';
+          default:
+            return 'An unknown error occurred while retrieving your location.';
         }
+      }
 
-        function testNetworkError() {
-            const result = getDetailedErrorMessage(2, 'kCLErrorNetwork');
-            addResult(`kCLErrorNetwork: ${result}`);
-        }
+      function addResult(message, isSuccess = true) {
+        const resultsDiv = document.getElementById('results');
+        const resultDiv = document.createElement('div');
+        resultDiv.className = `result ${isSuccess ? 'success' : 'error'}`;
+        resultDiv.textContent = message;
+        resultsDiv.appendChild(resultDiv);
+      }
 
-        function testFallback() {
-            const result = getDetailedErrorMessage(1, 'User denied Geolocation');
-            addResult(`Fallback error: ${result}`);
-        }
+      function testUnknownError() {
+        const result = getDetailedErrorMessage(2, 'kCLErrorLocationUnknown');
+        addResult(`kCLErrorLocationUnknown: ${result}`);
+      }
 
-        function clearResults() {
-            document.getElementById('results').innerHTML = '';
-        }
+      function testDeniedError() {
+        const result = getDetailedErrorMessage(1, 'kCLErrorDenied');
+        addResult(`kCLErrorDenied: ${result}`);
+      }
+
+      function testNetworkError() {
+        const result = getDetailedErrorMessage(2, 'kCLErrorNetwork');
+        addResult(`kCLErrorNetwork: ${result}`);
+      }
+
+      function testFallback() {
+        const result = getDetailedErrorMessage(1, 'User denied Geolocation');
+        addResult(`Fallback error: ${result}`);
+      }
+
+      function clearResults() {
+        document.getElementById('results').innerHTML = '';
+      }
     </script>
-</body>
+  </body>
 </html>

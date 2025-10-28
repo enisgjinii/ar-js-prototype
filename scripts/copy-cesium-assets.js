@@ -15,7 +15,15 @@ const candidates = [
   // direct node_modules path
   path.join(__dirname, '..', 'node_modules', 'cesium'),
   // pnpm structure
-  path.join(__dirname, '..', 'node_modules', '.pnpm', 'cesium@1.134.1', 'node_modules', 'cesium'),
+  path.join(
+    __dirname,
+    '..',
+    'node_modules',
+    '.pnpm',
+    'cesium@1.134.1',
+    'node_modules',
+    'cesium'
+  ),
   path.join(__dirname, '..', 'node_modules', '.pnpm', 'cesium@*'),
 ];
 
@@ -27,7 +35,12 @@ if (fs.existsSync(pnpmDir)) {
   const entries = fs.readdirSync(pnpmDir, { withFileTypes: true });
   for (const entry of entries) {
     if (entry.isDirectory() && entry.name.startsWith('cesium@')) {
-      const cesiumPath = path.join(pnpmDir, entry.name, 'node_modules', 'cesium');
+      const cesiumPath = path.join(
+        pnpmDir,
+        entry.name,
+        'node_modules',
+        'cesium'
+      );
       if (fs.existsSync(cesiumPath)) {
         // Check for Build/Cesium
         const buildPath = path.join(cesiumPath, 'Build', 'Cesium');
@@ -66,7 +79,9 @@ if (!found) {
 }
 
 if (!found) {
-  console.error('Could not find Cesium Build or Source directory. Make sure "cesium" is installed.');
+  console.error(
+    'Could not find Cesium Build or Source directory. Make sure "cesium" is installed.'
+  );
   process.exit(1);
 }
 
@@ -95,7 +110,9 @@ if (found.type === 'build') {
   // expects at runtime. This includes Assets (images/json), Widget images,
   // Workers, and ThirdParty shaders/fonts/etc. We'll mirror them into public/cesium
   // so paths like /cesium/Assets/... or /cesium/Workers/... resolve.
-  console.log(`Detected Source layout at ${found.path}. Copying runtime assets to ${dest} ...`);
+  console.log(
+    `Detected Source layout at ${found.path}. Copying runtime assets to ${dest} ...`
+  );
   const foldersToCopy = ['Assets', 'Widget', 'Workers', 'ThirdParty'];
   for (const name of foldersToCopy) {
     const s = path.join(found.path, name);
@@ -106,7 +123,11 @@ if (found.type === 'build') {
     }
   }
   // Copy top-level approximateTerrainHeights.json if present inside Assets
-  const approx = path.join(found.path, 'Assets', 'approximateTerrainHeights.json');
+  const approx = path.join(
+    found.path,
+    'Assets',
+    'approximateTerrainHeights.json'
+  );
   if (fs.existsSync(approx)) {
     copyDir(path.join(found.path, 'Assets'), path.join(dest, 'Assets'));
   }

@@ -22,7 +22,7 @@ export default function AudioGuideView({
   onPause,
   onStop,
   onPlay,
-  isPlaying = false
+  isPlaying = false,
 }: AudioGuideViewProps) {
   const t = useT();
 
@@ -33,7 +33,7 @@ export default function AudioGuideView({
       onPlay && onPlay();
     }
   };
-  
+
   const stopAudio = () => {
     onStop && onStop();
   };
@@ -56,7 +56,9 @@ export default function AudioGuideView({
               <Volume2 className="w-5 h-5 text-primary sm:w-6 sm:h-6" />
               <span className="text-lg sm:text-xl">{t('audio.cardTitle')}</span>
             </CardTitle>
-            <CardDescription className="text-sm sm:text-base">{t('audio.cardLocation')}</CardDescription>
+            <CardDescription className="text-sm sm:text-base">
+              {t('audio.cardLocation')}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
@@ -71,7 +73,9 @@ export default function AudioGuideView({
             </div>
 
             <div className="space-y-2">
-              <h3 className="font-semibold text-base sm:text-lg">{t('audio.overviewTitle')}</h3>
+              <h3 className="font-semibold text-base sm:text-lg">
+                {t('audio.overviewTitle')}
+              </h3>
               <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                 {t('audio.overviewText')}
               </p>
@@ -82,20 +86,31 @@ export default function AudioGuideView({
                 {isPlaying ? (
                   <>
                     <Pause className="w-5 h-5" />
-                    <span className="text-sm sm:text-base">{t('audio.pause')}</span>
+                    <span className="text-sm sm:text-base">
+                      {t('audio.pause')}
+                    </span>
                   </>
                 ) : (
                   <>
                     <Play className="w-5 h-5" />
-                    <span className="text-sm sm:text-base">{t('audio.play')}</span>
+                    <span className="text-sm sm:text-base">
+                      {t('audio.play')}
+                    </span>
                   </>
                 )}
               </Button>
-              
+
               {isPlaying && (
-                <Button onClick={stopAudio} variant="outline" size="lg" className="gap-2">
+                <Button
+                  onClick={stopAudio}
+                  variant="outline"
+                  size="lg"
+                  className="gap-2"
+                >
                   <Square className="w-5 h-5" />
-                  <span className="sr-only sm:not-sr-only text-sm sm:text-base">{t('common.stop')}</span>
+                  <span className="sr-only sm:not-sr-only text-sm sm:text-base">
+                    {t('common.stop')}
+                  </span>
                 </Button>
               )}
             </div>

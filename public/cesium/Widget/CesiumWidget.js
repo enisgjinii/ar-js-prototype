@@ -1,38 +1,38 @@
-import BoundingSphere from "../Core/BoundingSphere.js";
-import Cartesian3 from "../Core/Cartesian3.js";
-import Cartographic from "../Core/Cartographic.js";
-import Clock from "../Core/Clock.js";
-import Frozen from "../Core/Frozen.js";
-import defined from "../Core/defined.js";
-import destroyObject from "../Core/destroyObject.js";
-import DeveloperError from "../Core/DeveloperError.js";
-import Ellipsoid from "../Core/Ellipsoid.js";
-import Event from "../Core/Event.js";
-import EventHelper from "../Core/EventHelper.js";
-import FeatureDetection from "../Core/FeatureDetection.js";
-import formatError from "../Core/formatError.js";
-import HeadingPitchRange from "../Core/HeadingPitchRange.js";
-import Matrix4 from "../Core/Matrix4.js";
-import BoundingSphereState from "../DataSources/BoundingSphereState.js";
-import DataSourceCollection from "../DataSources/DataSourceCollection.js";
-import DataSourceDisplay from "../DataSources/DataSourceDisplay.js";
-import EntityView from "../DataSources/EntityView.js";
-import getElement from "../DataSources/getElement.js";
-import Property from "../DataSources/Property.js";
-import Cesium3DTileset from "../Scene/Cesium3DTileset.js";
-import computeFlyToLocationForRectangle from "../Scene/computeFlyToLocationForRectangle.js";
-import Globe from "../Scene/Globe.js";
-import ImageryLayer from "../Scene/ImageryLayer.js";
-import Moon from "../Scene/Moon.js";
-import Scene from "../Scene/Scene.js";
-import SceneMode from "../Scene/SceneMode.js";
-import ScreenSpaceEventHandler from "../Core/ScreenSpaceEventHandler.js";
-import ShadowMode from "../Scene/ShadowMode.js";
-import SkyAtmosphere from "../Scene/SkyAtmosphere.js";
-import SkyBox from "../Scene/SkyBox.js";
-import Sun from "../Scene/Sun.js";
-import TimeDynamicPointCloud from "../Scene/TimeDynamicPointCloud.js";
-import VoxelPrimitive from "../Scene/VoxelPrimitive.js";
+import BoundingSphere from '../Core/BoundingSphere.js';
+import Cartesian3 from '../Core/Cartesian3.js';
+import Cartographic from '../Core/Cartographic.js';
+import Clock from '../Core/Clock.js';
+import Frozen from '../Core/Frozen.js';
+import defined from '../Core/defined.js';
+import destroyObject from '../Core/destroyObject.js';
+import DeveloperError from '../Core/DeveloperError.js';
+import Ellipsoid from '../Core/Ellipsoid.js';
+import Event from '../Core/Event.js';
+import EventHelper from '../Core/EventHelper.js';
+import FeatureDetection from '../Core/FeatureDetection.js';
+import formatError from '../Core/formatError.js';
+import HeadingPitchRange from '../Core/HeadingPitchRange.js';
+import Matrix4 from '../Core/Matrix4.js';
+import BoundingSphereState from '../DataSources/BoundingSphereState.js';
+import DataSourceCollection from '../DataSources/DataSourceCollection.js';
+import DataSourceDisplay from '../DataSources/DataSourceDisplay.js';
+import EntityView from '../DataSources/EntityView.js';
+import getElement from '../DataSources/getElement.js';
+import Property from '../DataSources/Property.js';
+import Cesium3DTileset from '../Scene/Cesium3DTileset.js';
+import computeFlyToLocationForRectangle from '../Scene/computeFlyToLocationForRectangle.js';
+import Globe from '../Scene/Globe.js';
+import ImageryLayer from '../Scene/ImageryLayer.js';
+import Moon from '../Scene/Moon.js';
+import Scene from '../Scene/Scene.js';
+import SceneMode from '../Scene/SceneMode.js';
+import ScreenSpaceEventHandler from '../Core/ScreenSpaceEventHandler.js';
+import ShadowMode from '../Scene/ShadowMode.js';
+import SkyAtmosphere from '../Scene/SkyAtmosphere.js';
+import SkyBox from '../Scene/SkyBox.js';
+import Sun from '../Scene/Sun.js';
+import TimeDynamicPointCloud from '../Scene/TimeDynamicPointCloud.js';
+import VoxelPrimitive from '../Scene/VoxelPrimitive.js';
 
 function trackDataSourceClock(clock, dataSource) {
   if (defined(dataSource)) {
@@ -75,7 +75,7 @@ function startRenderLoop(widget) {
         widget._renderLoopRunning = false;
         if (widget._showRenderLoopErrors) {
           const title =
-            "An error occurred while rendering.  Rendering has stopped.";
+            'An error occurred while rendering.  Rendering has stopped.';
           widget.showErrorPanel(title, undefined, error);
         }
       }
@@ -206,7 +206,7 @@ function configureCameraFrustum(widget) {
 function CesiumWidget(container, options) {
   //>>includeStart('debug', pragmas.debug);
   if (!defined(container)) {
-    throw new DeveloperError("container is required.");
+    throw new DeveloperError('container is required.');
   }
   //>>includeEnd('debug');
 
@@ -215,11 +215,11 @@ function CesiumWidget(container, options) {
   options = options ?? Frozen.EMPTY_OBJECT;
 
   //Configure the widget DOM elements
-  const element = document.createElement("div");
-  element.className = "cesium-widget";
+  const element = document.createElement('div');
+  element.className = 'cesium-widget';
   container.appendChild(element);
 
-  const canvas = document.createElement("canvas");
+  const canvas = document.createElement('canvas');
   const supportsImageRenderingPixelated =
     FeatureDetection.supportsImageRenderingPixelated();
   this._supportsImageRenderingPixelated = supportsImageRenderingPixelated;
@@ -252,14 +252,14 @@ function CesiumWidget(container, options) {
     options.blurActiveElementOnCanvasFocus ?? true;
 
   if (blurActiveElementOnCanvasFocus) {
-    canvas.addEventListener("mousedown", blurActiveElement);
-    canvas.addEventListener("pointerdown", blurActiveElement);
+    canvas.addEventListener('mousedown', blurActiveElement);
+    canvas.addEventListener('pointerdown', blurActiveElement);
   }
 
   element.appendChild(canvas);
 
-  const innerCreditContainer = document.createElement("div");
-  innerCreditContainer.className = "cesium-widget-credits";
+  const innerCreditContainer = document.createElement('div');
+  innerCreditContainer.className = 'cesium-widget-credits';
 
   const creditContainer = defined(options.creditContainer)
     ? getElement(options.creditContainer)
@@ -385,7 +385,7 @@ function CesiumWidget(container, options) {
       //>>includeStart('debug', pragmas.debug);
       if (defined(options.terrainProvider)) {
         throw new DeveloperError(
-          "Specify either options.terrainProvider or options.terrain.",
+          'Specify either options.terrainProvider or options.terrain.'
         );
       }
       //>>includeEnd('debug');
@@ -416,7 +416,7 @@ function CesiumWidget(container, options) {
       that._renderLoopRunning = false;
       if (that._showRenderLoopErrors) {
         const title =
-          "An error occurred while rendering.  Rendering has stopped.";
+          'An error occurred while rendering.  Rendering has stopped.';
         that.showErrorPanel(title, undefined, error);
       }
     };
@@ -449,19 +449,19 @@ function CesiumWidget(container, options) {
     eventHelper.add(
       scene.morphStart,
       CesiumWidget.prototype._clearTrackedObject,
-      this,
+      this
     );
 
     //Listen to data source events in order to track clock changes.
     eventHelper.add(
       dataSourceCollection.dataSourceAdded,
       CesiumWidget.prototype._onDataSourceAdded,
-      this,
+      this
     );
     eventHelper.add(
       dataSourceCollection.dataSourceRemoved,
       CesiumWidget.prototype._onDataSourceRemoved,
-      this,
+      this
     );
 
     eventHelper.add(scene.postRender, CesiumWidget.prototype._postRender, this);
@@ -479,16 +479,16 @@ function CesiumWidget(container, options) {
     eventHelper.add(
       dataSourceCollection.dataSourceAdded,
       CesiumWidget.prototype._dataSourceAdded,
-      this,
+      this
     );
     eventHelper.add(
       dataSourceCollection.dataSourceRemoved,
       CesiumWidget.prototype._dataSourceRemoved,
-      this,
+      this
     );
   } catch (error) {
     if (showRenderLoopErrors) {
-      const title = "Error constructing CesiumWidget.";
+      const title = 'Error constructing CesiumWidget.';
       const message =
         'Visit <a href="http://get.webgl.org">http://get.webgl.org</a> to verify that your web browser and hardware support WebGL.  Consider trying a different web browser or updating your video drivers.  Detailed error information is below:';
       this.showErrorPanel(title, message, error);
@@ -709,7 +709,7 @@ Object.defineProperties(CesiumWidget.prototype, {
       //>>includeStart('debug', pragmas.debug);
       if (value <= 0) {
         throw new DeveloperError(
-          "targetFrameRate must be greater than 0, or undefined.",
+          'targetFrameRate must be greater than 0, or undefined.'
         );
       }
       //>>includeEnd('debug');
@@ -764,7 +764,7 @@ Object.defineProperties(CesiumWidget.prototype, {
     set: function (value) {
       //>>includeStart('debug', pragmas.debug);
       if (value <= 0) {
-        throw new DeveloperError("resolutionScale must be greater than 0.");
+        throw new DeveloperError('resolutionScale must be greater than 0.');
       }
       //>>includeEnd('debug');
       if (this._resolutionScale !== value) {
@@ -909,44 +909,44 @@ Object.defineProperties(CesiumWidget.prototype, {
  */
 CesiumWidget.prototype.showErrorPanel = function (title, message, error) {
   const element = this._element;
-  const overlay = document.createElement("div");
-  overlay.className = "cesium-widget-errorPanel";
+  const overlay = document.createElement('div');
+  overlay.className = 'cesium-widget-errorPanel';
 
-  const content = document.createElement("div");
-  content.className = "cesium-widget-errorPanel-content";
+  const content = document.createElement('div');
+  content.className = 'cesium-widget-errorPanel-content';
   overlay.appendChild(content);
 
-  const errorHeader = document.createElement("div");
-  errorHeader.className = "cesium-widget-errorPanel-header";
+  const errorHeader = document.createElement('div');
+  errorHeader.className = 'cesium-widget-errorPanel-header';
   errorHeader.appendChild(document.createTextNode(title));
   content.appendChild(errorHeader);
 
-  const errorPanelScroller = document.createElement("div");
-  errorPanelScroller.className = "cesium-widget-errorPanel-scroll";
+  const errorPanelScroller = document.createElement('div');
+  errorPanelScroller.className = 'cesium-widget-errorPanel-scroll';
   content.appendChild(errorPanelScroller);
   function resizeCallback() {
     errorPanelScroller.style.maxHeight = `${Math.max(
       Math.round(element.clientHeight * 0.9 - 100),
-      30,
+      30
     )}px`;
   }
   resizeCallback();
   if (defined(window.addEventListener)) {
-    window.addEventListener("resize", resizeCallback, false);
+    window.addEventListener('resize', resizeCallback, false);
   }
 
   const hasMessage = defined(message);
   const hasError = defined(error);
 
   if (hasMessage || hasError) {
-    const errorMessage = document.createElement("div");
-    errorMessage.className = "cesium-widget-errorPanel-message";
+    const errorMessage = document.createElement('div');
+    errorMessage.className = 'cesium-widget-errorPanel-message';
     errorPanelScroller.appendChild(errorMessage);
 
     if (hasError) {
       let errorDetails = formatError(error);
       if (!hasMessage) {
-        if (typeof error === "string") {
+        if (typeof error === 'string') {
           error = new Error(error);
         }
 
@@ -958,25 +958,25 @@ CesiumWidget.prototype.showErrorPanel = function (title, message, error) {
       }
 
       //IE8 does not have a console object unless the dev tools are open.
-      if (typeof console !== "undefined") {
+      if (typeof console !== 'undefined') {
         console.error(`${title}\n${message}\n${errorDetails}`);
       }
 
-      const errorMessageDetails = document.createElement("div");
+      const errorMessageDetails = document.createElement('div');
       errorMessageDetails.className =
-        "cesium-widget-errorPanel-message-details collapsed";
+        'cesium-widget-errorPanel-message-details collapsed';
 
-      const moreDetails = document.createElement("span");
-      moreDetails.className = "cesium-widget-errorPanel-more-details";
-      moreDetails.appendChild(document.createTextNode("See more..."));
+      const moreDetails = document.createElement('span');
+      moreDetails.className = 'cesium-widget-errorPanel-more-details';
+      moreDetails.appendChild(document.createTextNode('See more...'));
       errorMessageDetails.appendChild(moreDetails);
 
       errorMessageDetails.onclick = function (e) {
         errorMessageDetails.removeChild(moreDetails);
         errorMessageDetails.appendChild(document.createTextNode(errorDetails));
         errorMessageDetails.className =
-          "cesium-widget-errorPanel-message-details";
-        content.className = "cesium-widget-errorPanel-content expanded";
+          'cesium-widget-errorPanel-message-details';
+        content.className = 'cesium-widget-errorPanel-content expanded';
         errorMessageDetails.onclick = undefined;
       };
 
@@ -986,17 +986,17 @@ CesiumWidget.prototype.showErrorPanel = function (title, message, error) {
     errorMessage.innerHTML = `<p>${message}</p>`;
   }
 
-  const buttonPanel = document.createElement("div");
-  buttonPanel.className = "cesium-widget-errorPanel-buttonPanel";
+  const buttonPanel = document.createElement('div');
+  buttonPanel.className = 'cesium-widget-errorPanel-buttonPanel';
   content.appendChild(buttonPanel);
 
-  const okButton = document.createElement("button");
-  okButton.setAttribute("type", "button");
-  okButton.className = "cesium-button";
-  okButton.appendChild(document.createTextNode("OK"));
+  const okButton = document.createElement('button');
+  okButton.setAttribute('type', 'button');
+  okButton.className = 'cesium-button';
+  okButton.appendChild(document.createTextNode('OK'));
   okButton.onclick = function () {
     if (defined(resizeCallback) && defined(window.removeEventListener)) {
-      window.removeEventListener("resize", resizeCallback, false);
+      window.removeEventListener('resize', resizeCallback, false);
     }
     element.removeChild(overlay);
   };
@@ -1086,12 +1086,12 @@ CesiumWidget.prototype.render = function () {
  */
 CesiumWidget.prototype._dataSourceAdded = function (
   dataSourceCollection,
-  dataSource,
+  dataSource
 ) {
   const entityCollection = dataSource.entities;
   entityCollection.collectionChanged.addEventListener(
     CesiumWidget.prototype._onEntityCollectionChanged,
-    this,
+    this
   );
 };
 
@@ -1100,12 +1100,12 @@ CesiumWidget.prototype._dataSourceAdded = function (
  */
 CesiumWidget.prototype._dataSourceRemoved = function (
   dataSourceCollection,
-  dataSource,
+  dataSource
 ) {
   const entityCollection = dataSource.entities;
   entityCollection.collectionChanged.removeEventListener(
     CesiumWidget.prototype._onEntityCollectionChanged,
-    this,
+    this
   );
 
   if (defined(this.trackedEntity)) {
@@ -1143,7 +1143,7 @@ CesiumWidget.prototype._onTick = function (clock) {
     const trackedState = this._dataSourceDisplay.getBoundingSphere(
       trackedEntity,
       false,
-      entityView.boundingSphere ?? boundingSphereScratch,
+      entityView.boundingSphere ?? boundingSphereScratch
     );
     if (trackedState === BoundingSphereState.DONE) {
       entityView.update(time);
@@ -1157,7 +1157,7 @@ CesiumWidget.prototype._onTick = function (clock) {
 CesiumWidget.prototype._onEntityCollectionChanged = function (
   collection,
   added,
-  removed,
+  removed
 ) {
   const length = removed.length;
   for (let i = 0; i < length; i++) {
@@ -1189,7 +1189,7 @@ CesiumWidget.prototype._onDataSourceChanged = function (dataSource) {
  */
 CesiumWidget.prototype._onDataSourceAdded = function (
   dataSourceCollection,
-  dataSource,
+  dataSource
 ) {
   if (this._automaticallyTrackDataSourceClocks) {
     this.clockTrackedDataSource = dataSource;
@@ -1198,7 +1198,7 @@ CesiumWidget.prototype._onDataSourceAdded = function (
   const removalFunc = this._eventHelper.add(
     dataSource.changedEvent,
     CesiumWidget.prototype._onDataSourceChanged,
-    this,
+    this
   );
   this._dataSourceChangedListeners[id] = removalFunc;
 };
@@ -1208,7 +1208,7 @@ CesiumWidget.prototype._onDataSourceAdded = function (
  */
 CesiumWidget.prototype._onDataSourceRemoved = function (
   dataSourceCollection,
-  dataSource,
+  dataSource
 ) {
   const resetClock = this.clockTrackedDataSource === dataSource;
   const id = dataSource.entities.id;
@@ -1218,7 +1218,7 @@ CesiumWidget.prototype._onDataSourceRemoved = function (
     const numDataSources = dataSourceCollection.length;
     if (this._automaticallyTrackDataSourceClocks && numDataSources > 0) {
       this.clockTrackedDataSource = dataSourceCollection.get(
-        numDataSources - 1,
+        numDataSources - 1
       );
     } else {
       this.clockTrackedDataSource = undefined;
@@ -1281,7 +1281,7 @@ CesiumWidget.prototype.flyTo = function (target, options) {
 function zoomToOrFly(that, zoomTarget, options, isFlight) {
   //>>includeStart('debug', pragmas.debug);
   if (!defined(zoomTarget)) {
-    throw new DeveloperError("zoomTarget is required.");
+    throw new DeveloperError('zoomTarget is required.');
   }
   //>>includeEnd('debug');
 
@@ -1291,7 +1291,7 @@ function zoomToOrFly(that, zoomTarget, options, isFlight) {
   //bounding spheres have been computed.  Therefore we create and return
   //a deferred which will be resolved as part of the post-render step in the
   //frame that actually performs the zoom.
-  const zoomPromise = new Promise((resolve) => {
+  const zoomPromise = new Promise(resolve => {
     that._completeZoom = function (value) {
       resolve(value);
     };
@@ -1313,7 +1313,7 @@ function zoomToOrFly(that, zoomTarget, options, isFlight) {
       if (defined(zoomTarget.imageryProvider)) {
         rectanglePromise = Promise.resolve(zoomTarget.getImageryRectangle());
       } else {
-        rectanglePromise = new Promise((resolve) => {
+        rectanglePromise = new Promise(resolve => {
           const removeListener = zoomTarget.readyEvent.addEventListener(() => {
             removeListener();
             resolve(zoomTarget.getImageryRectangle());
@@ -1422,7 +1422,7 @@ function updateZoomTarget(widget) {
       zoomOptions.offset = new HeadingPitchRange(
         0.0,
         -0.5,
-        boundingSphere.radius,
+        boundingSphere.radius
       );
     }
 
@@ -1462,7 +1462,7 @@ function updateZoomTarget(widget) {
       function (timeDynamicPointCloud) {
         zoomToBoundingSphere(timeDynamicPointCloud.boundingSphere);
         removeEventListener();
-      },
+      }
     );
     return;
   }
@@ -1503,14 +1503,14 @@ function updateZoomTarget(widget) {
     const state = widget._dataSourceDisplay.getBoundingSphere(
       entities[i],
       false,
-      zoomTargetBoundingSphereScratch,
+      zoomTargetBoundingSphereScratch
     );
 
     if (state === BoundingSphereState.PENDING) {
       return;
     } else if (state !== BoundingSphereState.FAILED) {
       boundingSpheres.push(
-        BoundingSphere.clone(zoomTargetBoundingSphereScratch),
+        BoundingSphere.clone(zoomTargetBoundingSphereScratch)
       );
     }
   }
@@ -1561,7 +1561,7 @@ function updateTrackedEntity(widget) {
   //computed. In this case, we will track the entity once it comes back into existence.
   const currentPosition = Property.getValueOrUndefined(
     trackedEntity.position,
-    currentTime,
+    currentTime
   );
 
   if (!defined(currentPosition)) {
@@ -1573,7 +1573,7 @@ function updateTrackedEntity(widget) {
   const state = widget._dataSourceDisplay.getBoundingSphere(
     trackedEntity,
     false,
-    trackedEntityBoundingSphereScratch,
+    trackedEntityBoundingSphereScratch
   );
   if (state === BoundingSphereState.PENDING) {
     return;

@@ -47,6 +47,7 @@ footer (optional)
 ```
 
 Types:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
@@ -57,6 +58,7 @@ Types:
 - `chore`: Maintenance tasks
 
 Example:
+
 ```
 feat(audio): add playback speed control
 
@@ -162,30 +164,37 @@ Description of testing procedures.
 
 ```markdown
 ## Description
+
 Clear and concise description of the bug.
 
 ## Steps to Reproduce
+
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
 4. See error
 
 ## Expected Behavior
+
 Description of what you expected to happen.
 
 ## Actual Behavior
+
 Description of what actually happened.
 
 ## Screenshots
+
 If applicable, add screenshots to help explain your problem.
 
 ## Environment
+
 - OS: [e.g. iOS, Windows]
 - Browser [e.g. chrome, safari]
 - Version [e.g. 22]
 - Device: [e.g. iPhone6, desktop]
 
 ## Additional Context
+
 Add any other context about the problem here.
 ```
 
@@ -193,15 +202,19 @@ Add any other context about the problem here.
 
 ```markdown
 ## Problem Statement
+
 Clear description of the problem this feature would solve.
 
 ## Proposed Solution
+
 Description of what you want to happen.
 
 ## Alternatives Considered
+
 Description of any alternative solutions or features you've considered.
 
 ## Additional Context
+
 Add any other context or screenshots about the feature request here.
 ```
 

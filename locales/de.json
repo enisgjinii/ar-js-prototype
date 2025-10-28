@@ -1,14 +1,16 @@
 {
   "nav": {
     "audio": "Audioguide",
-    "ar": "AR-Ansicht"
+    "ar": "AR-Ansicht",
+    "cameraAR": "Kamera AR"
   },
   "common": {
     "loading": "Laden...",
     "backToApp": "Zurück zur App",
     "toggleTheme": "Design wechseln",
     "stop": "Stopp",
-    "reset": "Zurücksetzen"
+    "reset": "Zurücksetzen",
+    "back": "Zurück"
   },
   "settings": {
     "themeLabel": "Design",
@@ -33,5 +35,8 @@
     "pause": "Audio pausieren",
     "sampleContent": "Beispielinhalt des Audioguides",
     "audioFallback": "Dein Browser unterstützt das Audio-Element nicht."
+  },
+  "ar": {
+    "pointAtSurface": "Tippen Sie auf den Bildschirm, um AR-Objekte zu platzieren"
   }
 }

@@ -1,6 +1,7 @@
 # Cesium AR Implementation
 
 ## Overview
+
 This document describes the implementation of the Cesium-based AR view component for the AR.js prototype project. The implementation follows the exact structure and functionality requested, providing a 3D globe-based AR experience with model placement capabilities.
 
 ## Component Structure
@@ -35,23 +36,27 @@ The component implements:
 ## Key Features
 
 ### 1. Cesium Integration
+
 - Uses the official Cesium library for 3D globe visualization
 - Properly configured Ion access token for accessing Cesium services
 - Correct CSS import for Cesium widgets
 - Proper asset configuration to avoid 404 errors
 
 ### 2. Model Placement
+
 - Models placed at fixed coordinates (-123.0744619, 44.0503706)
 - Proper orientation using HeadingPitchRoll
 - Configurable altitude for different model types
 - Entity tracking for automatic camera following
 
 ### 3. UI Components
+
 - Clean, modern interface with backdrop blur effect
 - Responsive design that works on mobile and desktop
 - Intuitive model selection dropdown
 
 ### 4. Performance Considerations
+
 - Proper cleanup of Cesium viewer on component unmount
 - Efficient entity management (removing all before adding new)
 - Optimized rendering settings
@@ -59,6 +64,7 @@ The component implements:
 ## Asset Management
 
 ### Cesium Asset Copying
+
 To ensure Cesium can load all required assets (images, workers, JSON files), we've implemented a script that copies the necessary files from the Cesium package to the public directory:
 
 1. **Script**: [/scripts/copy-cesium-assets.js](file:///Users/enisgjini/Desktop/ar-js-prototype/scripts/copy-cesium-assets.js)
@@ -66,7 +72,9 @@ To ensure Cesium can load all required assets (images, workers, JSON files), we'
 3. **Integration**: The script is automatically run during `pnpm dev` and `pnpm build`
 
 ### Asset Configuration
+
 The Cesium component is configured to use the copied assets:
+
 ```typescript
 window.CESIUM_BASE_URL = '/cesium';
 ```
@@ -84,6 +92,7 @@ To use the Cesium AR view:
 ## Customization
 
 ### Adding New Models
+
 To add new models, simply extend the `options` array:
 
 ```typescript
@@ -139,3 +148,4 @@ The implementation relies on the following Cesium features:
 - Verify Cesium Ion access token is valid
 - Check network tab for failed model loading requests
 - Ensure CESIUM_BASE_URL is correctly set
+```
