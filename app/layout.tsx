@@ -53,8 +53,9 @@ export default function RootLayout({
           src="https://aframe.io/releases/1.4.0/aframe.min.js"
           strategy="beforeInteractive"
         />
+        {/* Primary AR.js source - using a more reliable CDN */}
         <Script
-          src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.min.js"
+          src="https://cdn.jsdelivr.net/npm/ar.js@3.4.0/aframe/build/aframe-ar.min.js"
           strategy="beforeInteractive"
         />
       </head>
