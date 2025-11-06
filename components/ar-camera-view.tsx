@@ -143,97 +143,134 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
       setIsARReady(true);
       setIsLoading(false);
 
+      // Add a test sphere 1 meter in front of camera to verify 3D rendering works
+      const testSphere = MeshBuilder.CreateSphere('testSphere', {
+        diameter: 0.1,
+        segments: 16
+      }, scene);
+      testSphere.position = new Vector3(0, 0, -1);
+      const testMat = new StandardMaterial('testMat', scene);
+      testMat.diffuseColor = new Color3(1, 0, 0);
+      testMat.emissiveColor = new Color3(1, 0, 0);
+      testSphere.material = testMat;
+      console.log('Test sphere created at:', testSphere.position);
+
       // --- WebXR Hit Test Feature ---
       try {
         const WebXRHitTest = (BABYLON as any).WebXRHitTest;
-        const hitTest = fm.enableFeature(WebXRHitTest, 'latest', {
-          entityTypes: ['plane', 'point', 'mesh'],
-          offsetRay: { x: 0, y: 0, z: 0 },
-          useReferenceSpace: true
-        });
+        if (!WebXRHitTest) {
+          console.warn('WebXRHitTest not available in Babylon.js');
+        } else {
+          const hitTest = fm.enableFeature(WebXRHitTest, 'latest');
+          console.log('Hit test feature enabled:', hitTest);
 
-        // Create placement reticle
-        const reticle = MeshBuilder.CreateTorus('reticle', {
-          diameter: 0.3,
-          thickness: 0.02,
-          tessellation: 32
-        }, scene);
-
-        const reticleMat = new StandardMaterial('reticleMat', scene);
-        reticleMat.diffuseColor = new Color3(0.2, 0.8, 1);
-        reticleMat.emissiveColor = new Color3(0.2, 0.8, 1);
-        reticleMat.alpha = 0.8;
-        reticle.material = reticleMat;
-        reticle.isVisible = false;
-
-        let lastHitPose: { position: any; rotationQuaternion: any } | null = null;
-
-        hitTest.onHitTestResultObservable.add((results: any[]) => {
-          if (!results || results.length === 0) {
-            reticle.isVisible = false;
-            lastHitPose = null;
-            setPlanesDetected(false);
-            return;
-          }
-
-          const hit = results[0];
-          const transformMatrix = hit.transformationMatrix;
-
-          if (transformMatrix) {
-            const matrix = (BABYLON as any).Matrix.FromArray(transformMatrix);
-            const position = new Vector3();
-            const rotation = new (BABYLON as any).Quaternion();
-            const scale = new Vector3();
-
-            matrix.decompose(scale, rotation, position);
-
-            reticle.position.copyFrom(position);
-            reticle.rotationQuaternion = rotation;
-            reticle.isVisible = true;
-            lastHitPose = { position: position.clone(), rotationQuaternion: rotation.clone() };
-            setPlanesDetected(true);
-          }
-        });
-
-        // Place object on tap
-        const onTap = () => {
-          if (!lastHitPose) return;
-
-          // Create a 3D model at the hit location
-          const box = MeshBuilder.CreateBox('placedBox-' + Date.now(), {
-            size: 0.15
+          // Create a more visible placement reticle
+          const reticle = MeshBuilder.CreateTorus('reticle', {
+            diameter: 0.15,
+            thickness: 0.015,
+            tessellation: 32
           }, scene);
 
-          box.position = lastHitPose.position.clone();
-          box.position.y += 0.075; // Lift slightly above surface
-          box.rotationQuaternion = lastHitPose.rotationQuaternion.clone();
+          const reticleMat = new StandardMaterial('reticleMat', scene);
+          reticleMat.diffuseColor = new Color3(0, 1, 0);
+          reticleMat.emissiveColor = new Color3(0, 1, 0);
+          reticleMat.alpha = 0.9;
+          reticleMat.disableLighting = true;
+          reticle.material = reticleMat;
+          reticle.isVisible = false;
 
-          const boxMat = new PBRMaterial('boxMat', scene);
-          boxMat.albedoColor = new Color3(
-            Math.random(),
-            Math.random(),
-            Math.random()
-          );
-          boxMat.metallic = 0.2;
-          boxMat.roughness = 0.3;
-          box.material = boxMat;
+          let lastHitPose: { position: any; rotationQuaternion: any } | null = null;
 
-          // Add simple animation
-          let time = 0;
-          scene.registerBeforeRender(() => {
-            if (box && !box.isDisposed()) {
-              time += 0.02;
-              box.rotation.y = time;
+          hitTest.onHitTestResultObservable.add((results: any[]) => {
+            console.log('Hit test results:', results?.length || 0);
+
+            if (!results || results.length === 0) {
+              reticle.isVisible = false;
+              lastHitPose = null;
+              setPlanesDetected(false);
+              return;
+            }
+
+            const hit = results[0];
+            const transformMatrix = hit.transformationMatrix;
+
+            if (transformMatrix) {
+              try {
+                const matrix = (BABYLON as any).Matrix.FromArray(transformMatrix);
+                const position = new Vector3();
+                const rotation = new (BABYLON as any).Quaternion();
+                const scale = new Vector3();
+
+                matrix.decompose(scale, rotation, position);
+
+                reticle.position.copyFrom(position);
+                reticle.rotationQuaternion = rotation;
+                reticle.isVisible = true;
+                lastHitPose = { position: position.clone(), rotationQuaternion: rotation.clone() };
+                setPlanesDetected(true);
+                console.log('Reticle positioned at:', position);
+              } catch (err) {
+                console.error('Error processing hit test:', err);
+              }
             }
           });
-        };
 
-        canvas.addEventListener('click', onTap);
-        (xrRef.current as any)._reticle = reticle;
-        (xrRef.current as any)._hitTest = hitTest;
-        (xrRef.current as any)._onTap = onTap;
+          // Place object on tap
+          const onTap = (event: any) => {
+            console.log('Tap detected, lastHitPose:', lastHitPose);
+
+            if (!lastHitPose) {
+              console.warn('No hit pose available for placement');
+              return;
+            }
+
+            // Create a colorful sphere at the hit location
+            const sphere = MeshBuilder.CreateSphere('placedSphere-' + Date.now(), {
+              diameter: 0.1,
+              segments: 16
+            }, scene);
+
+            sphere.position = lastHitPose.position.clone();
+            sphere.position.y += 0.05; // Lift slightly above surface
+
+            if (lastHitPose.rotationQuaternion) {
+              sphere.rotationQuaternion = lastHitPose.rotationQuaternion.clone();
+            }
+
+            const sphereMat = new StandardMaterial('sphereMat-' + Date.now(), scene);
+            sphereMat.diffuseColor = new Color3(
+              Math.random(),
+              Math.random(),
+              Math.random()
+            );
+            sphereMat.emissiveColor = sphereMat.diffuseColor.scale(0.3);
+            sphere.material = sphereMat;
+
+            console.log('Sphere placed at:', sphere.position);
+
+            // Add bounce animation
+            let time = 0;
+            const animationId = scene.registerBeforeRender(() => {
+              if (sphere && !sphere.isDisposed()) {
+                time += 0.05;
+                sphere.position.y = lastHitPose!.position.y + 0.05 + Math.abs(Math.sin(time)) * 0.05;
+                sphere.rotation.y = time;
+              }
+            });
+
+            // Store animation ID for cleanup
+            (sphere as any)._animationId = animationId;
+          };
+
+          canvas.addEventListener('click', onTap);
+          (xrRef.current as any)._reticle = reticle;
+          (xrRef.current as any)._hitTest = hitTest;
+          (xrRef.current as any)._onTap = onTap;
+
+          console.log('Hit test setup complete');
+        }
       } catch (e) {
-        console.warn('Hit-test feature failed:', e);
+        console.error('Hit-test feature failed:', e);
       }
 
       // --- WebXR Plane Detection Feature ---
@@ -241,38 +278,53 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
         const WebXRPlaneDetector = (BABYLON as any).WebXRPlaneDetector;
         if (WebXRPlaneDetector) {
           const planeDetector = fm.enableFeature(WebXRPlaneDetector, 'latest');
+          console.log('Plane detector enabled:', planeDetector);
 
           planeDetector.onPlaneAddedObservable.add((plane: any) => {
-            console.log('Plane detected:', plane);
+            console.log('✅ Plane detected! ID:', plane.id, 'Position:', plane.position);
             setPlanesDetected(true);
 
-            // Visualize detected planes
-            const planeMesh = MeshBuilder.CreatePlane('detectedPlane-' + plane.id, {
+            // Create a simple grid to visualize the plane
+            const planeMesh = MeshBuilder.CreateGround('detectedPlane-' + plane.id, {
               width: 1,
-              height: 1
+              height: 1,
+              subdivisions: 4
             }, scene);
 
-            planeMesh.rotationQuaternion = plane.rotationQuaternion;
             planeMesh.position = plane.position;
+            if (plane.rotationQuaternion) {
+              planeMesh.rotationQuaternion = plane.rotationQuaternion;
+            }
 
-            const planeMat = new StandardMaterial('planeMat', scene);
-            planeMat.diffuseColor = new Color3(0.5, 0.5, 1);
-            planeMat.alpha = 0.3;
+            const planeMat = new StandardMaterial('planeMat-' + plane.id, scene);
+            planeMat.diffuseColor = new Color3(0, 0.8, 1);
+            planeMat.alpha = 0.2;
             planeMat.wireframe = true;
             planeMesh.material = planeMat;
 
-            plane.polygonDefinition.forEach((point: any) => {
-              planeMesh.scaling.x = Math.max(planeMesh.scaling.x, Math.abs(point.x) * 2);
-              planeMesh.scaling.y = Math.max(planeMesh.scaling.y, Math.abs(point.z) * 2);
-            });
+            // Scale based on plane size if available
+            if (plane.polygonDefinition && plane.polygonDefinition.length > 0) {
+              let maxX = 0, maxZ = 0;
+              plane.polygonDefinition.forEach((point: any) => {
+                maxX = Math.max(maxX, Math.abs(point.x));
+                maxZ = Math.max(maxZ, Math.abs(point.z));
+              });
+              planeMesh.scaling.x = maxX * 2 || 1;
+              planeMesh.scaling.z = maxZ * 2 || 1;
+              console.log('Plane size:', maxX * 2, 'x', maxZ * 2);
+            }
           });
 
           planeDetector.onPlaneRemovedObservable.add((plane: any) => {
-            console.log('Plane removed:', plane);
+            console.log('Plane removed:', plane.id);
+            const mesh = scene.getMeshByName('detectedPlane-' + plane.id);
+            if (mesh) mesh.dispose();
           });
+        } else {
+          console.warn('WebXRPlaneDetector not available');
         }
       } catch (e) {
-        console.warn('Plane detection feature not available:', e);
+        console.error('Plane detection feature error:', e);
       }
 
       // --- WebXR Light Estimation Feature ---
