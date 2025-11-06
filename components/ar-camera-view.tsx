@@ -107,8 +107,7 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
           }
           
           const sources = [
-            'https://aframe.io/releases/1.4.0/aframe.min.js',
-            'https://cdn.jsdelivr.net/npm/aframe@1.4.0/dist/aframe-master.min.js'
+            '/aframe/aframe.min.js' // Local copy only (no CDN fallbacks)
           ];
           
           let sourceIndex = 0;
@@ -148,9 +147,7 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
           }
           
           const sources = [
-            '/arjs/aframe-ar.min.js', // Prefer local copy from npm package (copied at build/dev time)
-            'https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.min.js',
-            'https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js'
+            '/arjs/aframe-ar.min.js' // Local copy only (no CDN fallbacks)
           ];
           
           let sourceIndex = 0;
