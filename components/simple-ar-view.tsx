@@ -82,11 +82,52 @@ export default function SimpleARView({ onBack }: SimpleARViewProps) {
                 await (gl as any).makeXRCompatible();
             }
 
-            // Request AR session
-            const session = await navigator.xr.requestSession('immersive-ar', {
-                requiredFeatures: [],
-                optionalFeatures: ['local-floor', 'bounded-floor', 'hit-test']
-            });
+            // Attempt to start an AR session with progressively simpler feature requirements.
+            const sessionProfiles = [
+                {
+                    label: 'local-floor-priority',
+                    init: {
+                        requiredFeatures: ['local-floor'],
+                        optionalFeatures: ['bounded-floor', 'hit-test']
+                    },
+                    referenceSpaceCandidates: ['local-floor', 'bounded-floor', 'local', 'viewer'] as XRReferenceSpaceType[]
+                },
+                {
+                    label: 'local-only',
+                    init: {
+                        requiredFeatures: ['local'],
+                        optionalFeatures: ['hit-test']
+                    },
+                    referenceSpaceCandidates: ['local', 'viewer'] as XRReferenceSpaceType[]
+                },
+                {
+                    label: 'viewer-only',
+                    init: {
+                        requiredFeatures: ['viewer'],
+                        optionalFeatures: []
+                    },
+                    referenceSpaceCandidates: ['viewer'] as XRReferenceSpaceType[]
+                }
+            ];
+
+            let session: XRSession | null = null;
+            let sessionProfileUsed: (typeof sessionProfiles)[number] | null = null;
+
+            for (const profile of sessionProfiles) {
+                try {
+                    console.log(`🔍 Trying AR session profile: ${profile.label}`);
+                    session = await navigator.xr.requestSession('immersive-ar', profile.init);
+                    sessionProfileUsed = profile;
+                    console.log(`✅ Session started with profile: ${profile.label}`);
+                    break;
+                } catch (sessionError: any) {
+                    console.warn(`⚠️ Failed to start AR session with profile "${profile.label}"`, sessionError);
+                }
+            }
+
+            if (!session || !sessionProfileUsed) {
+                throw new Error('Unable to start an AR session with the available WebXR features on this device.');
+            }
 
             xrRef.current = { session };
 
@@ -99,23 +140,20 @@ export default function SimpleARView({ onBack }: SimpleARViewProps) {
 
             // Get reference space
             // Gracefully fallback through supported reference spaces to avoid runtime errors
-            const preferredSpaces: XRReferenceSpaceType[] = ['local-floor', 'bounded-floor', 'local', 'unbounded', 'viewer'];
+            const preferredSpaces = Array.from(
+                new Set<XRReferenceSpaceType>([
+                    ...sessionProfileUsed.referenceSpaceCandidates,
+                    'bounded-floor' as XRReferenceSpaceType,
+                    'unbounded' as XRReferenceSpaceType
+                ])
+            );
             let referenceSpace: XRReferenceSpace | null = null;
             let activeReferenceSpaceType: XRReferenceSpaceType | null = null;
-
-            // Some browsers expose requestReferenceSpace on the XRSession, others on navigator.xr.
-            // Bind the available function to keep a consistent call signature.
-            const requestRefSpace = (session as any).requestReferenceSpace?.bind(session) ||
-                (navigator.xr as any).requestReferenceSpace?.bind(navigator.xr);
-
-            if (!requestRefSpace) {
-                throw new Error('requestReferenceSpace is not available on this browser (neither on XRSession nor navigator.xr).');
-            }
 
             for (const spaceType of preferredSpaces) {
                 try {
                     // Try the available API (session or navigator.xr)
-                    referenceSpace = await requestRefSpace(spaceType);
+                    referenceSpace = await session.requestReferenceSpace(spaceType);
                     activeReferenceSpaceType = spaceType;
                     console.log(`✅ Using reference space: ${spaceType}`);
                     break;
@@ -128,6 +166,13 @@ export default function SimpleARView({ onBack }: SimpleARViewProps) {
             if (!referenceSpace || !activeReferenceSpaceType) {
                 throw new Error('This device does not expose a compatible WebXR reference space. Try Chrome on Android with ARCore.');
             }
+
+            xrRef.current = {
+                session,
+                referenceSpace,
+                referenceSpaceType: activeReferenceSpaceType,
+                sessionProfile: sessionProfileUsed.label
+            };
 
             setIsARActive(true);
             setIsLoading(false);
