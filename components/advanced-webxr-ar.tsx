@@ -91,9 +91,23 @@ export default function AdvancedWebXRAR({ onBack }: AdvancedWebXRARProps) {
             setIsARActive(true);
             setIsLoading(false);
 
-            // Get reference space
-            const referenceSpace = await session.requestReferenceSpace('local-floor');
-            console.log('✅ Reference space: local-floor');
+            // Get reference space with fallback
+            const supportedSpaces: XRReferenceSpaceType[] = ['local-floor', 'local', 'viewer'];
+            let referenceSpace: XRReferenceSpace | null = null;
+
+            for (const spaceType of supportedSpaces) {
+                try {
+                    referenceSpace = await session.requestReferenceSpace(spaceType);
+                    console.log(`✅ Reference space: ${spaceType}`);
+                    break;
+                } catch (e) {
+                    console.warn(`❌ ${spaceType} not supported, trying next...`);
+                }
+            }
+
+            if (!referenceSpace) {
+                throw new Error('No supported reference space found. Device may not support WebXR AR.');
+            }
 
             // Create reticle (placement indicator)
             const reticleGeometry = new THREE.RingGeometry(0.08, 0.1, 32);
