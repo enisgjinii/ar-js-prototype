@@ -190,18 +190,33 @@ export default function RealCameraAR({ onBack }: RealCameraARProps) {
 
             renderer.domElement.addEventListener('click', handleTap);
 
-            // Step 6: Device orientation tracking
-            let alpha = 0, beta = 0, gamma = 0;
+            // Step 6: Device orientation tracking for AR
+            let initialAlpha: number | null = null;
+            let initialBeta: number | null = null;
+            let initialGamma: number | null = null;
 
             const handleOrientation = (event: DeviceOrientationEvent) => {
-                alpha = event.alpha || 0; // Z axis
-                beta = event.beta || 0;   // X axis
-                gamma = event.gamma || 0; // Y axis
+                if (event.alpha === null || event.beta === null || event.gamma === null) return;
 
-                // Update camera rotation based on device orientation
-                camera.rotation.x = (beta * Math.PI) / 180;
-                camera.rotation.y = (alpha * Math.PI) / 180;
-                camera.rotation.z = (gamma * Math.PI) / 180;
+                // Store initial orientation on first reading
+                if (initialAlpha === null) {
+                    initialAlpha = event.alpha;
+                    initialBeta = event.beta;
+                    initialGamma = event.gamma;
+                    console.log('📱 Initial orientation set:', { alpha: initialAlpha, beta: initialBeta, gamma: initialGamma });
+                    return;
+                }
+
+                // Calculate rotation relative to initial orientation
+                const deltaAlpha = (event.alpha - (initialAlpha || 0)) * (Math.PI / 180);
+                const deltaBeta = (event.beta - (initialBeta || 0)) * (Math.PI / 180);
+                const deltaGamma = (event.gamma - (initialGamma || 0)) * (Math.PI / 180);
+
+                // Apply rotation to camera (inverted so objects stay in world space)
+                camera.rotation.order = 'YXZ';
+                camera.rotation.y = -deltaAlpha; // Horizontal rotation (inverted)
+                camera.rotation.x = -deltaBeta;  // Vertical tilt (inverted)
+                camera.rotation.z = deltaGamma;  // Roll
             };
 
             // Request device orientation permission (iOS 13+)
@@ -209,14 +224,14 @@ export default function RealCameraAR({ onBack }: RealCameraARProps) {
                 (DeviceOrientationEvent as any).requestPermission()
                     .then((response: string) => {
                         if (response === 'granted') {
-                            window.addEventListener('deviceorientation', handleOrientation);
-                            console.log('✅ Device orientation tracking enabled');
+                            window.addEventListener('deviceorientation', handleOrientation, true);
+                            console.log('✅ Device orientation tracking enabled (iOS)');
                         }
                     })
                     .catch(console.error);
             } else {
                 // Non-iOS devices
-                window.addEventListener('deviceorientation', handleOrientation);
+                window.addEventListener('deviceorientation', handleOrientation, true);
                 console.log('✅ Device orientation tracking enabled');
             }
 
