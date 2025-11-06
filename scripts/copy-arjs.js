@@ -8,6 +8,9 @@ const candidates = [
   path.join(__dirname, '..', 'node_modules', 'ar.js', 'dist', 'aframe', 'build', 'aframe-ar.min.js'),
   // fallback to legacy /lib locations
   path.join(__dirname, '..', 'node_modules', 'ar.js', 'lib', 'aframe', 'aframe-ar.min.js'),
+  // pnpm .ignored or .pnpm layout
+  path.join(__dirname, '..', 'node_modules', '.ignored', 'ar.js', 'aframe', 'build', 'aframe-ar.min.js'),
+  path.join(__dirname, '..', 'node_modules', '.pnpm', '*/node_modules', '@ar-js-org', 'ar.js', 'aframe', 'build', 'aframe-ar.min.js')
 ];
 
 const outDir = path.join(__dirname, '..', 'public', 'arjs');

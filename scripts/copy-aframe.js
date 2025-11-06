@@ -1,11 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 
-const candidates = [
-  path.join(__dirname, '..', 'node_modules', 'aframe', 'dist', 'aframe.min.js'),
-  path.join(__dirname, '..', 'node_modules', 'aframe', 'build', 'aframe.min.js'),
-];
-
 const outDir = path.join(__dirname, '..', 'public', 'aframe');
 const outFile = path.join(outDir, 'aframe.min.js');
 
@@ -16,15 +11,32 @@ function copyFile(src, dest) {
 }
 
 let found = false;
-for (const candidate of candidates) {
-  if (fs.existsSync(candidate)) {
-    try {
-      copyFile(candidate, outFile);
-      found = true;
-      break;
-    } catch (e) {
-      console.error('Failed to copy from', candidate, e);
+
+// Look for common dist directories and pick any aframe*min.js file
+const possibleDirs = [
+  path.join(__dirname, '..', 'node_modules', 'aframe', 'dist'),
+  path.join(__dirname, '..', 'node_modules', '.pnpm', 'aframe@*', 'node_modules', 'aframe', 'dist'),
+  path.join(__dirname, '..', 'node_modules', '.ignored', 'aframe', 'dist'),
+];
+
+for (const dir of possibleDirs) {
+  try {
+    if (!fs.existsSync(dir)) continue;
+    const files = fs.readdirSync(dir).filter(f => /^aframe.*\.min\.js$/.test(f));
+    if (files.length > 0) {
+      // prefer v1.x builds if present
+      const preferred = files.find(f => /v?1\./.test(f)) || files[0];
+      const src = path.join(dir, preferred);
+      try {
+        copyFile(src, outFile);
+        found = true;
+        break;
+      } catch (e) {
+        console.error('Failed to copy from', src, e);
+      }
     }
+  } catch (e) {
+    // glob could fail for pattern dir; ignore
   }
 }
 
