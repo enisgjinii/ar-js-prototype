@@ -1,4 +1,4 @@
-use client';
+"use client";
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -15,14 +15,44 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
   const t = useT();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const xrRef = useRef<any>(null);
+  const sceneRef = useRef<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isARReady, setIsARReady] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [markerDetected, setMarkerDetected] = useState(false);
+  const [started, setStarted] = useState(false);
 
+  // Cleanup on unmount
   useEffect(() => {
-    let mounted = true;
+    return () => {
+      try {
+        if (xrRef.current && xrRef.current.baseExperience && xrRef.current.baseExperience.exitXR) {
+          // try to end session gracefully
+          xrRef.current.baseExperience.exitXR();
+        }
+      } catch (e) {
+        // ignore
+      }
+      const eng = engineRef.current;
+      if (eng) {
+        try {
+          eng.stopRenderLoop();
+          if (sceneRef.current && !sceneRef.current.isDisposed) sceneRef.current.dispose();
+          eng.dispose();
+        } catch (e) {
+          // ignore
+        }
+      }
+    };
+  }, []);
+
+  const startAR = async () => {
+    setError(null);
+    setIsLoading(true);
+    setStarted(true);
+
     const canvas = canvasRef.current;
     if (!canvas) {
       setError('Canvas not available');
@@ -30,84 +60,60 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
       return;
     }
 
-    (async () => {
-      try {
-        const BABYLON = await import('@babylonjs/core');
-        await import('@babylonjs/loaders');
+    try {
+      const BABYLON = await import('@babylonjs/core');
+      await import('@babylonjs/loaders');
 
-        const Engine = (BABYLON as any).Engine;
-        const Scene = (BABYLON as any).Scene;
-        const Vector3 = (BABYLON as any).Vector3;
+      const Engine = (BABYLON as any).Engine;
+      const Scene = (BABYLON as any).Scene;
+      const Vector3 = (BABYLON as any).Vector3;
 
-        const engine = new Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
-        engineRef.current = engine;
+      const engine = new Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
+      engineRef.current = engine;
 
-        const scene = new Scene(engine);
+      const scene = new Scene(engine);
+      sceneRef.current = scene;
 
-        // Simple light so the scene isn't totally dark
-        new (BABYLON as any).HemisphericLight('hLight', new Vector3(0, 1, 0), scene);
+      // Simple light so the scene isn't totally dark
+      new (BABYLON as any).HemisphericLight('hLight', new Vector3(0, 1, 0), scene);
 
-        // Try to create an immersive-ar session if supported
-        if ((scene as any).createDefaultXRExperienceAsync) {
+      // Start render loop
+      engine.runRenderLoop(() => {
+        if (scene && !scene.isDisposed) scene.render();
+      });
+
+      window.addEventListener('resize', () => engine.resize());
+
+      // Try to create an immersive-ar session when user explicitly requests it
+      if ((scene as any).createDefaultXRExperienceAsync) {
+        try {
+          const xr = await (scene as any).createDefaultXRExperienceAsync({ uiOptions: { sessionMode: 'immersive-ar' } });
+          xrRef.current = xr;
+          setIsARReady(true);
+          setIsLoading(false);
+
+          // optional: observe state changes
           try {
-            const xr = await (scene as any).createDefaultXRExperienceAsync({ uiOptions: { sessionMode: 'immersive-ar' } });
-            if (mounted) {
-              setIsARReady(true);
-              setIsLoading(false);
-            }
-
-            // Example: observe state changes if needed
             xr.baseExperience.onStateChangedObservable.add(() => {});
-          } catch (xrErr) {
-            console.warn('WebXR (immersive-ar) not available or failed to start:', xrErr);
-            if (mounted) {
-              setIsARReady(false);
-              setIsLoading(false);
-            }
-          }
-        } else {
-          console.warn('createDefaultXRExperienceAsync not available on this Babylon build');
-          if (mounted) {
-            setIsARReady(false);
-            setIsLoading(false);
-          }
-        }
-
-        engine.runRenderLoop(() => {
-          if (scene && !scene.isDisposed) scene.render();
-        });
-
-        const onResize = () => engine.resize();
-        window.addEventListener('resize', onResize);
-
-        // Clean up when effect is torn down
-        return () => {
-          mounted = false;
-          window.removeEventListener('resize', onResize);
-          try {
-            engine.stopRenderLoop();
-            scene.dispose();
-            engine.dispose();
           } catch (e) {
-            // ignore
+            // ignore if API differs
           }
-        };
-      } catch (err: any) {
-        console.error('Failed to initialize Babylon scene:', err);
-        setError(String(err?.message || err));
+        } catch (xrErr) {
+          console.warn('WebXR (immersive-ar) not available or failed to start:', xrErr);
+          setIsARReady(false);
+          setIsLoading(false);
+        }
+      } else {
+        console.warn('createDefaultXRExperienceAsync not available on this Babylon build');
+        setIsARReady(false);
         setIsLoading(false);
       }
-    })();
-
-    return () => {
-      const eng = engineRef.current;
-      if (eng) {
-        try {
-          eng.dispose();
-        } catch (e) {}
-      }
-    };
-  }, []);
+    } catch (err: any) {
+      console.error('Failed to initialize Babylon scene:', err);
+      setError(String(err?.message || err));
+      setIsLoading(false);
+    }
+  };
 
   const resetARSession = () => {
     setError(null);
@@ -126,6 +132,15 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
   return (
     <div className="w-full h-screen relative bg-black">
       <canvas ref={canvasRef} className="w-full h-full" />
+
+      {/* Entry button: start AR when the user explicitly clicks */}
+      {!started && !isLoading && !error && (
+        <div className="absolute inset-0 flex items-center justify-center z-20">
+          <Button onClick={startAR} variant="secondary" className="px-6 py-3 text-lg rounded-lg bg-primary text-white">
+            {t?.('ar.enter') || 'Enter AR'}
+          </Button>
+        </div>
+      )}
 
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-20">
