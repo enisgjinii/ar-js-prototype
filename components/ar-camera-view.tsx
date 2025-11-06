@@ -10,7 +10,7 @@ interface ARCameraViewProps {
   onBack?: () => void;
 }
 
-// Minimal Babylon-based AR view. Dynamically imports Babylon to avoid SSR issues.
+// Babylon.js WebXR AR view with comprehensive AR features
 export default function ARCameraView({ onBack }: ARCameraViewProps) {
   const t = useT();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -21,7 +21,7 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
   const [error, setError] = useState<string | null>(null);
   const [isARReady, setIsARReady] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const [markerDetected, setMarkerDetected] = useState(false);
+  const [planesDetected, setPlanesDetected] = useState(false);
   const [started, setStarted] = useState(false);
 
   // Cleanup on unmount
@@ -29,7 +29,6 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
     return () => {
       try {
         if (xrRef.current && xrRef.current.baseExperience && xrRef.current.baseExperience.exitXR) {
-          // try to end session gracefully
           xrRef.current.baseExperience.exitXR();
         }
       } catch (e) {
@@ -45,7 +44,6 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
           // ignore
         }
       }
-      // cleanup any hit-test/reticle handlers
       try {
         if (xrRef.current) {
           const r: any = xrRef.current._reticle;
@@ -80,22 +78,22 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
       const Engine = (BABYLON as any).Engine;
       const Scene = (BABYLON as any).Scene;
       const Vector3 = (BABYLON as any).Vector3;
+      const Color3 = (BABYLON as any).Color3;
+      const Color4 = (BABYLON as any).Color4;
+      const MeshBuilder = (BABYLON as any).MeshBuilder;
+      const StandardMaterial = (BABYLON as any).StandardMaterial;
+      const PBRMaterial = (BABYLON as any).PBRMaterial;
 
       const engine = new Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
       engineRef.current = engine;
 
       const scene = new Scene(engine);
-      // Make the scene transparent so the underlying camera/video feed is visible
-      try {
-        const Color4 = (BABYLON as any).Color4;
-        if (Color4) scene.clearColor = new Color4(0, 0, 0, 0);
-      } catch (e) {
-        // ignore if Color4 isn't available
-      }
+      scene.clearColor = new Color4(0, 0, 0, 0);
       sceneRef.current = scene;
 
-      // Simple light so the scene isn't totally dark
-      new (BABYLON as any).HemisphericLight('hLight', new Vector3(0, 1, 0), scene);
+      // Create default lighting (will be enhanced by light estimation)
+      const light = new (BABYLON as any).HemisphericLight('defaultLight', new Vector3(0, 1, 0), scene);
+      light.intensity = 0.7;
 
       // Start render loop
       engine.runRenderLoop(() => {
@@ -104,164 +102,236 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
 
       window.addEventListener('resize', () => engine.resize());
 
-      // Try to create an immersive-ar session when user explicitly requests it.
-      // First do a quick feature check so we can show a helpful message instead of a black canvas.
+      // Check WebXR support
       let immersiveArSupported = false;
       try {
         if (navigator && (navigator as any).xr && (navigator as any).xr.isSessionSupported) {
           immersiveArSupported = await (navigator as any).xr.isSessionSupported('immersive-ar');
         }
       } catch (e) {
-        // ignore
+        console.error('WebXR check failed:', e);
       }
 
       if (!immersiveArSupported) {
-        console.warn('immersive-ar not supported on this device/browser');
-        setError('WebXR immersive-ar not supported by this browser or device');
+        setError('WebXR AR not supported. Please use a compatible device and browser (e.g., Chrome on Android)');
         setIsLoading(false);
-        setIsARReady(false);
         return;
       }
 
-      if ((scene as any).createDefaultXRExperienceAsync) {
-        try {
-          // Request common optional WebXR features for AR: hit-test (placement), anchors (persistence),
-          // local-floor reference and dom-overlay for UI overlays. These are optional and will be
-          // negotiated by the browser; requesting them can improve behavior on capable devices.
-          const xr = await (scene as any).createDefaultXRExperienceAsync({
-            uiOptions: { sessionMode: 'immersive-ar' },
-            optionalFeatures: ['hit-test', 'anchors', 'local-floor', 'bounded-floor', 'dom-overlay']
+      // Create WebXR experience with comprehensive AR features
+      const xr = await (scene as any).createDefaultXRExperienceAsync({
+        uiOptions: {
+          sessionMode: 'immersive-ar',
+          referenceSpaceType: 'local-floor'
+        },
+        optionalFeatures: [
+          'hit-test',
+          'anchors',
+          'plane-detection',
+          'light-estimation',
+          'dom-overlay',
+          'hand-tracking',
+          'depth-sensing'
+        ]
+      });
+
+      xrRef.current = xr;
+      const fm = xr.baseExperience.featuresManager;
+
+      // Enter AR session
+      await xr.baseExperience.enterXRAsync('immersive-ar', 'local-floor');
+      setIsARReady(true);
+      setIsLoading(false);
+
+      // --- WebXR Hit Test Feature ---
+      try {
+        const WebXRHitTest = (BABYLON as any).WebXRHitTest;
+        const hitTest = fm.enableFeature(WebXRHitTest, 'latest', {
+          entityTypes: ['plane', 'point', 'mesh'],
+          offsetRay: { x: 0, y: 0, z: 0 },
+          useReferenceSpace: true
+        });
+
+        // Create placement reticle
+        const reticle = MeshBuilder.CreateTorus('reticle', {
+          diameter: 0.3,
+          thickness: 0.02,
+          tessellation: 32
+        }, scene);
+
+        const reticleMat = new StandardMaterial('reticleMat', scene);
+        reticleMat.diffuseColor = new Color3(0.2, 0.8, 1);
+        reticleMat.emissiveColor = new Color3(0.2, 0.8, 1);
+        reticleMat.alpha = 0.8;
+        reticle.material = reticleMat;
+        reticle.isVisible = false;
+
+        let lastHitPose: { position: any; rotationQuaternion: any } | null = null;
+
+        hitTest.onHitTestResultObservable.add((results: any[]) => {
+          if (!results || results.length === 0) {
+            reticle.isVisible = false;
+            lastHitPose = null;
+            setPlanesDetected(false);
+            return;
+          }
+
+          const hit = results[0];
+          const transformMatrix = hit.transformationMatrix;
+
+          if (transformMatrix) {
+            const matrix = (BABYLON as any).Matrix.FromArray(transformMatrix);
+            const position = new Vector3();
+            const rotation = new (BABYLON as any).Quaternion();
+            const scale = new Vector3();
+
+            matrix.decompose(scale, rotation, position);
+
+            reticle.position.copyFrom(position);
+            reticle.rotationQuaternion = rotation;
+            reticle.isVisible = true;
+            lastHitPose = { position: position.clone(), rotationQuaternion: rotation.clone() };
+            setPlanesDetected(true);
+          }
+        });
+
+        // Place object on tap
+        const onTap = () => {
+          if (!lastHitPose) return;
+
+          // Create a 3D model at the hit location
+          const box = MeshBuilder.CreateBox('placedBox-' + Date.now(), {
+            size: 0.15
+          }, scene);
+
+          box.position = lastHitPose.position.clone();
+          box.position.y += 0.075; // Lift slightly above surface
+          box.rotationQuaternion = lastHitPose.rotationQuaternion.clone();
+
+          const boxMat = new PBRMaterial('boxMat', scene);
+          boxMat.albedoColor = new Color3(
+            Math.random(),
+            Math.random(),
+            Math.random()
+          );
+          boxMat.metallic = 0.2;
+          boxMat.roughness = 0.3;
+          box.material = boxMat;
+
+          // Add simple animation
+          let time = 0;
+          scene.registerBeforeRender(() => {
+            if (box && !box.isDisposed()) {
+              time += 0.02;
+              box.rotation.y = time;
+            }
           });
-          xrRef.current = xr;
+        };
 
-          // Try to explicitly enter an AR session. Some devices require an explicit enter call
-          // so the camera feed becomes visible. If this fails, we still keep the helper so the
-          // user can try again via the UI.
-          try {
-            if (xr.baseExperience && xr.baseExperience.enterXRAsync) {
-              await xr.baseExperience.enterXRAsync('immersive-ar', 'local-floor');
-            }
-          } catch (enterErr) {
-            // Not fatal: entering XR might be handled differently on some builds/devices
-            console.warn('enterXRAsync failed:', enterErr);
-          }
-
-          setIsARReady(true);
-          setIsLoading(false);
-
-          // --- Plane detection (hit-test) and placement reticle ---
-          try {
-            const fm = xr.baseExperience && xr.baseExperience.featuresManager;
-            if (fm && (BABYLON as any).WebXRHitTest) {
-              const WebXRHitTest = (BABYLON as any).WebXRHitTest;
-              const hitTest = fm.enableFeature(WebXRHitTest, 'latest', { preferredResultCount: 1 });
-
-              // create a placement reticle (transparent plane with grid material)
-              const MeshBuilder = (BABYLON as any).MeshBuilder;
-              const Vector3 = (BABYLON as any).Vector3;
-              const Quaternion = (BABYLON as any).Quaternion;
-
-              const reticle = MeshBuilder.CreatePlane('xr-reticle', { size: 0.4 }, scene);
-              reticle.rotate(new (BABYLON as any).Vector3(1, 0, 0), Math.PI / 2, BABYLON as any);
-
-              // GridMaterial from @babylonjs/materials if available
-              let gridMat: any = null;
-              try {
-                const GridMaterial = (BABYLON as any).GridMaterial;
-                if (GridMaterial) {
-                  gridMat = new GridMaterial('xr-grid', scene);
-                  gridMat.majorUnitFrequency = 5;
-                  gridMat.minorUnitVisibility = 0.45;
-                  gridMat.gridRatio = 0.05;
-                  gridMat.mainColor = new (BABYLON as any).Color3(0.08, 0.08, 0.08);
-                  gridMat.lineColor = new (BABYLON as any).Color3(1, 1, 1);
-                  gridMat.opacity = 0.9;
-                }
-              } catch (e) {
-                gridMat = null;
-              }
-
-              if (gridMat) reticle.material = gridMat;
-              else {
-                const mat = new (BABYLON as any).StandardMaterial('xr-reticle-mat', scene);
-                mat.diffuseColor = new (BABYLON as any).Color3(0.2, 0.7, 0.7);
-                mat.alpha = 0.6;
-                reticle.material = mat;
-              }
-
-              reticle.isVisible = false;
-
-              let lastHitPose: { position: any; rotationQuaternion: any } | null = null;
-
-              hitTest.onHitTestResultObservable.add((results: any[]) => {
-                if (!results || results.length === 0) {
-                  reticle.isVisible = false;
-                  lastHitPose = null;
-                  return;
-                }
-                const hit = results[0];
-                const matArr = hit.transformationMatrix || hit.transformationMatrixFromHit || hit.matrix;
-                if (!matArr) {
-                  reticle.isVisible = false;
-                  lastHitPose = null;
-                  return;
-                }
-                try {
-                  const M = (BABYLON as any).Matrix.FromArray(matArr);
-                  const scale = new (BABYLON as any).Vector3();
-                  const rot = new (BABYLON as any).Quaternion();
-                  const pos = new (BABYLON as any).Vector3();
-                  M.decompose(scale, rot, pos);
-                  reticle.position.copyFrom(pos);
-                  reticle.rotationQuaternion = rot;
-                  reticle.isVisible = true;
-                  lastHitPose = { position: pos.clone(), rotationQuaternion: rot.clone() };
-                } catch (e) {
-                  // ignore decomposition issues
-                }
-              });
-
-              // Place an object on tap using last hit pose
-              const onTap = () => {
-                if (!lastHitPose) return;
-                const sphere = MeshBuilder.CreateSphere('placed-' + Date.now(), { diameter: 0.2 }, scene);
-                sphere.position = lastHitPose.position.clone();
-                sphere.rotationQuaternion = lastHitPose.rotationQuaternion.clone();
-                const sm = new (BABYLON as any).StandardMaterial('placed-mat', scene);
-                sm.diffuseColor = new (BABYLON as any).Color3(0.1, 0.8, 0.6);
-                sphere.material = sm;
-              };
-
-              canvas.addEventListener('click', onTap);
-
-              // store cleanup handlers
-              (xrRef.current as any)._reticle = reticle;
-              (xrRef.current as any)._hitTest = hitTest;
-              (xrRef.current as any)._onTap = onTap;
-            }
-          } catch (e) {
-            // Non-fatal: plane detection best-effort
-            console.warn('Hit-test / plane detection setup failed:', e);
-          }
-
-          // optional: observe state changes
-          try {
-            xr.baseExperience.onStateChangedObservable.add(() => {});
-          } catch (e) {
-            // ignore if API differs
-          }
-        } catch (xrErr) {
-          console.warn('WebXR (immersive-ar) not available or failed to start:', xrErr);
-          setIsARReady(false);
-          setIsLoading(false);
-        }
-      } else {
-        console.warn('createDefaultXRExperienceAsync not available on this Babylon build');
-        setIsARReady(false);
-        setIsLoading(false);
+        canvas.addEventListener('click', onTap);
+        (xrRef.current as any)._reticle = reticle;
+        (xrRef.current as any)._hitTest = hitTest;
+        (xrRef.current as any)._onTap = onTap;
+      } catch (e) {
+        console.warn('Hit-test feature failed:', e);
       }
+
+      // --- WebXR Plane Detection Feature ---
+      try {
+        const WebXRPlaneDetector = (BABYLON as any).WebXRPlaneDetector;
+        if (WebXRPlaneDetector) {
+          const planeDetector = fm.enableFeature(WebXRPlaneDetector, 'latest');
+
+          planeDetector.onPlaneAddedObservable.add((plane: any) => {
+            console.log('Plane detected:', plane);
+            setPlanesDetected(true);
+
+            // Visualize detected planes
+            const planeMesh = MeshBuilder.CreatePlane('detectedPlane-' + plane.id, {
+              width: 1,
+              height: 1
+            }, scene);
+
+            planeMesh.rotationQuaternion = plane.rotationQuaternion;
+            planeMesh.position = plane.position;
+
+            const planeMat = new StandardMaterial('planeMat', scene);
+            planeMat.diffuseColor = new Color3(0.5, 0.5, 1);
+            planeMat.alpha = 0.3;
+            planeMat.wireframe = true;
+            planeMesh.material = planeMat;
+
+            plane.polygonDefinition.forEach((point: any) => {
+              planeMesh.scaling.x = Math.max(planeMesh.scaling.x, Math.abs(point.x) * 2);
+              planeMesh.scaling.y = Math.max(planeMesh.scaling.y, Math.abs(point.z) * 2);
+            });
+          });
+
+          planeDetector.onPlaneRemovedObservable.add((plane: any) => {
+            console.log('Plane removed:', plane);
+          });
+        }
+      } catch (e) {
+        console.warn('Plane detection feature not available:', e);
+      }
+
+      // --- WebXR Light Estimation Feature ---
+      try {
+        const WebXRLightEstimation = (BABYLON as any).WebXRLightEstimation;
+        if (WebXRLightEstimation) {
+          const lightEstimation = fm.enableFeature(WebXRLightEstimation, 'latest', {
+            setSceneEnvironmentTexture: true,
+            createDirectionalLightSource: true,
+            reflectionFormat: 'srgba8',
+            disableCubeMapReflection: false
+          });
+
+          lightEstimation.onReflectionCubeMapUpdatedObservable.add(() => {
+            console.log('Light estimation updated');
+          });
+        }
+      } catch (e) {
+        console.warn('Light estimation feature not available:', e);
+      }
+
+      // --- WebXR Anchors Feature ---
+      try {
+        const WebXRAnchorSystem = (BABYLON as any).WebXRAnchorSystem;
+        if (WebXRAnchorSystem) {
+          const anchorSystem = fm.enableFeature(WebXRAnchorSystem, 'latest');
+
+          anchorSystem.onAnchorAddedObservable.add((anchor: any) => {
+            console.log('Anchor added:', anchor);
+          });
+
+          anchorSystem.onAnchorRemovedObservable.add((anchor: any) => {
+            console.log('Anchor removed:', anchor);
+          });
+        }
+      } catch (e) {
+        console.warn('Anchor system feature not available:', e);
+      }
+
+      // --- WebXR Background Remover ---
+      try {
+        const WebXRBackgroundRemover = (BABYLON as any).WebXRBackgroundRemover;
+        if (WebXRBackgroundRemover) {
+          fm.enableFeature(WebXRBackgroundRemover, 'latest', {
+            backgroundMeshes: [scene.getMeshByName('skyBox')],
+            ignoreEnvironmentHelper: true
+          });
+        }
+      } catch (e) {
+        console.warn('Background remover not available:', e);
+      }
+
+      // Monitor XR state changes
+      xr.baseExperience.onStateChangedObservable.add((state: any) => {
+        console.log('XR State changed:', state);
+      });
+
     } catch (err: any) {
-      console.error('Failed to initialize Babylon scene:', err);
+      console.error('Failed to initialize AR:', err);
       setError(String(err?.message || err));
       setIsLoading(false);
     }
@@ -275,7 +345,7 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
     if (eng) {
       try {
         eng.dispose();
-      } catch (e) {}
+      } catch (e) { }
       engineRef.current = null;
     }
     setTimeout(() => window.location.reload(), 300);
@@ -299,8 +369,8 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
           <div className="flex flex-col items-center gap-3 p-4 bg-background/80 rounded-lg max-w-xs">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <div className="text-center">
-              <p className="text-foreground font-medium">{isARReady ? 'Entering AR...' : 'Initializing AR (Babylon)...'}</p>
-              <p className="text-muted-foreground text-xs mt-1">{isARReady ? 'Starting session' : 'Preparing scene'}</p>
+              <p className="text-foreground font-medium">{isARReady ? 'Entering AR...' : 'Initializing WebXR AR...'}</p>
+              <p className="text-muted-foreground text-xs mt-1">{isARReady ? 'Starting session' : 'Loading features'}</p>
             </div>
           </div>
         </div>
@@ -344,14 +414,25 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
 
       <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
         <div className="bg-background/80 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-1">
-          {markerDetected ? (
+          {planesDetected ? (
             <CheckCircle className="h-3 w-3 text-green-500" />
           ) : (
-            <div className="h-3 w-3 rounded-full bg-red-500"></div>
+            <div className="h-3 w-3 rounded-full bg-yellow-500 animate-pulse"></div>
           )}
-          <p className="text-xs text-foreground">{isARReady ? 'AR Ready (Babylon)' : 'Initializing...'}</p>
+          <p className="text-xs text-foreground">
+            {isARReady ? (planesDetected ? 'Surfaces Detected' : 'Scanning...') : 'Initializing...'}
+          </p>
         </div>
       </div>
+
+      {isARReady && (
+        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-10">
+          <div className="bg-background/90 backdrop-blur-sm rounded-lg px-4 py-2 text-center">
+            <p className="text-sm text-foreground font-medium">Tap to place objects</p>
+            <p className="text-xs text-muted-foreground mt-1">Move device to detect surfaces</p>
+          </div>
+        </div>
+      )}
 
       {showHelp && <ARHelpModal onClose={() => setShowHelp(false)} />}
     </div>
