@@ -121,6 +121,8 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
             
             const script = document.createElement('script');
             script.src = sources[sourceIndex];
+            script.async = true;
+            script.crossOrigin = 'anonymous';
             script.onload = () => {
               console.log(`A-Frame loaded from ${sources[sourceIndex]}`);
               aframeResolve(true);
@@ -146,9 +148,9 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
           }
           
           const sources = [
-            'https://cdn.jsdelivr.net/npm/ar.js@3.4.0/aframe/build/aframe-ar.min.js',
-            'https://raw.githubusercontent.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.min.js',
-            '/arjs/aframe-ar.min.js' // Local fallback
+            '/arjs/aframe-ar.min.js', // Prefer local copy from npm package (copied at build/dev time)
+            'https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.min.js',
+            'https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js'
           ];
           
           let sourceIndex = 0;
@@ -164,6 +166,8 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
             
             const script = document.createElement('script');
             script.src = sources[sourceIndex];
+            script.async = true;
+            script.crossOrigin = 'anonymous';
             script.onload = () => {
               console.log(`AR.js loaded from ${sources[sourceIndex]}`);
               arjsResolve(true);
