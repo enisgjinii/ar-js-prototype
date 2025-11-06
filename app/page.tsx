@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import AudioGuideView from '@/components/audio-guide-view';
-import AdvancedWebXRAR from '@/components/advanced-webxr-ar';
+import { useRouter } from 'next/navigation';
 import Navigation from '@/components/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +27,7 @@ import {
 import ARHelpModal from '@/components/ar-help-modal';
 
 export default function Home() {
+  const router = useRouter();
   const [activeView, setActiveView] = useState<'audio' | 'ar'>(
     'audio'
   );
@@ -46,6 +47,11 @@ export default function Home() {
 
   // Handle view change without automatically pausing audio
   const handleViewChange = (view: 'audio' | 'ar') => {
+    // If user selects AR, navigate to the dedicated AR page
+    if (view === 'ar') {
+      router.push('/working-ar');
+      return;
+    }
     // Audio will continue playing in the background
     // Users can control it through the navigation controls
     setActiveView(view);
@@ -106,15 +112,13 @@ export default function Home() {
         {t('audio.audioFallback')}
       </audio>
 
-      {activeView === 'audio' ? (
+      {activeView === 'audio' && (
         <AudioGuideView
           isPlaying={isAudioPlaying}
           onPlay={handleAudioPlay}
           onPause={handleAudioPause}
           onStop={handleAudioReset}
         />
-      ) : (
-        <AdvancedWebXRAR onBack={() => setActiveView('audio')} />
       )}
 
       {/* Middle left sidebar for theme, language switchers, and audio controls */}
