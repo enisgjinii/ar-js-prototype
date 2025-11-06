@@ -91,23 +91,27 @@ export default function AdvancedWebXRAR({ onBack }: AdvancedWebXRARProps) {
             setIsARActive(true);
             setIsLoading(false);
 
-            // Get reference space with fallback
+            // Get reference space with fallback (FIXED VERSION)
+            console.log('🔍 Trying to get reference space...');
             const supportedSpaces: XRReferenceSpaceType[] = ['local-floor', 'local', 'viewer'];
             let referenceSpace: XRReferenceSpace | null = null;
 
             for (const spaceType of supportedSpaces) {
                 try {
+                    console.log(`🔄 Attempting: ${spaceType}...`);
                     referenceSpace = await session.requestReferenceSpace(spaceType);
-                    console.log(`✅ Reference space: ${spaceType}`);
+                    console.log(`✅ SUCCESS! Using reference space: ${spaceType}`);
                     break;
-                } catch (e) {
-                    console.warn(`❌ ${spaceType} not supported, trying next...`);
+                } catch (e: any) {
+                    console.warn(`❌ ${spaceType} not supported: ${e.message}`);
                 }
             }
 
             if (!referenceSpace) {
                 throw new Error('No supported reference space found. Device may not support WebXR AR.');
             }
+
+            console.log('✅ Reference space obtained successfully!');
 
             // Create reticle (placement indicator)
             const reticleGeometry = new THREE.RingGeometry(0.08, 0.1, 32);
@@ -129,17 +133,27 @@ export default function AdvancedWebXRAR({ onBack }: AdvancedWebXRARProps) {
             let hitTestSource: XRHitTestSource | null = null;
             let hitTestSourceRequested = false;
 
-            // Request hit test source
-            session.requestReferenceSpace('viewer').then((viewerSpace) => {
-                (session as any).requestHitTestSource({ space: viewerSpace })
-                    .then((source: XRHitTestSource) => {
-                        hitTestSource = source;
-                        console.log('✅ Hit test source created');
-                    })
-                    .catch((err: any) => {
-                        console.warn('Hit test source failed:', err);
-                    });
-            });
+            // Request hit test source with error handling
+            console.log('🔍 Setting up hit test source...');
+            try {
+                // Use the same reference space we successfully obtained
+                const viewerSpace = await session.requestReferenceSpace('viewer').catch(() => referenceSpace);
+
+                if ((session as any).requestHitTestSource) {
+                    (session as any).requestHitTestSource({ space: viewerSpace })
+                        .then((source: XRHitTestSource) => {
+                            hitTestSource = source;
+                            console.log('✅ Hit test source created successfully');
+                        })
+                        .catch((err: any) => {
+                            console.warn('⚠️ Hit test source failed (non-fatal):', err);
+                        });
+                } else {
+                    console.warn('⚠️ Hit test not available on this device');
+                }
+            } catch (err) {
+                console.warn('⚠️ Could not set up hit test (non-fatal):', err);
+            }
 
             // Handle taps for placement
             let tapCount = 0;
