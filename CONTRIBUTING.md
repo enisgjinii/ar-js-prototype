@@ -1,4 +1,4 @@
-# Contributing to AR.js Cultural Experience
+# Contributing to AR Cultural Experience
 
 Thank you for your interest in contributing to the AR.js Cultural Experience project! This document provides guidelines and instructions for contributing.
 

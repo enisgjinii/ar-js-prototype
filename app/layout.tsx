@@ -48,16 +48,7 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
-        {/* Use A-Frame + AR.js (A-Frame build) for GPS-based AR */}
-        <Script
-          src="https://aframe.io/releases/1.4.0/aframe.min.js"
-          strategy="beforeInteractive"
-        />
-        {/* Primary AR.js source - using a more reliable CDN */}
-        <Script
-          src="https://cdn.jsdelivr.net/npm/ar.js@3.4.0/aframe/build/aframe-ar.min.js"
-          strategy="beforeInteractive"
-        />
+        {/* A-Frame and AR.js removed: scripts intentionally omitted. Babylon-based AR is used in client components. */}
       </head>
       <body className={`font-sans antialiased ${geist.className}`}>
         <LocaleProvider>

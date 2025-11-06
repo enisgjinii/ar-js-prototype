@@ -1,4 +1,4 @@
-# AR.js Cultural Experience Prototype
+# AR Cultural Experience Prototype
 
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/enisenisnisis-projects/v0-ar-js-prototype)
 [![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/projects/Bfpqj2zfCAj)
@@ -128,7 +128,6 @@ ar-js-prototype/
 │   ├── copy-cesium-assets.js       # Cesium asset copying script
 │   └── test-geolocation.js         # Geolocation testing utilities
 ├── 📁 types/                        # TypeScript type definitions
-│   ├── aframe.d.ts                 # A-Frame type definitions
 │   └── three.d.ts                  # Three.js type definitions
 └── 📄 Configuration Files
     ├── next.config.mjs             # Next.js configuration

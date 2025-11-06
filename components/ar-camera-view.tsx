@@ -1,493 +1,144 @@
-'use client';
+use client';
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/lib/locale';
-import { Loader2, RotateCw, HelpCircle, Camera, Scan, AlertCircle, CheckCircle } from 'lucide-react';
+import { Loader2, RotateCw, HelpCircle, AlertCircle, CheckCircle } from 'lucide-react';
 import ARHelpModal from '@/components/ar-help-modal';
-
-declare global {
-  interface Window {
-    AFRAME: any;
-    ARjs: any;
-  }
-}
 
 interface ARCameraViewProps {
   onBack?: () => void;
 }
 
+// Minimal Babylon-based AR view. Dynamically imports Babylon to avoid SSR issues.
 export default function ARCameraView({ onBack }: ARCameraViewProps) {
   const t = useT();
-  const sceneRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const engineRef = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isARReady, setIsARReady] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const [arMode, setArMode] = useState<'marker' | 'experimental'>('marker');
-  const [cameraActive, setCameraActive] = useState(false);
   const [markerDetected, setMarkerDetected] = useState(false);
-  const [attemptCount, setAttemptCount] = useState(0);
-  const [deviceType, setDeviceType] = useState<'mobile' | 'desktop'>('mobile');
-  const [libraryStatus, setLibraryStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
 
   useEffect(() => {
-    // Detect device type
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    setDeviceType(isMobile ? 'mobile' : 'desktop');
-    
-    if (!sceneRef.current) return;
-
-    // Check for library availability with retries
-    checkLibrariesAndInitialize();
-
-    return () => {
-      // Clean up AR.js scene
-      cleanupARScene();
-    };
-  }, [arMode, attemptCount]);
-
-  const checkLibrariesAndInitialize = () => {
-    console.log('Checking for AR libraries...');
-    
-    // Check if libraries are already available
-    if (typeof window !== 'undefined' && window.AFRAME && window.ARjs) {
-      console.log('AR libraries already loaded');
-      setLibraryStatus('loaded');
-      initializeARScene();
+    let mounted = true;
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      setError('Canvas not available');
+      setIsLoading(false);
       return;
     }
-    
-    // If not available, try to load them dynamically (once per attempt cycle)
-    if (attemptCount < 3) {
-      console.log(`Attempt ${attemptCount + 1} to load AR libraries`);
 
-      // Try to load A-Frame and AR.js dynamically; if that fails, we'll retry
-      loadLibrariesDynamically()
-        .then(() => {
-          // Wait a short moment for scripts to initialize
-          setTimeout(() => {
-            if (typeof window !== 'undefined' && window.AFRAME && window.ARjs) {
-              console.log('AR libraries loaded after dynamic load');
-              setLibraryStatus('loaded');
-              initializeARScene();
-            } else {
-              console.log('Dynamic load finished but libraries not available yet, scheduling retry');
-              setAttemptCount(prev => prev + 1);
-              setTimeout(checkLibrariesAndInitialize, 1000);
+    (async () => {
+      try {
+        const BABYLON = await import('@babylonjs/core');
+        await import('@babylonjs/loaders');
+
+        const Engine = (BABYLON as any).Engine;
+        const Scene = (BABYLON as any).Scene;
+        const Vector3 = (BABYLON as any).Vector3;
+
+        const engine = new Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
+        engineRef.current = engine;
+
+        const scene = new Scene(engine);
+
+        // Simple light so the scene isn't totally dark
+        new (BABYLON as any).HemisphericLight('hLight', new Vector3(0, 1, 0), scene);
+
+        // Try to create an immersive-ar session if supported
+        if ((scene as any).createDefaultXRExperienceAsync) {
+          try {
+            const xr = await (scene as any).createDefaultXRExperienceAsync({ uiOptions: { sessionMode: 'immersive-ar' } });
+            if (mounted) {
+              setIsARReady(true);
+              setIsLoading(false);
             }
-          }, 800);
-        })
-        .catch((err) => {
-          console.error('Dynamic library load failed:', err);
-          setAttemptCount(prev => prev + 1);
-          setTimeout(checkLibrariesAndInitialize, 1000);
-        });
-    } else {
-      setLibraryStatus('error');
-      setError('AR libraries failed to load. Please check your internet connection and refresh the page.');
-      setIsLoading(false);
-    }
-  };
 
-  const loadLibrariesDynamically = () => {
-    return new Promise((resolve, reject) => {
-      // Check if already loaded
-      if (typeof window !== 'undefined' && window.AFRAME && window.ARjs) {
-        resolve(true);
-        return;
-      }
-      
-      // Try multiple sources for A-Frame
-      const loadAFrame = () => {
-        return new Promise((aframeResolve, aframeReject) => {
-          if (typeof window !== 'undefined' && window.AFRAME) {
-            aframeResolve(true);
-            return;
+            // Example: observe state changes if needed
+            xr.baseExperience.onStateChangedObservable.add(() => {});
+          } catch (xrErr) {
+            console.warn('WebXR (immersive-ar) not available or failed to start:', xrErr);
+            if (mounted) {
+              setIsARReady(false);
+              setIsLoading(false);
+            }
           }
-          
-          const sources = [
-            '/aframe/aframe.min.js' // Local copy only (no CDN fallbacks)
-          ];
-          
-          let sourceIndex = 0;
-          
-          const tryNextSource = () => {
-            if (sourceIndex >= sources.length) {
-              aframeReject(new Error('Failed to load A-Frame from all sources'));
-              return;
-            }
-            
-            const script = document.createElement('script');
-            script.src = sources[sourceIndex];
-            script.async = true;
-            script.crossOrigin = 'anonymous';
-            script.onload = () => {
-              console.log(`A-Frame loaded from ${sources[sourceIndex]}`);
-              aframeResolve(true);
-            };
-            script.onerror = () => {
-              console.error(`Failed to load A-Frame from ${sources[sourceIndex]}`);
-              sourceIndex++;
-              tryNextSource();
-            };
-            document.head.appendChild(script);
-          };
-          
-          tryNextSource();
-        });
-      };
-      
-      // Try multiple sources for AR.js
-      const loadARjs = () => {
-        return new Promise((arjsResolve, arjsReject) => {
-          if (typeof window !== 'undefined' && window.ARjs) {
-            arjsResolve(true);
-            return;
+        } else {
+          console.warn('createDefaultXRExperienceAsync not available on this Babylon build');
+          if (mounted) {
+            setIsARReady(false);
+            setIsLoading(false);
           }
-          
-          const sources = [
-            '/arjs/aframe-ar.min.js' // Local copy only (no CDN fallbacks)
-          ];
-          
-          let sourceIndex = 0;
-          
-          const tryNextSource = () => {
-            if (sourceIndex >= sources.length) {
-              // If all sources fail, create a minimal AR.js implementation
-              console.log('All AR.js sources failed, creating minimal implementation');
-              createMinimalARImplementation();
-              arjsResolve(true);
-              return;
-            }
-            
-            const script = document.createElement('script');
-            script.src = sources[sourceIndex];
-            script.async = true;
-            script.crossOrigin = 'anonymous';
-            script.onload = () => {
-              console.log(`AR.js loaded from ${sources[sourceIndex]}`);
-              arjsResolve(true);
-            };
-            script.onerror = () => {
-              console.error(`Failed to load AR.js from ${sources[sourceIndex]}`);
-              sourceIndex++;
-              tryNextSource();
-            };
-            document.head.appendChild(script);
-          };
-          
-          tryNextSource();
-        });
-      };
-      
-      // Load A-Frame first, then AR.js
-      loadAFrame()
-        .then(() => {
-          return loadARjs();
-        })
-        .then(() => {
-          resolve(true);
-        })
-        .catch((err) => {
-          // Even if loading fails, try to create a minimal implementation
-          console.error('Failed to load libraries dynamically:', err);
-          createMinimalARImplementation();
-          resolve(true);
-        });
-    });
-  };
-
-  const createMinimalARImplementation = () => {
-    // Create a minimal implementation of AR.js functionality
-    if (typeof window !== 'undefined' && !window.ARjs) {
-      console.log('Creating minimal AR.js implementation');
-      window.ARjs = {
-        // Minimal AR.js implementation
-      };
-    }
-  };
-
-  const cleanupARScene = () => {
-    if (window.AFRAME && sceneRef.current) {
-      const scene = sceneRef.current.querySelector('a-scene');
-      if (scene) {
-        try {
-          scene.remove();
-        } catch (e) {
-          console.log('Error cleaning up scene:', e);
         }
-      }
-    }
-  };
 
-  const initializeARScene = () => {
-    if (!sceneRef.current) return;
+        engine.runRenderLoop(() => {
+          if (scene && !scene.isDisposed) scene.render();
+        });
 
-    try {
-      // Check if AFRAME is available
-      if (typeof window !== 'undefined' && window.AFRAME) {
-        createARScene();
-        setIsARReady(true);
-        setIsLoading(false);
-      } else {
-        throw new Error('A-Frame library not available');
-      }
-    } catch (err) {
-      console.error('AR initialization error:', err);
-      if (attemptCount < 3) {
-        setAttemptCount(prev => prev + 1);
-        setTimeout(() => {
-          checkLibrariesAndInitialize();
-        }, 1000);
-      } else {
-        setError('Failed to initialize AR: ' + (err as Error).message);
+        const onResize = () => engine.resize();
+        window.addEventListener('resize', onResize);
+
+        // Clean up when effect is torn down
+        return () => {
+          mounted = false;
+          window.removeEventListener('resize', onResize);
+          try {
+            engine.stopRenderLoop();
+            scene.dispose();
+            engine.dispose();
+          } catch (e) {
+            // ignore
+          }
+        };
+      } catch (err: any) {
+        console.error('Failed to initialize Babylon scene:', err);
+        setError(String(err?.message || err));
         setIsLoading(false);
       }
-    }
-  };
+    })();
 
-  // Generate a small tiled dot texture using a canvas and add it as an <img> element
-  const createDotsTexture = () => {
-    if (typeof window === 'undefined') return;
-    // If texture already exists, do nothing
-    if (document.getElementById('arDotsTexture')) return;
-
-    const size = 64;
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Background: subtle translucent white so the real world still shows through
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.fillRect(0, 0, size, size);
-
-    // Draw a small dark dot in the center
-    ctx.fillStyle = '#333';
-    const r = 3;
-    ctx.beginPath();
-    ctx.arc(size / 2, size / 2, r, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Convert to data URL and create an image element A-Frame can reference
-    const dataURL = canvas.toDataURL('image/png');
-    const img = document.createElement('img');
-    img.id = 'arDotsTexture';
-    img.src = dataURL;
-    img.style.display = 'none';
-    document.body.appendChild(img);
-  };
-
-  const createARScene = () => {
-    if (!sceneRef.current) return;
-
-    // Clean up any existing scene
-    cleanupARScene();
-
-    // Clear the container
-    sceneRef.current.innerHTML = '';
-
-    // Create A-Frame scene with AR.js
-    const scene = document.createElement('a-scene');
-    scene.setAttribute('vr-mode-ui', 'enabled: false');
-    scene.setAttribute('renderer', 'logarithmicDepthBuffer: true; antialias: true;');
-    scene.setAttribute('loading-screen', 'enabled: false');
-    
-    // Mobile-specific optimizations
-    if (deviceType === 'mobile') {
-      scene.setAttribute('webxr', 'optionalFeatures: local-floor, bounded-floor; domOverlay: true');
-    }
-    
-    // Different configuration based on mode
-    if (arMode === 'marker') {
-      scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: true; detectionMode: mono_and_matrix; matrixCodeType: 3x3;');
-    } else {
-      scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: true; detectionMode: color_and_matrix;');
-    }
-    
-    // Add a marker for Hiro pattern
-    const marker = document.createElement('a-marker');
-    marker.setAttribute('preset', 'hiro');
-    marker.setAttribute('type', 'pattern');
-    
-    // Create multiple 3D objects for better visualization
-    // Main box
-    const box = document.createElement('a-box');
-    box.setAttribute('position', '0 0.5 0');
-    box.setAttribute('material', 'color: #4F46E5; metalness: 0.8; roughness: 0.2');
-    box.setAttribute('scale', '0.5 0.5 0.5');
-    
-    // Add animation
-    const animation = document.createElement('a-animation');
-    animation.setAttribute('attribute', 'rotation');
-    animation.setAttribute('to', '0 360 0');
-    animation.setAttribute('dur', '3000');
-    animation.setAttribute('easing', 'linear');
-    animation.setAttribute('repeat', 'indefinite');
-    box.appendChild(animation);
-    
-    // Add the box to the marker
-    marker.appendChild(box);
-    
-    // Add a sphere
-    const sphere = document.createElement('a-sphere');
-    sphere.setAttribute('position', '0.8 0.8 0');
-    sphere.setAttribute('radius', '0.25');
-    sphere.setAttribute('color', '#10B981');
-    marker.appendChild(sphere);
-    
-    // Add a cylinder
-    const cylinder = document.createElement('a-cylinder');
-    cylinder.setAttribute('position', '-0.8 0.75 0');
-    cylinder.setAttribute('radius', '0.25');
-    cylinder.setAttribute('height', '0.5');
-    cylinder.setAttribute('color', '#F59E0B');
-    marker.appendChild(cylinder);
-    
-    // Add a text element
-    const text = document.createElement('a-text');
-    text.setAttribute('value', 'AR Demo');
-    text.setAttribute('position', '0 1.5 0');
-    text.setAttribute('align', 'center');
-    text.setAttribute('color', '#ffffff');
-    text.setAttribute('scale', '1.5 1.5 1.5');
-    marker.appendChild(text);
-    
-    // Add marker to scene
-    scene.appendChild(marker);
-
-  // Create a dotted floor texture and add a ground plane under the marker
-  createDotsTexture();
-  const ground = document.createElement('a-plane');
-  // Make the plane face up and be slightly below the marker origin so it doesn't z-fight
-  ground.setAttribute('rotation', '-90 0 0');
-  ground.setAttribute('position', '0 0 0');
-  ground.setAttribute('width', '4');
-  ground.setAttribute('height', '4');
-  // Use the generated texture by id and tile it; make it double-sided
-  ground.setAttribute('material', 'src: #arDotsTexture; repeat: 8 8; side: double; transparent: true;');
-  marker.appendChild(ground);
-
-  // Load a GLB model and add it to the marker so it appears on the real-world marker
-  const model = document.createElement('a-entity');
-  // Choose a default model from /public/models (exists in repo)
-  model.setAttribute('gltf-model', '/models/GroundVehicle.glb');
-  // Position the model so its base sits on the plane; scale may need adjusting per model
-  model.setAttribute('position', '0 0 0');
-  model.setAttribute('rotation', '0 0 0');
-  model.setAttribute('scale', '0.02 0.02 0.02');
-  // Optionally add a small animation so it's easy to see
-  model.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 8000; easing: linear');
-  marker.appendChild(model);
-    
-    // Add a camera entity
-    const camera = document.createElement('a-entity');
-    camera.setAttribute('camera', '');
-    scene.appendChild(camera);
-    
-    // Add scene to container
-    sceneRef.current.appendChild(scene);
-    
-    // Handle scene loaded event
-    scene.addEventListener('loaded', () => {
-      console.log('AR scene loaded successfully');
-      setIsLoading(false);
-      setCameraActive(true);
-    });
-    
-    // Handle marker found event
-    marker.addEventListener('markerFound', () => {
-      console.log('Marker detected!');
-      setMarkerDetected(true);
-    });
-    
-    // Handle marker lost event
-    marker.addEventListener('markerLost', () => {
-      console.log('Marker lost');
-      setMarkerDetected(false);
-    });
-    
-    // Handle render start
-    scene.addEventListener('renderstart', () => {
-      console.log('AR render started');
-    });
-    
-    // Handle AR.js initialization error
-    scene.addEventListener('arjs-error', (event: any) => {
-      console.error('AR.js error:', event.detail.error);
-      setError(`AR.js error: ${event.detail.error}`);
-    });
-  };
+    return () => {
+      const eng = engineRef.current;
+      if (eng) {
+        try {
+          eng.dispose();
+        } catch (e) {}
+      }
+    };
+  }, []);
 
   const resetARSession = () => {
     setError(null);
     setIsLoading(true);
-    setCameraActive(false);
-    setMarkerDetected(false);
-    setAttemptCount(0);
-    setLibraryStatus('loading');
-    
-    // Clean up and reinitialize
-    cleanupARScene();
-    
-    // Try to load libraries dynamically first
-    loadLibrariesDynamically()
-      .then(() => {
-        console.log('Libraries loaded dynamically, initializing AR scene');
-        setTimeout(() => {
-          checkLibrariesAndInitialize();
-        }, 1000);
-      })
-      .catch((err) => {
-        console.error('Failed to load libraries dynamically:', err);
-        // Fall back to regular initialization
-        setTimeout(() => {
-          checkLibrariesAndInitialize();
-        }, 500);
-      });
-  };
-
-  const toggleARMode = () => {
-    setArMode(arMode === 'marker' ? 'experimental' : 'marker');
-    setAttemptCount(0);
+    setIsARReady(false);
+    const eng = engineRef.current;
+    if (eng) {
+      try {
+        eng.dispose();
+      } catch (e) {}
+      engineRef.current = null;
+    }
+    setTimeout(() => window.location.reload(), 300);
   };
 
   return (
     <div className="w-full h-screen relative bg-black">
-      {/* AR Scene Container */}
-      <div 
-        ref={sceneRef} 
-        className="w-full h-full"
-      />
-      
-      {/* Loading indicator */}
+      <canvas ref={canvasRef} className="w-full h-full" />
+
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-20">
           <div className="flex flex-col items-center gap-3 p-4 bg-background/80 rounded-lg max-w-xs">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <div className="text-center">
-              <p className="text-foreground font-medium">
-                {libraryStatus === 'loading' ? 'Loading AR Libraries...' : t('ar.initializing')}
-              </p>
-              <p className="text-muted-foreground text-xs mt-1">
-                {cameraActive ? 'Detecting marker...' : 'Accessing camera...'}
-              </p>
-              <p className="text-muted-foreground text-xs mt-2">
-                Attempt {attemptCount + 1} of 3
-              </p>
-              {deviceType === 'mobile' && (
-                <p className="text-muted-foreground text-xs mt-1">
-                  Mobile optimized
-                </p>
-              )}
+              <p className="text-foreground font-medium">{isARReady ? 'Entering AR...' : 'Initializing AR (Babylon)...'}</p>
+              <p className="text-muted-foreground text-xs mt-1">{isARReady ? 'Starting session' : 'Preparing scene'}</p>
             </div>
           </div>
         </div>
       )}
-      
-      {/* Error message */}
+
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20 p-4">
           <div className="bg-destructive/90 text-destructive-foreground p-4 rounded-lg max-w-md w-full">
@@ -497,21 +148,11 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
                 <p className="font-bold mb-1">AR Error</p>
                 <p className="text-sm mb-3">{error}</p>
                 <div className="flex gap-2">
-                  <Button 
-                    onClick={resetARSession}
-                    variant="secondary"
-                    size="sm"
-                    className="flex-1"
-                  >
+                  <Button onClick={resetARSession} variant="secondary" size="sm" className="flex-1">
                     <RotateCw className="h-4 w-4 mr-1" />
                     Retry
                   </Button>
-                  <Button 
-                    onClick={() => setShowHelp(true)}
-                    variant="secondary"
-                    size="sm"
-                    className="flex-1"
-                  >
+                  <Button onClick={() => setShowHelp(true)} variant="secondary" size="sm" className="flex-1">
                     <HelpCircle className="h-4 w-4 mr-1" />
                     Help
                   </Button>
@@ -521,49 +162,19 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
           </div>
         </div>
       )}
-      
-      {/* Back Button */}
+
       <div className="absolute top-4 left-4 z-10">
-        <Button 
-          onClick={onBack}
-          variant="secondary"
-          className="bg-background/80 backdrop-blur-sm"
-        >
+        <Button onClick={onBack} variant="secondary" className="bg-background/80 backdrop-blur-sm">
           {t('common.back')}
         </Button>
       </div>
-      
-      {/* Help Button */}
+
       <div className="absolute top-4 right-4 z-10 flex gap-2">
-        <Button 
-          onClick={() => setShowHelp(true)}
-          variant="secondary"
-          size="icon"
-          className="bg-background/80 backdrop-blur-sm rounded-full w-12 h-12"
-        >
+        <Button onClick={() => setShowHelp(true)} variant="secondary" size="icon" className="bg-background/80 backdrop-blur-sm rounded-full w-12 h-12">
           <HelpCircle className="h-5 w-5" />
         </Button>
       </div>
-      
-      {/* AR Controls */}
-      <div className="absolute bottom-20 left-0 right-0 z-10 flex justify-center gap-3 px-4">
-        <Button 
-          onClick={resetARSession}
-          variant="secondary"
-          className="bg-background/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg"
-        >
-          <RotateCw className="h-4 w-4" />
-        </Button>
-        <Button 
-          onClick={toggleARMode}
-          variant="secondary"
-          className="bg-background/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg"
-        >
-          <Camera className="h-4 w-4" />
-        </Button>
-      </div>
-      
-      {/* Status Indicator */}
+
       <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
         <div className="bg-background/80 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-1">
           {markerDetected ? (
@@ -571,35 +182,11 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
           ) : (
             <div className="h-3 w-3 rounded-full bg-red-500"></div>
           )}
-          <p className="text-xs text-foreground">
-            {isARReady ? 
-              (arMode === 'marker' ? 'Marker Mode' : 'Experimental Mode') : 
-              'Initializing...'}
-          </p>
+          <p className="text-xs text-foreground">{isARReady ? 'AR Ready (Babylon)' : 'Initializing...'}</p>
         </div>
       </div>
-      
-      {/* Instructions */}
-      <div className="absolute bottom-4 left-0 right-0 z-10 px-4">
-        <div className="bg-background/80 backdrop-blur-sm rounded-lg p-3 mx-auto max-w-md">
-          <p className="text-xs text-foreground text-center">
-            {isARReady 
-              ? (markerDetected 
-                  ? 'Marker detected! Move camera to reposition objects' 
-                  : deviceType === 'mobile'
-                    ? 'Point camera at Hiro marker. Hold device steady 1-2ft from marker'
-                    : 'Point camera at Hiro marker to see 3D objects') 
-              : deviceType === 'mobile'
-                ? 'Make sure you\'re using latest mobile browser with camera permissions'
-                : 'Make sure you\'re using the latest browser'}
-          </p>
-        </div>
-      </div>
-      
-      {/* Help Modal */}
-      {showHelp && (
-        <ARHelpModal onClose={() => setShowHelp(false)} />
-      )}
+
+      {showHelp && <ARHelpModal onClose={() => setShowHelp(false)} />}
     </div>
   );
 }

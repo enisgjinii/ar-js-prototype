@@ -14,7 +14,7 @@
     "check": "pnpm run format:check && pnpm run lint && pnpm run type-check",
     "fix": "pnpm run format && pnpm run lint:fix",
     "start": "next start",
-    "copy-cesium-assets": "node ./scripts/copy-cesium-assets.js && node ./scripts/copy-aframe.js && node ./scripts/copy-arjs.js"
+    "copy-cesium-assets": "node ./scripts/copy-cesium-assets.js"
   },
   "dependencies": {
     "@babylonjs/core": "^8.32.2",
@@ -51,8 +51,6 @@
     "@vercel/analytics": "latest",
     "autoprefixer": "^10.4.20",
     "cesium": "^1.134.1",
-  "ar.js": "github:AR-js-org/AR.js#master",
-  "aframe": "1.4.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
