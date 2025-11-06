@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import AudioGuideView from '@/components/audio-guide-view';
-import CesiumARView from '@/components/cesium-ar-view';
 import ARCameraView from '@/components/ar-camera-view';
 import Navigation from '@/components/navigation';
 import { Button } from '@/components/ui/button';
@@ -28,7 +27,7 @@ import {
 import ARHelpModal from '@/components/ar-help-modal';
 
 export default function Home() {
-  const [activeView, setActiveView] = useState<'audio' | 'cesium' | 'ar'>(
+  const [activeView, setActiveView] = useState<'audio' | 'ar'>(
     'audio'
   );
   const { theme, setTheme } = useTheme();
@@ -46,7 +45,7 @@ export default function Home() {
   const t = useT();
 
   // Handle view change without automatically pausing audio
-  const handleViewChange = (view: 'audio' | 'cesium' | 'ar') => {
+  const handleViewChange = (view: 'audio' | 'ar') => {
     // Audio will continue playing in the background
     // Users can control it through the navigation controls
     setActiveView(view);
@@ -114,8 +113,6 @@ export default function Home() {
           onPause={handleAudioPause}
           onStop={handleAudioReset}
         />
-      ) : activeView === 'cesium' ? (
-        <CesiumARView />
       ) : (
         <ARCameraView onBack={() => setActiveView('audio')} />
       )}
