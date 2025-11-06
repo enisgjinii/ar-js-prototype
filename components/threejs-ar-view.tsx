@@ -104,10 +104,9 @@ export default function ThreeJSARView({ onBack }: ThreeJSARViewProps) {
 
             console.log('✅ Test cube added at (0, 0, -0.5)');
 
-            // Start XR session
+            // Start XR session with more compatible settings
             const session = await navigator.xr.requestSession('immersive-ar', {
-                requiredFeatures: ['local'],
-                optionalFeatures: ['hit-test', 'dom-overlay', 'light-estimation']
+                optionalFeatures: ['hit-test', 'dom-overlay', 'light-estimation', 'local', 'local-floor', 'bounded-floor']
             });
 
             await renderer.xr.setSession(session);
@@ -116,13 +115,33 @@ export default function ThreeJSARView({ onBack }: ThreeJSARViewProps) {
             setIsARActive(true);
             setIsLoading(false);
 
-            // Set up hit testing for surface detection
+            // Set up hit testing for surface detection with fallback reference spaces
             let hitTestSource: XRHitTestSource | null = null;
             let reticle: any = null;
+            let referenceSpace: XRReferenceSpace | null = null;
 
-            session.requestReferenceSpace('viewer').then((referenceSpace) => {
-                session.requestHitTestSource!({ space: referenceSpace })?.then((source) => {
-                    hitTestSource = source;
+            // Try different reference space types in order of preference
+            const referenceSpaceTypes = ['local-floor', 'local', 'viewer'];
+
+            for (const spaceType of referenceSpaceTypes) {
+                try {
+                    referenceSpace = await session.requestReferenceSpace(spaceType as XRReferenceSpaceType);
+                    console.log(`✅ Reference space created: ${spaceType}`);
+                    break;
+                } catch (e) {
+                    console.warn(`Reference space '${spaceType}' not supported:`, e);
+                }
+            }
+
+            if (!referenceSpace) {
+                throw new Error('No supported reference space found');
+            }
+
+            // Set up hit test source
+            try {
+                if (session.requestHitTestSource) {
+                    const source = await session.requestHitTestSource({ space: referenceSpace });
+                    hitTestSource = source || null;
                     console.log('✅ Hit test source created');
 
                     // Create reticle (placement indicator)
@@ -137,8 +156,12 @@ export default function ThreeJSARView({ onBack }: ThreeJSARViewProps) {
                     reticle.visible = false;
                     scene.add(reticle);
                     console.log('✅ Reticle created');
-                });
-            });
+                } else {
+                    console.warn('Hit test not supported on this device');
+                }
+            } catch (e) {
+                console.warn('Hit test setup failed:', e);
+            }
 
             // Handle screen taps for object placement
             let tapCount = 0;
@@ -204,13 +227,12 @@ export default function ThreeJSARView({ onBack }: ThreeJSARViewProps) {
 
             // Handle XR frame updates for hit testing
             const onXRFrame = (time: number, frame: XRFrame) => {
-                if (hitTestSource && reticle) {
-                    const referenceSpace = renderer.xr.getReferenceSpace();
+                if (hitTestSource && reticle && referenceSpace) {
                     const hitTestResults = frame.getHitTestResults(hitTestSource);
 
                     if (hitTestResults.length > 0) {
                         const hit = hitTestResults[0];
-                        const pose = hit.getPose(referenceSpace!);
+                        const pose = hit.getPose(referenceSpace);
 
                         if (pose) {
                             reticle.visible = true;
