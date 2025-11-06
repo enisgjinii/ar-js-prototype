@@ -214,7 +214,7 @@ export default function AdvancedWebXRAR({ onBack }: AdvancedWebXRARProps) {
 
                     if (hitTestResults.length > 0) {
                         const hit = hitTestResults[0];
-                        const pose = hit.getPose(referenceSpace);
+                        const pose = hit.getPose(referenceSpace!);
 
                         if (pose) {
                             reticle.visible = true;

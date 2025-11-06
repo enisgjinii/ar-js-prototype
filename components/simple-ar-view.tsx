@@ -200,7 +200,7 @@ export default function SimpleARView({ onBack }: SimpleARViewProps) {
                 session.requestAnimationFrame(animate);
 
                 // Get viewer pose
-                const pose = frame.getViewerPose(referenceSpace);
+                const pose = frame.getViewerPose(referenceSpace!);
                 if (pose) {
                     // Update camera
                     const view = pose.views[0];
