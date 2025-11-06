@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import AudioGuideView from '@/components/audio-guide-view';
-import ARCameraView from '@/components/ar-camera-view';
+import SimpleARView from '@/components/simple-ar-view';
 import Navigation from '@/components/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -114,7 +114,7 @@ export default function Home() {
           onStop={handleAudioReset}
         />
       ) : (
-        <ARCameraView onBack={() => setActiveView('audio')} />
+        <SimpleARView onBack={() => setActiveView('audio')} />
       )}
 
       {/* Middle left sidebar for theme, language switchers, and audio controls */}
