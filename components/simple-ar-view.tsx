@@ -78,12 +78,14 @@ export default function SimpleARView({ onBack }: SimpleARViewProps) {
             if (!gl) throw new Error('WebGL not supported');
 
             // Make sure context is XR compatible
-            await gl.makeXRCompatible();
+            if ('makeXRCompatible' in gl) {
+                await (gl as any).makeXRCompatible();
+            }
 
             // Request AR session
             const session = await navigator.xr.requestSession('immersive-ar', {
-                requiredFeatures: ['local'],
-                optionalFeatures: ['hit-test', 'dom-overlay']
+                requiredFeatures: [],
+                optionalFeatures: ['local-floor', 'bounded-floor', 'hit-test']
             });
 
             xrRef.current = { session };
@@ -96,7 +98,36 @@ export default function SimpleARView({ onBack }: SimpleARViewProps) {
             });
 
             // Get reference space
-            const referenceSpace = await session.requestReferenceSpace('local');
+            // Gracefully fallback through supported reference spaces to avoid runtime errors
+            const preferredSpaces: XRReferenceSpaceType[] = ['local-floor', 'bounded-floor', 'local', 'unbounded', 'viewer'];
+            let referenceSpace: XRReferenceSpace | null = null;
+            let activeReferenceSpaceType: XRReferenceSpaceType | null = null;
+
+            // Some browsers expose requestReferenceSpace on the XRSession, others on navigator.xr.
+            // Bind the available function to keep a consistent call signature.
+            const requestRefSpace = (session as any).requestReferenceSpace?.bind(session) ||
+                (navigator.xr as any).requestReferenceSpace?.bind(navigator.xr);
+
+            if (!requestRefSpace) {
+                throw new Error('requestReferenceSpace is not available on this browser (neither on XRSession nor navigator.xr).');
+            }
+
+            for (const spaceType of preferredSpaces) {
+                try {
+                    // Try the available API (session or navigator.xr)
+                    referenceSpace = await requestRefSpace(spaceType);
+                    activeReferenceSpaceType = spaceType;
+                    console.log(`✅ Using reference space: ${spaceType}`);
+                    break;
+                } catch (spaceError: any) {
+                    // Continue trying other space types — some runtimes only support a subset.
+                    console.warn(`ℹ️ Reference space "${spaceType}" not supported on this device.`, spaceError);
+                }
+            }
+
+            if (!referenceSpace || !activeReferenceSpaceType) {
+                throw new Error('This device does not expose a compatible WebXR reference space. Try Chrome on Android with ARCore.');
+            }
 
             setIsARActive(true);
             setIsLoading(false);
