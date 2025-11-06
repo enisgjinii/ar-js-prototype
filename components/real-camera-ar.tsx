@@ -190,50 +190,73 @@ export default function RealCameraAR({ onBack }: RealCameraARProps) {
 
             renderer.domElement.addEventListener('click', handleTap);
 
-            // Step 6: Device orientation tracking for AR
-            let initialAlpha: number | null = null;
-            let initialBeta: number | null = null;
-            let initialGamma: number | null = null;
+            // Step 6: Manual camera control (no auto-rotation)
+            // Objects stay in world space, user can manually look around by dragging
+            let isDragging = false;
+            let previousMouseX = 0;
+            let previousMouseY = 0;
 
-            const handleOrientation = (event: DeviceOrientationEvent) => {
-                if (event.alpha === null || event.beta === null || event.gamma === null) return;
-
-                // Store initial orientation on first reading
-                if (initialAlpha === null) {
-                    initialAlpha = event.alpha;
-                    initialBeta = event.beta;
-                    initialGamma = event.gamma;
-                    console.log('📱 Initial orientation set:', { alpha: initialAlpha, beta: initialBeta, gamma: initialGamma });
-                    return;
-                }
-
-                // Calculate rotation relative to initial orientation
-                const deltaAlpha = (event.alpha - (initialAlpha || 0)) * (Math.PI / 180);
-                const deltaBeta = (event.beta - (initialBeta || 0)) * (Math.PI / 180);
-                const deltaGamma = (event.gamma - (initialGamma || 0)) * (Math.PI / 180);
-
-                // Apply rotation to camera (inverted so objects stay in world space)
-                camera.rotation.order = 'YXZ';
-                camera.rotation.y = -deltaAlpha; // Horizontal rotation (inverted)
-                camera.rotation.x = -deltaBeta;  // Vertical tilt (inverted)
-                camera.rotation.z = deltaGamma;  // Roll
+            const handleMouseDown = (event: MouseEvent) => {
+                isDragging = true;
+                previousMouseX = event.clientX;
+                previousMouseY = event.clientY;
             };
 
-            // Request device orientation permission (iOS 13+)
-            if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
-                (DeviceOrientationEvent as any).requestPermission()
-                    .then((response: string) => {
-                        if (response === 'granted') {
-                            window.addEventListener('deviceorientation', handleOrientation, true);
-                            console.log('✅ Device orientation tracking enabled (iOS)');
-                        }
-                    })
-                    .catch(console.error);
-            } else {
-                // Non-iOS devices
-                window.addEventListener('deviceorientation', handleOrientation, true);
-                console.log('✅ Device orientation tracking enabled');
-            }
+            const handleMouseMove = (event: MouseEvent) => {
+                if (!isDragging) return;
+
+                const deltaX = event.clientX - previousMouseX;
+                const deltaY = event.clientY - previousMouseY;
+
+                // Rotate camera based on drag
+                camera.rotation.y -= deltaX * 0.005; // Horizontal rotation
+                camera.rotation.x -= deltaY * 0.005; // Vertical rotation
+                camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x)); // Limit vertical
+
+                previousMouseX = event.clientX;
+                previousMouseY = event.clientY;
+            };
+
+            const handleMouseUp = () => {
+                isDragging = false;
+            };
+
+            // Add touch support for mobile
+            const handleTouchStart = (event: TouchEvent) => {
+                if (event.touches.length === 1) {
+                    isDragging = true;
+                    previousMouseX = event.touches[0].clientX;
+                    previousMouseY = event.touches[0].clientY;
+                }
+            };
+
+            const handleTouchMove = (event: TouchEvent) => {
+                if (!isDragging || event.touches.length !== 1) return;
+
+                const deltaX = event.touches[0].clientX - previousMouseX;
+                const deltaY = event.touches[0].clientY - previousMouseY;
+
+                camera.rotation.y -= deltaX * 0.005;
+                camera.rotation.x -= deltaY * 0.005;
+                camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+
+                previousMouseX = event.touches[0].clientX;
+                previousMouseY = event.touches[0].clientY;
+            };
+
+            const handleTouchEnd = () => {
+                isDragging = false;
+            };
+
+            // Add event listeners for camera control
+            renderer.domElement.addEventListener('mousedown', handleMouseDown);
+            renderer.domElement.addEventListener('mousemove', handleMouseMove);
+            renderer.domElement.addEventListener('mouseup', handleMouseUp);
+            renderer.domElement.addEventListener('touchstart', handleTouchStart);
+            renderer.domElement.addEventListener('touchmove', handleTouchMove);
+            renderer.domElement.addEventListener('touchend', handleTouchEnd);
+
+            console.log('✅ Manual camera control enabled (drag to look around)');
 
             // Step 7: Animation loop
             const animate = () => {
@@ -261,8 +284,13 @@ export default function RealCameraAR({ onBack }: RealCameraARProps) {
             // Store cleanup
             (container as any)._cleanup = () => {
                 renderer.domElement.removeEventListener('click', handleTap);
+                renderer.domElement.removeEventListener('mousedown', handleMouseDown);
+                renderer.domElement.removeEventListener('mousemove', handleMouseMove);
+                renderer.domElement.removeEventListener('mouseup', handleMouseUp);
+                renderer.domElement.removeEventListener('touchstart', handleTouchStart);
+                renderer.domElement.removeEventListener('touchmove', handleTouchMove);
+                renderer.domElement.removeEventListener('touchend', handleTouchEnd);
                 window.removeEventListener('resize', handleResize);
-                window.removeEventListener('deviceorientation', handleOrientation);
                 if (streamRef.current) {
                     streamRef.current.getTracks().forEach(track => track.stop());
                 }
@@ -371,10 +399,10 @@ export default function RealCameraAR({ onBack }: RealCameraARProps) {
                     </div>
 
                     <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10">
-                        <div className="bg-black/70 text-white px-6 py-3 rounded-lg text-center">
-                            <p className="font-medium">👆 Tap to place objects on floor</p>
+                        <div className="bg-black/70 text-white px-6 py-3 rounded-lg text-center max-w-sm">
+                            <p className="font-medium">👆 Tap to place | 👋 Drag to look around</p>
                             <p className="text-sm opacity-80">Objects placed: {objectsPlaced}</p>
-                            <p className="text-xs opacity-60">Red cube = 3D test | Spheres = floor objects</p>
+                            <p className="text-xs opacity-60">Objects stay in place - drag screen to change view</p>
                         </div>
                     </div>
                 </>
