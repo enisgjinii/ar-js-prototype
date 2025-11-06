@@ -37,6 +37,30 @@
     </div>
 
     <!-- A-Frame AR Scene -->
+    <script>
+      // generate small dot texture for ground tiling
+      (function(){
+        const size = 64;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.fillRect(0, 0, size, size);
+        ctx.fillStyle = '#333';
+        ctx.beginPath();
+        ctx.arc(size/2, size/2, 3, 0, Math.PI * 2);
+        ctx.fill();
+        const dataURL = canvas.toDataURL('image/png');
+        const img = document.createElement('img');
+        img.id = 'arDotsTexture';
+        img.src = dataURL;
+        img.style.display = 'none';
+        document.body.appendChild(img);
+      })();
+    </script>
+
     <a-scene
       vr-mode-ui="enabled: false"
       arjs="sourceType: webcam; debugUIEnabled: true;"
@@ -79,6 +103,10 @@
           color="#ffffff"
           scale="1.5 1.5 1.5"
         ></a-text>
+
+        <!-- Load a GLB model and a dotted ground plane -->
+        <a-entity gltf-model="/models/GroundVehicle.glb" position="0 0 0" rotation="0 0 0" scale="0.02 0.02 0.02"></a-entity>
+        <a-plane rotation="-90 0 0" position="0 0 0" width="4" height="4" material="src: #arDotsTexture; repeat: 8 8; side: double; transparent: true"></a-plane>
       </a-marker>
       
       <!-- Camera -->

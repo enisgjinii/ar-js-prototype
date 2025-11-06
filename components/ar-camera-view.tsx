@@ -58,39 +58,31 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
       return;
     }
     
-    // If not available, try to load them dynamically
+    // If not available, try to load them dynamically (once per attempt cycle)
     if (attemptCount < 3) {
       console.log(`Attempt ${attemptCount + 1} to load AR libraries`);
-      
-      // Set a timeout to check again
-      const checkTimer = setTimeout(() => {
-        if (typeof window !== 'undefined' && window.AFRAME && window.ARjs) {
-          console.log('AR libraries loaded after delay');
-          setLibraryStatus('loaded');
-          initializeARScene();
-        } else {
-          console.log('AR libraries still not loaded, retrying...');
+
+      // Try to load A-Frame and AR.js dynamically; if that fails, we'll retry
+      loadLibrariesDynamically()
+        .then(() => {
+          // Wait a short moment for scripts to initialize
+          setTimeout(() => {
+            if (typeof window !== 'undefined' && window.AFRAME && window.ARjs) {
+              console.log('AR libraries loaded after dynamic load');
+              setLibraryStatus('loaded');
+              initializeARScene();
+            } else {
+              console.log('Dynamic load finished but libraries not available yet, scheduling retry');
+              setAttemptCount(prev => prev + 1);
+              setTimeout(checkLibrariesAndInitialize, 1000);
+            }
+          }, 800);
+        })
+        .catch((err) => {
+          console.error('Dynamic library load failed:', err);
           setAttemptCount(prev => prev + 1);
-          checkLibrariesAndInitialize();
-        }
-      }, 2000);
-      
-      // Also listen for potential load events
-      const handleAFRAMELoad = () => {
-        if (window.AFRAME && window.ARjs) {
-          console.log('AR libraries loaded via event listener');
-          clearTimeout(checkTimer);
-          setLibraryStatus('loaded');
-          initializeARScene();
-        }
-      };
-      
-      window.addEventListener('aframe-loaded', handleAFRAMELoad);
-      
-      // Clean up event listener after timeout
-      setTimeout(() => {
-        window.removeEventListener('aframe-loaded', handleAFRAMELoad);
-      }, 2500);
+          setTimeout(checkLibrariesAndInitialize, 1000);
+        });
     } else {
       setLibraryStatus('error');
       setError('AR libraries failed to load. Please check your internet connection and refresh the page.');
@@ -254,6 +246,39 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
     }
   };
 
+  // Generate a small tiled dot texture using a canvas and add it as an <img> element
+  const createDotsTexture = () => {
+    if (typeof window === 'undefined') return;
+    // If texture already exists, do nothing
+    if (document.getElementById('arDotsTexture')) return;
+
+    const size = 64;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Background: subtle translucent white so the real world still shows through
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.fillRect(0, 0, size, size);
+
+    // Draw a small dark dot in the center
+    ctx.fillStyle = '#333';
+    const r = 3;
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Convert to data URL and create an image element A-Frame can reference
+    const dataURL = canvas.toDataURL('image/png');
+    const img = document.createElement('img');
+    img.id = 'arDotsTexture';
+    img.src = dataURL;
+    img.style.display = 'none';
+    document.body.appendChild(img);
+  };
+
   const createARScene = () => {
     if (!sceneRef.current) return;
 
@@ -331,6 +356,30 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
     
     // Add marker to scene
     scene.appendChild(marker);
+
+  // Create a dotted floor texture and add a ground plane under the marker
+  createDotsTexture();
+  const ground = document.createElement('a-plane');
+  // Make the plane face up and be slightly below the marker origin so it doesn't z-fight
+  ground.setAttribute('rotation', '-90 0 0');
+  ground.setAttribute('position', '0 0 0');
+  ground.setAttribute('width', '4');
+  ground.setAttribute('height', '4');
+  // Use the generated texture by id and tile it; make it double-sided
+  ground.setAttribute('material', 'src: #arDotsTexture; repeat: 8 8; side: double; transparent: true;');
+  marker.appendChild(ground);
+
+  // Load a GLB model and add it to the marker so it appears on the real-world marker
+  const model = document.createElement('a-entity');
+  // Choose a default model from /public/models (exists in repo)
+  model.setAttribute('gltf-model', '/models/GroundVehicle.glb');
+  // Position the model so its base sits on the plane; scale may need adjusting per model
+  model.setAttribute('position', '0 0 0');
+  model.setAttribute('rotation', '0 0 0');
+  model.setAttribute('scale', '0.02 0.02 0.02');
+  // Optionally add a small animation so it's easy to see
+  model.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 8000; easing: linear');
+  marker.appendChild(model);
     
     // Add a camera entity
     const camera = document.createElement('a-entity');
