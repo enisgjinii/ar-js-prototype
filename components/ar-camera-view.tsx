@@ -45,6 +45,19 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
           // ignore
         }
       }
+      // cleanup any hit-test/reticle handlers
+      try {
+        if (xrRef.current) {
+          const r: any = xrRef.current._reticle;
+          const hitTest: any = xrRef.current._hitTest;
+          const onTap: any = xrRef.current._onTap;
+          if (r && !r.isDisposed) r.dispose();
+          if (hitTest && hitTest.dispose) hitTest.dispose();
+          if (onTap && canvasRef.current) canvasRef.current.removeEventListener('click', onTap);
+        }
+      } catch (e) {
+        // ignore
+      }
     };
   }, []);
 
@@ -112,7 +125,13 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
 
       if ((scene as any).createDefaultXRExperienceAsync) {
         try {
-          const xr = await (scene as any).createDefaultXRExperienceAsync({ uiOptions: { sessionMode: 'immersive-ar' } });
+          // Request common optional WebXR features for AR: hit-test (placement), anchors (persistence),
+          // local-floor reference and dom-overlay for UI overlays. These are optional and will be
+          // negotiated by the browser; requesting them can improve behavior on capable devices.
+          const xr = await (scene as any).createDefaultXRExperienceAsync({
+            uiOptions: { sessionMode: 'immersive-ar' },
+            optionalFeatures: ['hit-test', 'anchors', 'local-floor', 'bounded-floor', 'dom-overlay']
+          });
           xrRef.current = xr;
 
           // Try to explicitly enter an AR session. Some devices require an explicit enter call
@@ -129,6 +148,101 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
 
           setIsARReady(true);
           setIsLoading(false);
+
+          // --- Plane detection (hit-test) and placement reticle ---
+          try {
+            const fm = xr.baseExperience && xr.baseExperience.featuresManager;
+            if (fm && (BABYLON as any).WebXRHitTest) {
+              const WebXRHitTest = (BABYLON as any).WebXRHitTest;
+              const hitTest = fm.enableFeature(WebXRHitTest, 'latest', { preferredResultCount: 1 });
+
+              // create a placement reticle (transparent plane with grid material)
+              const MeshBuilder = (BABYLON as any).MeshBuilder;
+              const Vector3 = (BABYLON as any).Vector3;
+              const Quaternion = (BABYLON as any).Quaternion;
+
+              const reticle = MeshBuilder.CreatePlane('xr-reticle', { size: 0.4 }, scene);
+              reticle.rotate(new (BABYLON as any).Vector3(1, 0, 0), Math.PI / 2, BABYLON as any);
+
+              // GridMaterial from @babylonjs/materials if available
+              let gridMat: any = null;
+              try {
+                const GridMaterial = (BABYLON as any).GridMaterial;
+                if (GridMaterial) {
+                  gridMat = new GridMaterial('xr-grid', scene);
+                  gridMat.majorUnitFrequency = 5;
+                  gridMat.minorUnitVisibility = 0.45;
+                  gridMat.gridRatio = 0.05;
+                  gridMat.mainColor = new (BABYLON as any).Color3(0.08, 0.08, 0.08);
+                  gridMat.lineColor = new (BABYLON as any).Color3(1, 1, 1);
+                  gridMat.opacity = 0.9;
+                }
+              } catch (e) {
+                gridMat = null;
+              }
+
+              if (gridMat) reticle.material = gridMat;
+              else {
+                const mat = new (BABYLON as any).StandardMaterial('xr-reticle-mat', scene);
+                mat.diffuseColor = new (BABYLON as any).Color3(0.2, 0.7, 0.7);
+                mat.alpha = 0.6;
+                reticle.material = mat;
+              }
+
+              reticle.isVisible = false;
+
+              let lastHitPose: { position: any; rotationQuaternion: any } | null = null;
+
+              hitTest.onHitTestResultObservable.add((results: any[]) => {
+                if (!results || results.length === 0) {
+                  reticle.isVisible = false;
+                  lastHitPose = null;
+                  return;
+                }
+                const hit = results[0];
+                const matArr = hit.transformationMatrix || hit.transformationMatrixFromHit || hit.matrix;
+                if (!matArr) {
+                  reticle.isVisible = false;
+                  lastHitPose = null;
+                  return;
+                }
+                try {
+                  const M = (BABYLON as any).Matrix.FromArray(matArr);
+                  const scale = new (BABYLON as any).Vector3();
+                  const rot = new (BABYLON as any).Quaternion();
+                  const pos = new (BABYLON as any).Vector3();
+                  M.decompose(scale, rot, pos);
+                  reticle.position.copyFrom(pos);
+                  reticle.rotationQuaternion = rot;
+                  reticle.isVisible = true;
+                  lastHitPose = { position: pos.clone(), rotationQuaternion: rot.clone() };
+                } catch (e) {
+                  // ignore decomposition issues
+                }
+              });
+
+              // Place an object on tap using last hit pose
+              const onTap = () => {
+                if (!lastHitPose) return;
+                const sphere = MeshBuilder.CreateSphere('placed-' + Date.now(), { diameter: 0.2 }, scene);
+                sphere.position = lastHitPose.position.clone();
+                sphere.rotationQuaternion = lastHitPose.rotationQuaternion.clone();
+                const sm = new (BABYLON as any).StandardMaterial('placed-mat', scene);
+                sm.diffuseColor = new (BABYLON as any).Color3(0.1, 0.8, 0.6);
+                sphere.material = sm;
+              };
+
+              canvas.addEventListener('click', onTap);
+
+              // store cleanup handlers
+              (xrRef.current as any)._reticle = reticle;
+              (xrRef.current as any)._hitTest = hitTest;
+              (xrRef.current as any)._onTap = onTap;
+            }
+          } catch (e) {
+            // Non-fatal: plane detection best-effort
+            console.warn('Hit-test / plane detection setup failed:', e);
+          }
 
           // optional: observe state changes
           try {
