@@ -72,6 +72,14 @@ export default function SimpleARView({ onBack }: SimpleARViewProps) {
             engine.runRenderLoop(() => scene.render());
             window.addEventListener('resize', () => engine.resize());
 
+            // Get XR-compatible WebGL context FIRST
+            const gl = canvas.getContext('webgl2', { xrCompatible: true }) ||
+                canvas.getContext('webgl', { xrCompatible: true });
+            if (!gl) throw new Error('WebGL not supported');
+
+            // Make sure context is XR compatible
+            await gl.makeXRCompatible();
+
             // Request AR session
             const session = await navigator.xr.requestSession('immersive-ar', {
                 requiredFeatures: ['local'],
@@ -80,9 +88,7 @@ export default function SimpleARView({ onBack }: SimpleARViewProps) {
 
             xrRef.current = { session };
 
-            // Set up WebGL layer
-            const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
-            if (!gl) throw new Error('WebGL not supported');
+            // Set up WebGL layer (now with XR-compatible context)
             const layer = new XRWebGLLayer(session, gl);
 
             await session.updateRenderState({
