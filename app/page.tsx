@@ -49,7 +49,10 @@ export default function Home() {
   const handleViewChange = (view: 'audio' | 'ar') => {
     // If user selects AR, navigate to the dedicated AR page
     if (view === 'ar') {
-      router.push('/working-ar');
+      // Open the AR.js location-based docs in a new tab instead of the local Babylon demo
+      if (typeof window !== 'undefined') {
+        window.open('https://ar-js-org.github.io/AR.js-Docs/location-based/', '_blank', 'noopener');
+      }
       return;
     }
     // Audio will continue playing in the background
