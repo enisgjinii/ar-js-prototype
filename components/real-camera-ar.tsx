@@ -128,47 +128,99 @@ export default function RealCameraAR({ onBack }: RealCameraARProps) {
             setIsARActive(true);
             setIsLoading(false);
 
-            // Step 5: Handle taps for floor placement
+            // Step 5: Handle taps for precise placement
             let tapCount = 0;
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+
             const handleTap = (event: MouseEvent) => {
                 tapCount++;
                 console.log('👆 Tap detected #', tapCount);
 
-                // Calculate floor position (below camera)
-                const floorY = -1; // Floor level
-                const x = (Math.random() - 0.5) * 2; // Random X position
-                const z = -1 - Math.random() * 2; // In front of camera
+                // Get tap coordinates relative to screen
+                const rect = renderer.domElement.getBoundingClientRect();
+                mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-                // Create sphere on floor
-                const geometry = new THREE.SphereGeometry(0.05, 16, 16);
+                // Cast ray from camera through tap point
+                raycaster.setFromCamera(mouse, camera);
+
+                // Calculate where ray hits an imaginary floor plane
+                const floorY = -0.8; // Floor level (closer to camera level)
+                const rayDirection = raycaster.ray.direction;
+                const rayOrigin = raycaster.ray.origin;
+
+                // Calculate intersection with floor plane (y = floorY)
+                const t = (floorY - rayOrigin.y) / rayDirection.y;
+                const intersectionPoint = new THREE.Vector3(
+                    rayOrigin.x + rayDirection.x * t,
+                    floorY,
+                    rayOrigin.z + rayDirection.z * t
+                );
+
+                // Create sphere at tap location
+                const geometry = new THREE.SphereGeometry(0.04, 16, 16);
                 const material = new THREE.MeshStandardMaterial({
-                    color: new (THREE as any).Color().setHSL(Math.random(), 0.7, 0.6),
-                    metalness: 0.3,
-                    roughness: 0.4
+                    color: new (THREE as any).Color().setHSL(Math.random(), 0.8, 0.6),
+                    metalness: 0.4,
+                    roughness: 0.3,
+                    emissive: new (THREE as any).Color().setHSL(Math.random(), 0.5, 0.1)
                 });
                 const sphere = new THREE.Mesh(geometry, material);
-                sphere.position.set(x, floorY, z);
+                sphere.position.copy(intersectionPoint);
                 scene.add(sphere);
 
-                // Add bounce animation
+                // Add gentle bounce animation
                 let time = 0;
+                const baseY = intersectionPoint.y;
                 const animate = () => {
                     if (sphere.parent) {
-                        time += 0.05;
-                        sphere.position.y = floorY + Math.abs(Math.sin(time)) * 0.1;
-                        sphere.rotation.y += 0.02;
+                        time += 0.03;
+                        sphere.position.y = baseY + Math.abs(Math.sin(time)) * 0.05;
+                        sphere.rotation.x += 0.01;
+                        sphere.rotation.y += 0.015;
                         requestAnimationFrame(animate);
                     }
                 };
                 animate();
 
                 setObjectsPlaced(tapCount);
-                console.log('🎯 Sphere placed on floor at:', x, floorY, z);
+                console.log('🎯 Sphere placed at tap location:', intersectionPoint);
             };
 
             renderer.domElement.addEventListener('click', handleTap);
 
-            // Step 6: Animation loop
+            // Step 6: Device orientation tracking
+            let alpha = 0, beta = 0, gamma = 0;
+
+            const handleOrientation = (event: DeviceOrientationEvent) => {
+                alpha = event.alpha || 0; // Z axis
+                beta = event.beta || 0;   // X axis
+                gamma = event.gamma || 0; // Y axis
+
+                // Update camera rotation based on device orientation
+                camera.rotation.x = (beta * Math.PI) / 180;
+                camera.rotation.y = (alpha * Math.PI) / 180;
+                camera.rotation.z = (gamma * Math.PI) / 180;
+            };
+
+            // Request device orientation permission (iOS 13+)
+            if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+                (DeviceOrientationEvent as any).requestPermission()
+                    .then((response: string) => {
+                        if (response === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation);
+                            console.log('✅ Device orientation tracking enabled');
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                // Non-iOS devices
+                window.addEventListener('deviceorientation', handleOrientation);
+                console.log('✅ Device orientation tracking enabled');
+            }
+
+            // Step 7: Animation loop
             const animate = () => {
                 if (renderer && scene && camera) {
                     // Rotate test cube
@@ -195,6 +247,7 @@ export default function RealCameraAR({ onBack }: RealCameraARProps) {
             (container as any)._cleanup = () => {
                 renderer.domElement.removeEventListener('click', handleTap);
                 window.removeEventListener('resize', handleResize);
+                window.removeEventListener('deviceorientation', handleOrientation);
                 if (streamRef.current) {
                     streamRef.current.getTracks().forEach(track => track.stop());
                 }
