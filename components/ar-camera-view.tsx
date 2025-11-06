@@ -72,6 +72,13 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
       engineRef.current = engine;
 
       const scene = new Scene(engine);
+      // Make the scene transparent so the underlying camera/video feed is visible
+      try {
+        const Color4 = (BABYLON as any).Color4;
+        if (Color4) scene.clearColor = new Color4(0, 0, 0, 0);
+      } catch (e) {
+        // ignore if Color4 isn't available
+      }
       sceneRef.current = scene;
 
       // Simple light so the scene isn't totally dark
@@ -84,11 +91,42 @@ export default function ARCameraView({ onBack }: ARCameraViewProps) {
 
       window.addEventListener('resize', () => engine.resize());
 
-      // Try to create an immersive-ar session when user explicitly requests it
+      // Try to create an immersive-ar session when user explicitly requests it.
+      // First do a quick feature check so we can show a helpful message instead of a black canvas.
+      let immersiveArSupported = false;
+      try {
+        if (navigator && (navigator as any).xr && (navigator as any).xr.isSessionSupported) {
+          immersiveArSupported = await (navigator as any).xr.isSessionSupported('immersive-ar');
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      if (!immersiveArSupported) {
+        console.warn('immersive-ar not supported on this device/browser');
+        setError('WebXR immersive-ar not supported by this browser or device');
+        setIsLoading(false);
+        setIsARReady(false);
+        return;
+      }
+
       if ((scene as any).createDefaultXRExperienceAsync) {
         try {
           const xr = await (scene as any).createDefaultXRExperienceAsync({ uiOptions: { sessionMode: 'immersive-ar' } });
           xrRef.current = xr;
+
+          // Try to explicitly enter an AR session. Some devices require an explicit enter call
+          // so the camera feed becomes visible. If this fails, we still keep the helper so the
+          // user can try again via the UI.
+          try {
+            if (xr.baseExperience && xr.baseExperience.enterXRAsync) {
+              await xr.baseExperience.enterXRAsync('immersive-ar', 'local-floor');
+            }
+          } catch (enterErr) {
+            // Not fatal: entering XR might be handled differently on some builds/devices
+            console.warn('enterXRAsync failed:', enterErr);
+          }
+
           setIsARReady(true);
           setIsLoading(false);
 
