@@ -3,74 +3,78 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/lib/locale';
-import { Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 
-interface AFrameARViewProps {
+interface CameraARViewProps {
     onBack?: () => void;
 }
 
-// A-Frame AR - Most reliable mobile AR solution
-export default function AFrameARView({ onBack }: AFrameARViewProps) {
+// Simple AR with visible camera feed
+export default function CameraARView({ onBack }: CameraARViewProps) {
     const t = useT();
     const containerRef = useRef<HTMLDivElement | null>(null);
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isARActive, setIsARActive] = useState(false);
     const [objectsPlaced, setObjectsPlaced] = useState(0);
 
-    useEffect(() => {
-        return () => {
-            // Cleanup A-Frame scene
-            const scene = document.querySelector('a-scene');
-            if (scene) {
-                scene.remove();
-            }
-        };
-    }, []);
-
-    const startAFrameAR = async () => {
+    const startCameraAR = async () => {
         setError(null);
         setIsLoading(true);
 
         try {
-            // Load A-Frame and AR.js
-            await loadAFrame();
-
             const container = containerRef.current;
             if (!container) throw new Error('Container not found');
 
-            console.log('✅ A-Frame loaded, creating AR scene...');
+            // Get camera stream
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: 'environment',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
+            });
 
-            // Create A-Frame scene with AR
+            console.log('✅ Camera stream obtained');
+
+            // Create video element for camera feed
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            video.autoplay = true;
+            video.playsInline = true;
+            video.muted = true;
+            video.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 1;
+      `;
+
+            container.appendChild(video);
+            videoRef.current = video;
+
+            await video.play();
+            console.log('✅ Video playing');
+
+            // Load A-Frame
+            await loadAFrame();
+            console.log('✅ A-Frame loaded');
+
+            // Create A-Frame scene overlay
             const sceneHTML = `
         <a-scene 
           embedded 
-          arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best; sourceWidth: 1280; sourceHeight: 960; displayWidth: 1280; displayHeight: 960;"
-          vr-mode-ui="enabled: false"
-          renderer="logarithmicDepthBuffer: true; alpha: true; antialias: true;"
           background="transparent"
-          style="width: 100%; height: 100%;"
+          vr-mode-ui="enabled: false"
+          renderer="alpha: true; antialias: true;"
+          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: auto;"
         >
-          <!-- Assets -->
-          <a-assets>
-            <a-mixin id="sphere-mixin" 
-              geometry="primitive: sphere; radius: 0.05" 
-              material="color: #ff6b6b; metalness: 0.3; roughness: 0.4"
-              animation="property: rotation; to: 0 360 0; loop: true; dur: 3000">
-            </a-mixin>
-          </a-assets>
-
-          <!-- Camera with AR -->
-          <a-camera 
-            id="ar-camera"
-            look-controls-enabled="false"
-            arjs-look-controls="smoothingFactor: 0.1"
-            wasd-controls-enabled="false"
-            camera="active: true"
-            position="0 0 0">
-          </a-camera>
-
-          <!-- Test cube always visible -->
+          <!-- Test cube -->
           <a-box 
             id="test-cube"
             position="0 0 -1" 
@@ -80,17 +84,26 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
             animation="property: rotation; to: 360 405 360; loop: true; dur: 4000">
           </a-box>
 
+          <!-- Camera (no video, just for 3D positioning) -->
+          <a-camera 
+            id="ar-camera"
+            look-controls-enabled="true"
+            wasd-controls-enabled="false"
+            position="0 0 0">
+          </a-camera>
+
           <!-- Lighting -->
           <a-light type="ambient" color="#404040"></a-light>
           <a-light type="directional" position="1 1 1" color="#ffffff"></a-light>
         </a-scene>
       `;
 
-            container.innerHTML = sceneHTML;
+            const sceneDiv = document.createElement('div');
+            sceneDiv.innerHTML = sceneHTML;
+            container.appendChild(sceneDiv);
 
-            // Wait for A-Frame to initialize
-            const scene = container.querySelector('a-scene') as any;
-
+            // Wait for A-Frame to load
+            const scene = sceneDiv.querySelector('a-scene') as any;
             await new Promise((resolve) => {
                 if (scene.hasLoaded) {
                     resolve(true);
@@ -99,19 +112,7 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
                 }
             });
 
-            console.log('✅ A-Frame scene loaded');
-
-            // Initialize AR camera
-            try {
-                const arSystem = scene.systems.arjs;
-                if (arSystem && arSystem.initialize) {
-                    await arSystem.initialize();
-                    console.log('✅ AR.js system initialized');
-                }
-            } catch (e) {
-                console.warn('AR.js initialization:', e);
-            }
-
+            console.log('✅ A-Frame scene loaded over camera');
             setIsARActive(true);
             setIsLoading(false);
 
@@ -121,7 +122,7 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
                 tapCount++;
                 console.log('👆 Tap detected #', tapCount);
 
-                // Get camera position and direction
+                // Get camera
                 const camera = scene.querySelector('#ar-camera');
                 const cameraPosition = camera.getAttribute('position');
                 const cameraRotation = camera.getAttribute('rotation');
@@ -134,7 +135,7 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
                 const y = cameraPosition.y + (Math.random() - 0.5) * 0.2;
                 const z = cameraPosition.z - Math.cos(angle) * distance;
 
-                // Create new sphere
+                // Create sphere
                 const sphere = document.createElement('a-sphere');
                 sphere.setAttribute('position', `${x} ${y} ${z}`);
                 sphere.setAttribute('radius', '0.05');
@@ -151,14 +152,17 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
 
             container.addEventListener('click', handleTap);
 
-            // Store cleanup function
+            // Store cleanup
             (container as any)._cleanup = () => {
                 container.removeEventListener('click', handleTap);
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
             };
 
         } catch (err: any) {
-            console.error('A-Frame AR Error:', err);
-            setError(err.message || 'Failed to start AR');
+            console.error('Camera AR Error:', err);
+            setError(err.message || 'Failed to start camera AR');
             setIsLoading(false);
         }
     };
@@ -171,21 +175,22 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
                 return;
             }
 
-            // Load A-Frame
-            const aframeScript = document.createElement('script');
-            aframeScript.src = 'https://aframe.io/releases/1.4.0/aframe.min.js';
-            aframeScript.onload = () => {
-                // Load AR.js
-                const arScript = document.createElement('script');
-                arScript.src = 'https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js';
-                arScript.onload = () => resolve();
-                arScript.onerror = () => reject(new Error('Failed to load AR.js'));
-                document.head.appendChild(arScript);
-            };
-            aframeScript.onerror = () => reject(new Error('Failed to load A-Frame'));
-            document.head.appendChild(aframeScript);
+            const script = document.createElement('script');
+            script.src = 'https://aframe.io/releases/1.4.0/aframe.min.js';
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error('Failed to load A-Frame'));
+            document.head.appendChild(script);
         });
     };
+
+    useEffect(() => {
+        return () => {
+            const container = containerRef.current;
+            if (container && (container as any)._cleanup) {
+                (container as any)._cleanup();
+            }
+        };
+    }, []);
 
     return (
         <div className="w-full h-screen relative bg-black">
@@ -196,13 +201,13 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
                 <div className="absolute inset-0 flex items-center justify-center z-20">
                     <div className="text-center">
                         <Button
-                            onClick={startAFrameAR}
-                            className="px-8 py-4 text-lg bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
+                            onClick={startCameraAR}
+                            className="px-8 py-4 text-lg bg-green-600 hover:bg-green-700 text-white rounded-xl"
                         >
-                            🌟 A-Frame AR
+                            📹 Camera AR
                         </Button>
-                        <p className="text-white text-sm mt-2">Most reliable mobile AR solution</p>
-                        <p className="text-white text-xs mt-1 opacity-70">Works on 99% of devices</p>
+                        <p className="text-white text-sm mt-2">Camera feed + 3D objects</p>
+                        <p className="text-white text-xs mt-1 opacity-70">Guaranteed camera visibility</p>
                     </div>
                 </div>
             )}
@@ -212,8 +217,8 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
                 <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20">
                     <div className="text-center text-white">
                         <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
-                        <p className="text-lg">Loading A-Frame AR...</p>
-                        <p className="text-sm opacity-70">Most compatible AR solution</p>
+                        <p className="text-lg">Starting Camera AR...</p>
+                        <p className="text-sm opacity-70">Setting up camera feed</p>
                     </div>
                 </div>
             )}
@@ -223,12 +228,12 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
                 <div className="absolute inset-0 flex items-center justify-center bg-black/90 z-20 p-4">
                     <div className="bg-red-600 text-white p-6 rounded-lg max-w-md text-center">
                         <AlertCircle className="h-8 w-8 mx-auto mb-3" />
-                        <h3 className="font-bold mb-2">AR Error</h3>
+                        <h3 className="font-bold mb-2">Camera AR Error</h3>
                         <p className="text-sm mb-4">{error}</p>
                         <div className="space-y-2 text-xs">
                             <p>✅ Allow camera permission</p>
-                            <p>✅ Use any modern browser</p>
-                            <p>✅ Works on iOS and Android</p>
+                            <p>✅ Use HTTPS (required for camera)</p>
+                            <p>✅ Try refreshing the page</p>
                         </div>
                         <Button
                             onClick={() => window.location.reload()}
@@ -255,9 +260,8 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
             {isARActive && (
                 <>
                     <div className="absolute top-4 right-4 z-10">
-                        <div className="bg-blue-600/80 text-white px-3 py-1 rounded-full text-sm flex items-center gap-1">
-                            <CheckCircle className="h-3 w-3 text-green-400" />
-                            A-Frame AR
+                        <div className="bg-green-600/80 text-white px-3 py-1 rounded-full text-sm">
+                            📹 Camera AR Active
                         </div>
                     </div>
 
@@ -265,7 +269,7 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
                         <div className="bg-black/70 text-white px-6 py-3 rounded-lg text-center">
                             <p className="font-medium">👆 Tap to place spheres</p>
                             <p className="text-sm opacity-80">Objects placed: {objectsPlaced}</p>
-                            <p className="text-xs opacity-60">Look for spinning red cube!</p>
+                            <p className="text-xs opacity-60">Camera feed + 3D overlay</p>
                         </div>
                     </div>
                 </>
