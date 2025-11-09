@@ -114,20 +114,45 @@ export default function NewModelPage() {
       } = supabase.storage.from('models').getPublicUrl(filePath);
 
       // Save to database
-      const { error: dbError } = await supabase.from('models').insert({
-        name,
-        description: description || null,
-        file_url: publicUrl,
-        file_path: filePath,
-        file_size: file.size,
-        file_type: fileExt,
-        is_active: isActive,
-        created_by: user.id,
-      });
+      const { data: insertedModel, error: dbError } = await supabase
+        .from('models')
+        .insert({
+          name,
+          description: description || null,
+          file_url: publicUrl,
+          file_path: filePath,
+          file_size: file.size,
+          file_type: fileExt,
+          is_active: isActive,
+          created_by: user.id,
+          auto_convert_usdz: true,
+          conversion_status: 'pending',
+        })
+        .select()
+        .single();
 
       if (dbError) throw dbError;
 
       toast.success('Model uploaded successfully!');
+
+      // Trigger USDZ conversion in background
+      if (insertedModel && fileExt === 'glb') {
+        toast.info('Converting to USDZ for iOS...');
+
+        // Trigger conversion (non-blocking)
+        fetch('/api/convert-model', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            modelId: insertedModel.id,
+            glbUrl: publicUrl,
+          }),
+        }).catch((err) => {
+          console.error('Conversion trigger failed:', err);
+          // Don't block the upload flow
+        });
+      }
+
       router.push('/admin/models');
       router.refresh();
     } catch (error: any) {
@@ -177,11 +202,10 @@ export default function NewModelPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Drag and Drop Zone */}
             <div
-              className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                dragActive
+              className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive
                   ? 'border-primary bg-primary/5'
                   : 'border-gray-300 hover:border-gray-400'
-              } ${file ? 'bg-green-50 border-green-300' : ''}`}
+                } ${file ? 'bg-green-50 border-green-300' : ''}`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}

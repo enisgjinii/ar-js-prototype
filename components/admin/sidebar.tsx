@@ -11,6 +11,8 @@ import {
   LogOut,
   User,
   Box,
+  Eye,
+  Grid3x3,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -23,6 +25,19 @@ interface SidebarProps {
     full_name?: string;
     avatar_url?: string;
   };
+}
+
+interface SubRoute {
+  label: string;
+  href: string;
+}
+
+interface Route {
+  label: string;
+  icon: any;
+  href: string;
+  color: string;
+  subRoutes?: SubRoute[];
 }
 
 export function Sidebar({ user }: SidebarProps) {
@@ -41,7 +56,7 @@ export function Sidebar({ user }: SidebarProps) {
     }
   };
 
-  const routes = [
+  const routes: Route[] = [
     {
       label: 'Dashboard',
       icon: LayoutDashboard,
@@ -59,6 +74,20 @@ export function Sidebar({ user }: SidebarProps) {
       icon: Box,
       href: '/admin/models',
       color: 'text-green-500',
+      subRoutes: [
+        {
+          label: 'All Models',
+          href: '/admin/models',
+        },
+        {
+          label: 'Upload Model',
+          href: '/admin/models/new',
+        },
+        {
+          label: 'Convert to USDZ',
+          href: '/admin/models/convert',
+        },
+      ],
     },
     {
       label: 'Users',
@@ -74,6 +103,21 @@ export function Sidebar({ user }: SidebarProps) {
     },
   ];
 
+  const publicRoutes: Route[] = [
+    {
+      label: 'AR Viewer',
+      icon: Eye,
+      href: '/ar-viewer',
+      color: 'text-blue-500',
+    },
+    {
+      label: 'Model Gallery',
+      icon: Grid3x3,
+      href: '/models',
+      color: 'text-purple-500',
+    },
+  ];
+
   return (
     <div className="flex h-full flex-col border-r bg-gray-50">
       <div className="p-6">
@@ -82,21 +126,71 @@ export function Sidebar({ user }: SidebarProps) {
         </Link>
       </div>
       <ScrollArea className="flex-1 px-3">
-        <div className="space-y-1">
-          {routes.map(route => (
-            <Link key={route.href} href={route.href}>
-              <Button
-                variant={pathname === route.href ? 'secondary' : 'ghost'}
-                className={cn(
-                  'w-full justify-start',
-                  pathname === route.href && 'bg-gray-200'
+        <div className="space-y-4">
+          {/* Admin Routes */}
+          <div className="space-y-1">
+            <div className="px-3 py-2">
+              <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Admin
+              </h2>
+            </div>
+            {routes.map(route => (
+              <div key={route.href}>
+                <Link href={route.href}>
+                  <Button
+                    variant={pathname === route.href ? 'secondary' : 'ghost'}
+                    className={cn(
+                      'w-full justify-start',
+                      pathname === route.href && 'bg-gray-200'
+                    )}
+                  >
+                    <route.icon className={cn('mr-2 h-5 w-5', route.color)} />
+                    {route.label}
+                  </Button>
+                </Link>
+
+                {/* Sub-routes */}
+                {route.subRoutes && pathname?.startsWith(route.href) && (
+                  <div className="ml-7 mt-1 space-y-1">
+                    {route.subRoutes.map(subRoute => (
+                      <Link key={subRoute.href} href={subRoute.href}>
+                        <Button
+                          variant={pathname === subRoute.href ? 'secondary' : 'ghost'}
+                          size="sm"
+                          className={cn(
+                            'w-full justify-start text-sm',
+                            pathname === subRoute.href && 'bg-gray-200'
+                          )}
+                        >
+                          {subRoute.label}
+                        </Button>
+                      </Link>
+                    ))}
+                  </div>
                 )}
-              >
-                <route.icon className={cn('mr-2 h-5 w-5', route.color)} />
-                {route.label}
-              </Button>
-            </Link>
-          ))}
+              </div>
+            ))}
+          </div>
+
+          {/* Public Routes */}
+          <div className="space-y-1 border-t pt-4">
+            <div className="px-3 py-2">
+              <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Public Pages
+              </h2>
+            </div>
+            {publicRoutes.map(route => (
+              <Link key={route.href} href={route.href} target="_blank">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start"
+                >
+                  <route.icon className={cn('mr-2 h-5 w-5', route.color)} />
+                  {route.label}
+                </Button>
+              </Link>
+            ))}
+          </div>
         </div>
       </ScrollArea>
       <div className="border-t p-4">
@@ -109,14 +203,14 @@ export function Sidebar({ user }: SidebarProps) {
             <AvatarFallback className="bg-primary text-primary-foreground">
               {user.full_name
                 ? user.full_name
-                    .split(' ')
-                    .map(n => n[0])
-                    .join('')
-                    .toUpperCase()
-                    .slice(0, 2)
+                  .split(' ')
+                  .map(n => n[0])
+                  .join('')
+                  .toUpperCase()
+                  .slice(0, 2)
                 : user.email?.[0]?.toUpperCase() || (
-                    <User className="h-4 w-4" />
-                  )}
+                  <User className="h-4 w-4" />
+                )}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 overflow-hidden">

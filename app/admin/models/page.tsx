@@ -67,12 +67,19 @@ export default async function ModelsPage() {
           <h1 className="text-3xl font-bold">3D Model Management</h1>
           <p className="text-gray-500">Upload and manage GLB/GLTF 3D models</p>
         </div>
-        <Link href="/admin/models/new">
-          <Button size="lg">
-            <Plus className="mr-2 h-4 w-4" />
-            Upload Model
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/admin/models/convert">
+            <Button size="lg" variant="outline">
+              🔄 Convert to USDZ
+            </Button>
+          </Link>
+          <Link href="/admin/models/new">
+            <Button size="lg">
+              <Plus className="mr-2 h-4 w-4" />
+              Upload Model
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Statistics Cards */}
