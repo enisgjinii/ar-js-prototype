@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import ModelViewerWebAR from '@/components/model-viewer-webar';
 import ThreeJSWebXRAR from '@/components/threejs-webxr-ar';
+import ARjsMarkerAR from '@/components/arjs-marker-ar';
 
-type ARType = 'none' | 'model-viewer' | 'threejs';
+type ARType = 'none' | 'model-viewer' | 'threejs' | 'arjs';
 
 export default function CompareARPage() {
     const [activeAR, setActiveAR] = useState<ARType>('none');
@@ -19,7 +20,7 @@ export default function CompareARPage() {
                     Compare model-viewer vs Three.js WebXR implementations
                 </p>
 
-                <div className="grid md:grid-cols-2 gap-6 mb-8">
+                <div className="grid md:grid-cols-3 gap-6 mb-8">
                     {/* model-viewer Card */}
                     <Card className="bg-gray-800 border-gray-700">
                         <CardContent className="p-6">
@@ -120,6 +121,56 @@ export default function CompareARPage() {
                             </Button>
                         </CardContent>
                     </Card>
+
+                    {/* AR.js Card */}
+                    <Card className="bg-gray-800 border-red-700">
+                        <CardContent className="p-6">
+                            <div className="flex items-start justify-between mb-4">
+                                <div>
+                                    <h2 className="text-2xl font-bold mb-2">AR.js</h2>
+                                    <p className="text-sm text-red-400">⚠️ Not Recommended</p>
+                                </div>
+                                <div className="text-3xl">⚠️</div>
+                            </div>
+
+                            <div className="space-y-3 mb-6">
+                                <div>
+                                    <h3 className="font-semibold text-red-400 mb-2">❌ Cons:</h3>
+                                    <ul className="text-sm text-gray-300 space-y-1">
+                                        <li>• Requires printed markers</li>
+                                        <li>• No plane detection</li>
+                                        <li>• Outdated (2019)</li>
+                                        <li>• Poor performance</li>
+                                        <li>• Bad user experience</li>
+                                        <li>• Limited support</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <h3 className="font-semibold text-yellow-400 mb-2">⚠️ Only Good For:</h3>
+                                    <ul className="text-sm text-gray-300 space-y-1">
+                                        <li>• Museum exhibits with markers</li>
+                                        <li>• Educational posters</li>
+                                        <li>• Print advertising</li>
+                                    </ul>
+                                </div>
+
+                                <div className="pt-3 border-t border-gray-700">
+                                    <p className="text-xs text-red-300">
+                                        <strong>Avoid for:</strong> Modern AR experiences, product visualization,
+                                        e-commerce, anything requiring real surface placement
+                                    </p>
+                                </div>
+                            </div>
+
+                            <Button
+                                onClick={() => setActiveAR('arjs')}
+                                className="w-full bg-red-600 hover:bg-red-700"
+                            >
+                                Test AR.js (Demo Only)
+                            </Button>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 {/* Comparison Table */}
@@ -133,53 +184,87 @@ export default function CompareARPage() {
                                         <th className="text-left py-3 px-4">Feature</th>
                                         <th className="text-center py-3 px-4">model-viewer</th>
                                         <th className="text-center py-3 px-4">Three.js WebXR</th>
+                                        <th className="text-center py-3 px-4">AR.js</th>
                                     </tr>
                                 </thead>
                                 <tbody className="text-gray-300">
                                     <tr className="border-b border-gray-700">
+                                        <td className="py-3 px-4">Requires Markers</td>
+                                        <td className="text-center">❌</td>
+                                        <td className="text-center">❌</td>
+                                        <td className="text-center text-red-400">✅</td>
+                                    </tr>
+                                    <tr className="border-b border-gray-700">
                                         <td className="py-3 px-4">Android WebXR</td>
                                         <td className="text-center">✅</td>
                                         <td className="text-center">✅</td>
+                                        <td className="text-center">❌</td>
                                     </tr>
                                     <tr className="border-b border-gray-700">
                                         <td className="py-3 px-4">iOS Support</td>
                                         <td className="text-center">✅ (Quick Look)</td>
                                         <td className="text-center">❌</td>
+                                        <td className="text-center">⚠️ (Limited)</td>
+                                    </tr>
+                                    <tr className="border-b border-gray-700">
+                                        <td className="py-3 px-4">Plane Detection</td>
+                                        <td className="text-center">✅</td>
+                                        <td className="text-center">✅</td>
+                                        <td className="text-center text-red-400">❌</td>
                                     </tr>
                                     <tr className="border-b border-gray-700">
                                         <td className="py-3 px-4">Scene Viewer Fallback</td>
                                         <td className="text-center">✅</td>
+                                        <td className="text-center">❌</td>
                                         <td className="text-center">❌</td>
                                     </tr>
                                     <tr className="border-b border-gray-700">
                                         <td className="py-3 px-4">Hit Testing</td>
                                         <td className="text-center">✅ (Auto)</td>
                                         <td className="text-center">✅ (Manual)</td>
+                                        <td className="text-center text-red-400">❌</td>
                                     </tr>
                                     <tr className="border-b border-gray-700">
                                         <td className="py-3 px-4">Multiple Placement</td>
                                         <td className="text-center">❌</td>
                                         <td className="text-center">✅</td>
+                                        <td className="text-center">⚠️</td>
                                     </tr>
                                     <tr className="border-b border-gray-700">
                                         <td className="py-3 px-4">Custom Interactions</td>
                                         <td className="text-center">⚠️ Limited</td>
                                         <td className="text-center">✅ Full</td>
+                                        <td className="text-center">⚠️ Limited</td>
+                                    </tr>
+                                    <tr className="border-b border-gray-700">
+                                        <td className="py-3 px-4">Performance</td>
+                                        <td className="text-center">⭐⭐⭐⭐</td>
+                                        <td className="text-center">⭐⭐⭐⭐</td>
+                                        <td className="text-center text-red-400">⭐⭐</td>
                                     </tr>
                                     <tr className="border-b border-gray-700">
                                         <td className="py-3 px-4">Implementation Difficulty</td>
                                         <td className="text-center">⭐ Easy</td>
                                         <td className="text-center">⭐⭐⭐ Complex</td>
+                                        <td className="text-center">⭐⭐ Medium</td>
+                                    </tr>
+                                    <tr className="border-b border-gray-700">
+                                        <td className="py-3 px-4">Last Updated</td>
+                                        <td className="text-center">2024</td>
+                                        <td className="text-center">2024</td>
+                                        <td className="text-center text-red-400">2019</td>
                                     </tr>
                                     <tr className="border-b border-gray-700">
                                         <td className="py-3 px-4">Bundle Size</td>
                                         <td className="text-center">~200KB</td>
                                         <td className="text-center">~600KB</td>
+                                        <td className="text-center">~300KB</td>
                                     </tr>
                                     <tr className="border-b border-gray-700">
                                         <td className="py-3 px-4">Maintenance</td>
                                         <td className="text-center">Google</td>
                                         <td className="text-center">You</td>
+                                        <td className="text-center text-red-400">Inactive</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -230,6 +315,14 @@ export default function CompareARPage() {
                 <ThreeJSWebXRAR
                     modelUrl="/models/Cesium_Man.glb"
                     modelTitle="Three.js WebXR Test"
+                    onClose={() => setActiveAR('none')}
+                />
+            )}
+
+            {activeAR === 'arjs' && (
+                <ARjsMarkerAR
+                    modelUrl="/models/Cesium_Man.glb"
+                    modelTitle="AR.js Test (Marker Required)"
                     onClose={() => setActiveAR('none')}
                 />
             )}
