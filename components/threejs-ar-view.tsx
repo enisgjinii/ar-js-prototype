@@ -119,6 +119,10 @@ export default function ThreeJSARView({ onBack }: ThreeJSARViewProps) {
             let hitTestSource: XRHitTestSource | null = null;
             let reticle: any = null;
             let referenceSpace: XRReferenceSpace | null = null;
+            // Store the last hit result for anchor creation on tap
+            let lastHitResult: XRHitTestResult | null = null;
+            // Anchors created via hit.createAnchor() (if supported) and their meshes
+            const anchors: Array<{ anchor: any; mesh: any }> = [];
 
             // Try different reference space types in order of preference
             const referenceSpaceTypes = ['local-floor', 'local', 'viewer'];
@@ -165,7 +169,7 @@ export default function ThreeJSARView({ onBack }: ThreeJSARViewProps) {
 
             // Handle screen taps for object placement
             let tapCount = 0;
-            const handleTap = () => {
+            const handleTap = async () => {
                 if (!reticle || !reticle.visible) {
                     console.warn('No surface detected for placement');
                     return;
@@ -174,36 +178,47 @@ export default function ThreeJSARView({ onBack }: ThreeJSARViewProps) {
                 tapCount++;
                 console.log('👆 Tap detected #', tapCount);
 
-                // Create a colorful sphere at reticle position
-                const geometry = new THREE.SphereGeometry(0.05, 16, 16);
-                const material = new THREE.MeshStandardMaterial({
-                    color: new THREE.Color(Math.random(), Math.random(), Math.random()),
-                    metalness: 0.3,
-                    roughness: 0.4
-                });
-                const sphere = new THREE.Mesh(geometry, material);
+                // If lastHitResult supports createAnchor(), create an XRAnchor so the cube stays fixed in the world
+                if (lastHitResult && typeof (lastHitResult as any).createAnchor === 'function') {
+                    try {
+                        const anchor = await (lastHitResult as any).createAnchor();
+                        // Create a box mesh and add to scene; position will be updated each frame from the anchor
+                        const boxGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+                        const boxMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(Math.random(), Math.random(), Math.random()), metalness: 0.3, roughness: 0.4 });
+                        const boxMesh = new THREE.Mesh(boxGeo, boxMat);
+                        // initialize from reticle matrix
+                        boxMesh.matrixAutoUpdate = false;
+                        boxMesh.matrix.fromArray(reticle.matrix.elements || reticle.matrix.toArray());
+                        boxMesh.matrix.decompose(boxMesh.position, boxMesh.quaternion, boxMesh.scale);
+                        scene.add(boxMesh);
+                        anchors.push({ anchor, mesh: boxMesh });
+                        setObjectsPlaced(tapCount);
+                        console.log('🎯 Anchor created and cube placed');
+                        return;
+                    } catch (e) {
+                        console.warn('Failed to create anchor, falling back to non-anchored placement', e);
+                    }
+                }
 
-                // Copy reticle position
-                sphere.position.setFromMatrixPosition(reticle.matrix);
-                sphere.position.y += 0.05; // Lift slightly above surface
-
-                scene.add(sphere);
+                // Fallback: place a cube at the reticle position (not anchored)
+                const boxGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+                const boxMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(Math.random(), Math.random(), Math.random()), metalness: 0.3, roughness: 0.4 });
+                const box = new THREE.Mesh(boxGeo, boxMat);
+                box.position.setFromMatrixPosition(reticle.matrix);
+                scene.add(box);
                 setObjectsPlaced(tapCount);
+                console.log('🎯 Cube placed at:', box.position);
 
-                console.log('🎯 Sphere placed at:', sphere.position);
-
-                // Add bounce animation
+                // Add a small bob/rotation animation
                 let time = 0;
-                const animateSphere = () => {
-                    if (sphere.parent) {
+                const animateBox = () => {
+                    if (box.parent) {
                         time += 0.05;
-                        sphere.position.y = sphere.position.y + Math.sin(time) * 0.002;
-                        sphere.rotation.y += 0.02;
+                        box.position.y += Math.sin(time) * 0.0008;
+                        box.rotation.y += 0.02;
                     }
                 };
-
-                // Store animation function
-                (sphere as any).animate = animateSphere;
+                (box as any).animate = animateBox;
             };
 
             renderer.domElement.addEventListener('click', handleTap);
@@ -237,11 +252,28 @@ export default function ThreeJSARView({ onBack }: ThreeJSARViewProps) {
                         if (pose) {
                             reticle.visible = true;
                             reticle.matrix.fromArray(pose.transform.matrix);
+                            // Store the hit so taps can create anchors
+                            lastHitResult = hit;
                             setSurfacesDetected(true);
                         }
                     } else {
                         reticle.visible = false;
                         setSurfacesDetected(false);
+                        lastHitResult = null;
+                    }
+                    // Update any anchors' attached meshes from their anchorSpace poses
+                    if (anchors.length > 0 && referenceSpace) {
+                        anchors.forEach((entry) => {
+                            try {
+                                const anchorPose = frame.getPose(entry.anchor.anchorSpace, referenceSpace!);
+                                if (anchorPose) {
+                                    entry.mesh.matrix.fromArray(anchorPose.transform.matrix);
+                                    entry.mesh.matrix.decompose(entry.mesh.position, entry.mesh.quaternion, entry.mesh.scale);
+                                }
+                            } catch (e) {
+                                // ignore per-frame anchor update errors
+                            }
+                        });
                     }
                 }
             };
@@ -366,7 +398,7 @@ export default function ThreeJSARView({ onBack }: ThreeJSARViewProps) {
                     <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10">
                         <div className="bg-black/70 text-white px-6 py-3 rounded-lg text-center">
                             <p className="font-medium">
-                                {surfacesDetected ? '👆 Tap to place spheres' : '📱 Move phone to scan surfaces'}
+                                {surfacesDetected ? '👆 Tap to place cubes' : '📱 Move phone to scan surfaces'}
                             </p>
                             <p className="text-sm opacity-80">Objects placed: {objectsPlaced}</p>
                             <p className="text-xs opacity-60">Look for spinning red cube!</p>
