@@ -103,6 +103,38 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
       `;
 
             container.innerHTML = sceneHTML;
+            // Ensure container is positioned so AR.js video can be absolutely placed inside it
+            container.style.position = 'relative';
+
+            // Small CSS tweak: prefer the AR.js video to be full-bleed beneath the A-Frame canvas
+            const styleId = 'aframe-ar-video-style';
+            if (!document.getElementById(styleId)) {
+                const css = `
+                    /* Place AR.js video under the A-Frame canvas */
+                    #arjs-video, video[id^="arjs-video"], video.arjs-video {
+                        position: absolute !important;
+                        top: 0 !important;
+                        left: 0 !important;
+                        width: 100% !important;
+                        height: 100% !important;
+                        object-fit: cover !important;
+                        z-index: 0 !important;
+                    }
+                    a-scene, a-scene canvas {
+                        position: absolute !important;
+                        top: 0 !important;
+                        left: 0 !important;
+                        width: 100% !important;
+                        height: 100% !important;
+                        z-index: 1 !important;
+                        background: transparent !important;
+                    }
+                `;
+                const style = document.createElement('style');
+                style.id = styleId;
+                style.appendChild(document.createTextNode(css));
+                document.head.appendChild(style);
+            }
 
             // Wait for A-Frame to initialize
             const scene = container.querySelector('a-scene') as any;
@@ -126,6 +158,31 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
             }
             if (!((window as any).ARjs || scene.systems.arjs)) {
                 console.warn('AR.js not detected; markerless features may be limited');
+            }
+
+            // Attempt to find and style the AR.js video element so it's visible under the canvas
+            try {
+                // Some builds create id="arjs-video" or classes; target any video element that was added recently
+                const videos = Array.from(document.querySelectorAll('video')) as HTMLVideoElement[];
+                videos.forEach((v) => {
+                    // mark playsinline for mobile browsers
+                    try { v.setAttribute('playsinline', ''); } catch (e) { /* ignore */ }
+                    try { v.setAttribute('muted', ''); } catch (e) { /* ignore */ }
+                    v.style.objectFit = 'cover';
+                    v.style.position = 'absolute';
+                    v.style.top = '0';
+                    v.style.left = '0';
+                    v.style.width = '100%';
+                    v.style.height = '100%';
+                    v.style.zIndex = '0';
+                });
+                // Ensure scene canvas sits above
+                const canv = scene.querySelector('canvas') as HTMLCanvasElement | null;
+                if (canv) {
+                    canv.style.zIndex = '1';
+                }
+            } catch (e) {
+                console.warn('Failed to style AR video element:', e);
             }
 
             // Initialize AR camera
