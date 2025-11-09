@@ -33,6 +33,22 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
         setIsLoading(true);
 
         try {
+            // Quick camera capability & permission check to prompt browser permission early
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                throw new Error('getUserMedia not supported in this browser. Use a modern mobile browser over HTTPS.');
+            }
+
+            try {
+                // Request video permission for the environment (rear) camera when possible
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
+                // Immediately stop tracks - AR.js will re-open the camera as needed
+                stream.getTracks().forEach((t) => t.stop());
+                console.log('Camera permission granted (preflight)');
+            } catch (permErr: any) {
+                console.warn('Camera permission/preflight failed:', permErr);
+                // Continue — loadAFrame will attempt to open camera and may provide a better error
+            }
+
             // Load A-Frame and AR.js
             await loadAFrame();
 
@@ -100,6 +116,17 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
             });
 
             console.log('✅ A-Frame scene loaded');
+
+            // Diagnostic info: confirm libraries are present
+            if (!(window as any).AFRAME) {
+                console.error('AFRAME not present after loading scripts');
+                setError('A-Frame failed to load. Check network or CSP blocking external scripts.');
+                setIsLoading(false);
+                return;
+            }
+            if (!((window as any).ARjs || scene.systems.arjs)) {
+                console.warn('AR.js not detected; markerless features may be limited');
+            }
 
             // Initialize AR camera
             try {
@@ -190,6 +217,15 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
         });
     };
 
+    // Helper to show basic camera capability status for debugging
+    const cameraStatus = () => {
+        const md = navigator.mediaDevices as any;
+        return {
+            supported: !!(md && md.getUserMedia),
+            permissionsApi: !!(navigator.permissions && (navigator as any).permissions.query),
+        };
+    };
+
     return (
         <div className="w-full h-screen relative bg-black">
             <div ref={containerRef} className="w-full h-full" />
@@ -253,6 +289,14 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
                     ← Back
                 </Button>
             </div>
+
+            {/* Quick diagnostics panel */}
+            {!isARActive && (
+                <div className="absolute top-4 right-4 z-10 bg-black/60 text-white px-3 py-2 rounded-md text-xs">
+                    <div>Camera support: {cameraStatus().supported ? 'Yes' : 'No'}</div>
+                    <div>Permissions API: {cameraStatus().permissionsApi ? 'Yes' : 'No'}</div>
+                </div>
+            )}
 
             {/* AR Status */}
             {isARActive && (
