@@ -51,14 +51,14 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
           background="transparent"
           style="width: 100%; height: 100%;"
         >
-          <!-- Assets -->
-          <a-assets>
-            <a-mixin id="sphere-mixin" 
-              geometry="primitive: sphere; radius: 0.05" 
-              material="color: #ff6b6b; metalness: 0.3; roughness: 0.4"
-              animation="property: rotation; to: 0 360 0; loop: true; dur: 3000">
-            </a-mixin>
-          </a-assets>
+                    <!-- Assets -->
+                    <a-assets>
+                        <a-mixin id="cube-mixin" 
+                            geometry="primitive: box" 
+                            material="color: #ff6b6b; metalness: 0.3; roughness: 0.4"
+                            animation="property: rotation; to: 0 360 0; loop: true; dur: 3000">
+                        </a-mixin>
+                    </a-assets>
 
           <!-- Camera with AR -->
           <a-camera 
@@ -70,15 +70,15 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
             position="0 0 0">
           </a-camera>
 
-          <!-- Test cube always visible -->
-          <a-box 
-            id="test-cube"
-            position="0 0 -1" 
-            rotation="0 45 0" 
-            color="#ff0000" 
-            scale="0.1 0.1 0.1"
-            animation="property: rotation; to: 360 405 360; loop: true; dur: 4000">
-          </a-box>
+                    <!-- Test cube always visible -->
+                    <a-box 
+                        id="test-cube"
+                        position="0 0 -1" 
+                        rotation="0 45 0" 
+                        color="#ff0000" 
+                        scale="0.1 0.1 0.1"
+                        animation="property: rotation; to: 360 405 360; loop: true; dur: 4000">
+                    </a-box>
 
           <!-- Lighting -->
           <a-light type="ambient" color="#404040"></a-light>
@@ -134,19 +134,22 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
                 const y = cameraPosition.y + (Math.random() - 0.5) * 0.2;
                 const z = cameraPosition.z - Math.cos(angle) * distance;
 
-                // Create new sphere
-                const sphere = document.createElement('a-sphere');
-                sphere.setAttribute('position', `${x} ${y} ${z}`);
-                sphere.setAttribute('radius', '0.05');
-                sphere.setAttribute('color', `hsl(${Math.random() * 360}, 70%, 60%)`);
-                sphere.setAttribute('metalness', '0.3');
-                sphere.setAttribute('roughness', '0.4');
-                sphere.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 3000');
+                // Create new cube (a-box)
+                const box = document.createElement('a-box');
+                box.setAttribute('position', `${x} ${y} ${z}`);
+                // small cube (~10cm)
+                box.setAttribute('scale', '0.1 0.1 0.1');
+                box.setAttribute('color', `hsl(${Math.random() * 360}, 70%, 60%)`);
+                box.setAttribute('material', 'metalness: 0.3; roughness: 0.4');
+                // rotation animation
+                box.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 4000');
+                // small bobbing animation (alternate between y and y+0.05)
+                box.setAttribute('animation__bob', `property: position; dir: alternate; dur: 800; easing: easeInOutSine; loop: true; to: ${x} ${y + 0.05} ${z}`);
 
-                scene.appendChild(sphere);
+                scene.appendChild(box);
                 setObjectsPlaced(tapCount);
 
-                console.log('🎯 Sphere placed at:', x, y, z);
+                console.log('🎯 Cube placed at:', x, y, z);
             };
 
             container.addEventListener('click', handleTap);
@@ -263,9 +266,9 @@ export default function AFrameARView({ onBack }: AFrameARViewProps) {
 
                     <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10">
                         <div className="bg-black/70 text-white px-6 py-3 rounded-lg text-center">
-                            <p className="font-medium">👆 Tap to place spheres</p>
+                            <p className="font-medium">👆 Tap to place cubes</p>
                             <p className="text-sm opacity-80">Objects placed: {objectsPlaced}</p>
-                            <p className="text-xs opacity-60">Look for spinning red cube!</p>
+                            <p className="text-xs opacity-60">Look for spinning cubes!</p>
                         </div>
                     </div>
                 </>

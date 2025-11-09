@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import ARCameraView from '@/components/ar-camera-view';
+import AFrameARView from '@/components/aframe-ar-view';
 
 export default function ARPage() {
   const router = useRouter();
@@ -18,9 +18,8 @@ export default function ARPage() {
         </button>
       </div>
 
-      {/* Render the in-repo Babylon.js WebXR AR camera view which includes
-          markerless placement (hit-test, reticle, anchors) and tap-to-place behavior */}
-      <ARCameraView onBack={() => router.back()} />
+    {/* Render the A-Frame + AR.js AR view (tap to place cubes) */}
+    <AFrameARView onBack={() => router.back()} />
     </div>
   );
 }
