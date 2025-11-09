@@ -29,13 +29,36 @@ export default function ModelViewerWebAR({
 }: ModelViewerWebARProps) {
     const [isLoaded, setIsLoaded] = useState(false);
     const [platform, setPlatform] = useState<'ios' | 'android' | 'other'>('other');
+    const [webXRSupported, setWebXRSupported] = useState(false);
+    const [arModes, setArModes] = useState('webxr scene-viewer quick-look');
 
     useEffect(() => {
         const userAgent = navigator.userAgent.toLowerCase();
         if (/iphone|ipad|ipod/.test(userAgent)) {
             setPlatform('ios');
+            setArModes('quick-look'); // iOS only uses Quick Look
         } else if (/android/.test(userAgent)) {
             setPlatform('android');
+
+            // Check if WebXR is supported
+            if ('xr' in navigator) {
+                (navigator as any).xr?.isSessionSupported('immersive-ar').then((supported: boolean) => {
+                    setWebXRSupported(supported);
+                    if (supported) {
+                        setArModes('webxr'); // Only WebXR, no fallback
+                        console.log('✅ WebXR supported - will stay in browser!');
+                    } else {
+                        setArModes('scene-viewer'); // Fallback to Scene Viewer
+                        console.log('⚠️ WebXR not supported - will use Scene Viewer');
+                    }
+                }).catch(() => {
+                    setArModes('scene-viewer');
+                    console.log('⚠️ WebXR check failed - will use Scene Viewer');
+                });
+            } else {
+                setArModes('scene-viewer');
+                console.log('⚠️ No WebXR API - will use Scene Viewer');
+            }
         }
     }, []);
 
@@ -76,72 +99,41 @@ export default function ModelViewerWebAR({
                 {/* Model Viewer - This is where the magic happens */}
                 <div className="flex-1 relative">
                     {isLoaded ? (
-                        <model-viewer
-                            src={modelUrl}
-                            ios-src={usdzUrl || modelUrl.replace(/\.glb$/i, '.usdz')}
-                            alt={modelTitle}
-                            ar
-                            ar-modes="webxr scene-viewer quick-look"
-                            camera-controls
-                            touch-action="pan-y"
-                            auto-rotate
-                            shadow-intensity="1"
-                            style={{
-                                width: '100%',
-                                height: '100%',
-                                background: 'linear-gradient(to bottom, #1a1a1a, #000000)'
+                        <div
+                            dangerouslySetInnerHTML={{
+                                __html: `
+                                    <model-viewer
+                                        src="${modelUrl}"
+                                        ios-src="${usdzUrl || modelUrl.replace(/\.glb$/i, '.usdz')}"
+                                        alt="${modelTitle}"
+                                        ar
+                                        ar-modes="${arModes}"
+                                        camera-controls
+                                        touch-action="pan-y"
+                                        auto-rotate
+                                        shadow-intensity="1"
+                                        xr-environment
+                                        style="width: 100%; height: 100%; background: linear-gradient(to bottom, #1a1a1a, #000000);"
+                                    >
+                                        <button
+                                            slot="ar-button"
+                                            style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 16px 32px; font-size: 18px; font-weight: 600; color: white; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 10;"
+                                        >
+                                            🥽 View in AR
+                                        </button>
+                                        <div
+                                            slot="poster"
+                                            style="display: flex; align-items: center; justify-content: center; height: 100%; background: #000;"
+                                        >
+                                            <div style="text-align: center; color: white;">
+                                                <div style="width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+                                                <p>Loading 3D model...</p>
+                                            </div>
+                                        </div>
+                                    </model-viewer>
+                                `
                             }}
-                        >
-                            {/* AR Button - appears automatically on supported devices */}
-                            <button
-                                slot="ar-button"
-                                style={{
-                                    position: 'absolute',
-                                    bottom: '20px',
-                                    left: '50%',
-                                    transform: 'translateX(-50%)',
-                                    padding: '16px 32px',
-                                    fontSize: '18px',
-                                    fontWeight: '600',
-                                    color: 'white',
-                                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                    border: 'none',
-                                    borderRadius: '12px',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-                                    zIndex: 10
-                                }}
-                            >
-                                🥽 View in AR
-                            </button>
-
-                            {/* Loading indicator */}
-                            <div
-                                slot="poster"
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    height: '100%',
-                                    background: '#000'
-                                }}
-                            >
-                                <div style={{ textAlign: 'center', color: 'white' }}>
-                                    <div
-                                        style={{
-                                            width: '40px',
-                                            height: '40px',
-                                            border: '4px solid rgba(255,255,255,0.3)',
-                                            borderTop: '4px solid white',
-                                            borderRadius: '50%',
-                                            animation: 'spin 1s linear infinite',
-                                            margin: '0 auto 16px'
-                                        }}
-                                    />
-                                    <p>Loading 3D model...</p>
-                                </div>
-                            </div>
-                        </model-viewer>
+                        />
                     ) : (
                         <div className="flex items-center justify-center h-full text-white">
                             <div className="text-center">
@@ -159,8 +151,16 @@ export default function ModelViewerWebAR({
                         <div>
                             {platform === 'android' && (
                                 <p>
-                                    <strong className="text-white">Android WebXR:</strong> Your browser UI stays visible during AR!
-                                    Tap "View in AR" to place the model in your space.
+                                    {webXRSupported ? (
+                                        <>
+                                            <strong className="text-white">✅ WebXR Ready:</strong> Your browser UI stays visible during AR!
+                                        </>
+                                    ) : (
+                                        <>
+                                            <strong className="text-white">⚠️ Scene Viewer:</strong> Will open Google AR app.
+                                            Update Chrome for WebXR support.
+                                        </>
+                                    )}
                                 </p>
                             )}
                             {platform === 'ios' && (
@@ -188,13 +188,4 @@ export default function ModelViewerWebAR({
             `}</style>
         </>
     );
-}
-
-// TypeScript declaration for model-viewer custom element
-declare global {
-    namespace JSX {
-        interface IntrinsicElements {
-            'model-viewer': any;
-        }
-    }
 }
