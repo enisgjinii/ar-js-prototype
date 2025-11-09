@@ -3,6 +3,8 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import AFrameARView from '@/components/aframe-ar-view';
+import ThreeJSARView from '@/components/threejs-ar-view';
+import { useEffect, useState } from 'react';
 
 export default function ARPage() {
   const router = useRouter();
@@ -18,8 +20,44 @@ export default function ARPage() {
         </button>
       </div>
 
-    {/* Render the A-Frame + AR.js AR view (tap to place cubes) */}
-    <AFrameARView onBack={() => router.back()} />
+      {/* Choose Three.js WebXR when available, otherwise fallback to A-Frame AR.js */}
+      <ClientARRouter onBack={() => router.back()} />
     </div>
+  );
+}
+
+function ClientARRouter({ onBack }: { onBack: () => void }) {
+  const [webxrAvailable, setWebxrAvailable] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        if ((navigator as any).xr && (navigator as any).xr.isSessionSupported) {
+          const supported = await (navigator as any).xr.isSessionSupported('immersive-ar');
+          if (mounted) setWebxrAvailable(!!supported);
+          return;
+        }
+      } catch (e) {
+        // ignore
+      }
+      if (mounted) setWebxrAvailable(false);
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  if (webxrAvailable === null) {
+    // still checking -> show loader
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <p className="text-white">Checking AR support…</p>
+      </div>
+    );
+  }
+
+  return webxrAvailable ? (
+    <ThreeJSARView onBack={onBack} />
+  ) : (
+    <AFrameARView onBack={onBack} />
   );
 }
