@@ -11,6 +11,17 @@
 
 ## ✨ Key Features
 
+### 🔐 **Admin Panel** (NEW!)
+
+- Complete authentication system (Email/Password + Google OAuth)
+- Voice file management with upload, edit, and delete
+- Supabase Storage integration for audio files
+- Active/inactive voice toggle
+- Audio preview and playback
+- Public API endpoint for active voices
+- Beautiful sidebar dashboard with statistics
+- **[Setup Guide](START_HERE.md)** | **[Documentation](ADMIN_PANEL_OVERVIEW.md)**
+
 ### 🎧 **Audio Guide Experience**
 
 - Immersive location-based audio narratives
