@@ -9,6 +9,7 @@ The AR Camera View now uses Babylon.js WebXR API to provide comprehensive augmen
 ## Implemented Features
 
 ### 1. Hit Test (Surface Detection)
+
 - **Purpose**: Detects real-world surfaces for object placement
 - **Implementation**: Uses `WebXRHitTest` feature
 - **Visual Feedback**: Blue torus reticle appears on detected surfaces
@@ -18,6 +19,7 @@ The AR Camera View now uses Babylon.js WebXR API to provide comprehensive augmen
   - Real-time hit test results
 
 ### 2. Plane Detection
+
 - **Purpose**: Identifies horizontal and vertical planes in the environment
 - **Implementation**: Uses `WebXRPlaneDetector` feature
 - **Visual Feedback**: Semi-transparent wireframe meshes overlay detected planes
@@ -27,6 +29,7 @@ The AR Camera View now uses Babylon.js WebXR API to provide comprehensive augmen
   - Plane add/remove event handling
 
 ### 3. Light Estimation
+
 - **Purpose**: Matches virtual object lighting to real-world lighting conditions
 - **Implementation**: Uses `WebXRLightEstimation` feature
 - **Features**:
@@ -36,6 +39,7 @@ The AR Camera View now uses Babylon.js WebXR API to provide comprehensive augmen
   - SRGBA8 reflection format
 
 ### 4. Anchors
+
 - **Purpose**: Maintains stable object positions in the real world
 - **Implementation**: Uses `WebXRAnchorSystem` feature
 - **Features**:
@@ -44,6 +48,7 @@ The AR Camera View now uses Babylon.js WebXR API to provide comprehensive augmen
   - Stable object placement across sessions
 
 ### 5. Background Remover
+
 - **Purpose**: Makes the scene background transparent to show camera feed
 - **Implementation**: Uses `WebXRBackgroundRemover` feature
 - **Features**:
@@ -52,7 +57,9 @@ The AR Camera View now uses Babylon.js WebXR API to provide comprehensive augmen
   - Environment helper integration
 
 ### 6. Additional Optional Features
+
 The implementation requests these additional features when available:
+
 - **Hand Tracking**: For gesture-based interactions
 - **Depth Sensing**: For improved occlusion and spatial understanding
 - **DOM Overlay**: For UI elements over AR content
@@ -60,6 +67,7 @@ The implementation requests these additional features when available:
 ## User Interaction
 
 ### Placement Workflow
+
 1. **Enter AR**: User taps "Enter AR" button to start the session
 2. **Surface Scanning**: Move device to scan the environment
 3. **Reticle Appears**: Blue torus indicator shows where objects can be placed
@@ -67,6 +75,7 @@ The implementation requests these additional features when available:
 5. **Animation**: Placed objects rotate automatically
 
 ### Visual Indicators
+
 - **Yellow Pulsing Dot**: Scanning for surfaces
 - **Green Check**: Surfaces detected and ready for placement
 - **Blue Torus**: Current placement target location
@@ -75,14 +84,16 @@ The implementation requests these additional features when available:
 ## Technical Details
 
 ### Materials
+
 - **Reticle**: StandardMaterial with emissive glow
 - **Placed Objects**: PBRMaterial with random colors, metallic and roughness properties
 - **Detected Planes**: Semi-transparent wireframe StandardMaterial
 
 ### Session Configuration
+
 ```typescript
 {
-  uiOptions: { 
+  uiOptions: {
     sessionMode: 'immersive-ar',
     referenceSpaceType: 'local-floor'
   },
@@ -99,6 +110,7 @@ The implementation requests these additional features when available:
 ```
 
 ### Browser Compatibility
+
 - **Recommended**: Chrome on Android devices with ARCore support
 - **Requirements**: WebXR Device API support
 - **Fallback**: Clear error message if WebXR AR is not supported
@@ -106,6 +118,7 @@ The implementation requests these additional features when available:
 ## Error Handling
 
 The implementation includes comprehensive error handling:
+
 - WebXR support detection before initialization
 - Graceful degradation when optional features are unavailable
 - User-friendly error messages
@@ -123,6 +136,7 @@ The implementation includes comprehensive error handling:
 ## Future Enhancements
 
 Potential additions based on device capabilities:
+
 - Image tracking for marker-based AR
 - Face tracking for AR filters
 - Mesh detection for complex geometry

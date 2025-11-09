@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React from 'react';
 import { useUnityContext, Unity } from 'react-unity-webgl';
@@ -14,12 +14,13 @@ interface UnityViewProps {
 // - /unity-build/Build/Build.framework.js
 // - /unity-build/Build/Build.wasm
 export default function UnityView({ onBack }: UnityViewProps) {
-  const { unityProvider, loadingProgression, isLoaded, requestFullscreen } = useUnityContext({
-    loaderUrl: '/unity-build/Build/Build.loader.js',
-    dataUrl: '/unity-build/Build/Build.data',
-    frameworkUrl: '/unity-build/Build/Build.framework.js',
-    codeUrl: '/unity-build/Build/Build.wasm'
-  });
+  const { unityProvider, loadingProgression, isLoaded, requestFullscreen } =
+    useUnityContext({
+      loaderUrl: '/unity-build/Build/Build.loader.js',
+      dataUrl: '/unity-build/Build/Build.data',
+      frameworkUrl: '/unity-build/Build/Build.framework.js',
+      codeUrl: '/unity-build/Build/Build.wasm',
+    });
 
   return (
     <div className="w-full h-screen relative bg-black">
@@ -35,9 +36,14 @@ export default function UnityView({ onBack }: UnityViewProps) {
       <div className="w-full h-full flex items-center justify-center">
         {!isLoaded && (
           <div className="text-white text-center">
-            <p className="mb-2">Loading Unity content... {(loadingProgression * 100).toFixed(0)}%</p>
+            <p className="mb-2">
+              Loading Unity content... {(loadingProgression * 100).toFixed(0)}%
+            </p>
             <div className="w-48 h-2 bg-white/10 rounded overflow-hidden mx-auto">
-              <div className="h-full bg-white" style={{ width: `${loadingProgression * 100}%` }} />
+              <div
+                className="h-full bg-white"
+                style={{ width: `${loadingProgression * 100}%` }}
+              />
             </div>
           </div>
         )}

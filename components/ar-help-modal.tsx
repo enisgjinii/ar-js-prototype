@@ -22,17 +22,18 @@ export default function ARHelpModal({ onClose }: ARHelpModalProps) {
               <X className="h-5 w-5" />
             </Button>
           </div>
-          
+
           <div className="space-y-4">
             <div>
               <h3 className="font-semibold mb-2">Marker-Based AR</h3>
               <p className="text-sm text-muted-foreground mb-3">
-                This AR experience uses marker-based tracking. You'll need to print or display the Hiro marker pattern.
+                This AR experience uses marker-based tracking. You'll need to
+                print or display the Hiro marker pattern.
               </p>
               <div className="flex justify-center mb-3">
-                <img 
-                  src="/hiro-marker.png" 
-                  alt="Hiro marker" 
+                <img
+                  src="/hiro-marker.png"
+                  alt="Hiro marker"
                   className="w-48 h-48 object-contain border rounded"
                 />
               </div>
@@ -40,7 +41,7 @@ export default function ARHelpModal({ onClose }: ARHelpModalProps) {
                 Print this marker or display it on another device
               </p>
             </div>
-            
+
             <div>
               <h3 className="font-semibold mb-2">How to Use</h3>
               <ol className="list-decimal list-inside space-y-2 text-sm">
@@ -50,12 +51,14 @@ export default function ARHelpModal({ onClose }: ARHelpModalProps) {
                 <li>Watch as 3D objects appear on the marker</li>
               </ol>
             </div>
-            
+
             <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
               <div className="flex items-start gap-2">
                 <AlertCircle className="h-5 w-5 text-yellow-500 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h3 className="font-semibold text-yellow-500">Mobile Device Tips</h3>
+                  <h3 className="font-semibold text-yellow-500">
+                    Mobile Device Tips
+                  </h3>
                   <ul className="list-disc list-inside space-y-1 text-sm mt-1">
                     <li>Use latest Chrome or Safari on mobile</li>
                     <li>Ensure good lighting on the marker</li>
@@ -67,7 +70,7 @@ export default function ARHelpModal({ onClose }: ARHelpModalProps) {
                 </div>
               </div>
             </div>
-            
+
             <div>
               <h3 className="font-semibold mb-2">Troubleshooting</h3>
               <ul className="list-disc list-inside space-y-2 text-sm">
@@ -79,7 +82,7 @@ export default function ARHelpModal({ onClose }: ARHelpModalProps) {
               </ul>
             </div>
           </div>
-          
+
           <div className="mt-6 flex justify-end">
             <Button onClick={onClose}>Got It</Button>
           </div>

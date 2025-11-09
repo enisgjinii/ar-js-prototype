@@ -19,4 +19,5 @@ Notes
 - All A-Frame/AR.js static assets and scripts have been removed from the repository.
 
 For developer details, open `components/ar-camera-view.tsx` and `components/cesium-ar-view.tsx` (for Cesium + geolocation scenarios).
+
 ### Using the Hiro Marker

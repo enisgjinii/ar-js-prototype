@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
@@ -34,7 +34,9 @@ function ClientARRouter({ onBack }: { onBack: () => void }) {
     (async () => {
       try {
         if ((navigator as any).xr && (navigator as any).xr.isSessionSupported) {
-          const supported = await (navigator as any).xr.isSessionSupported('immersive-ar');
+          const supported = await (navigator as any).xr.isSessionSupported(
+            'immersive-ar'
+          );
           if (mounted) setWebxrAvailable(!!supported);
           return;
         }
@@ -43,7 +45,9 @@ function ClientARRouter({ onBack }: { onBack: () => void }) {
       }
       if (mounted) setWebxrAvailable(false);
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   if (webxrAvailable === null) {

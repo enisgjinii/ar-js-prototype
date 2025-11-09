@@ -28,9 +28,7 @@ import ARHelpModal from '@/components/ar-help-modal';
 
 export default function Home() {
   const router = useRouter();
-  const [activeView, setActiveView] = useState<'audio' | 'ar'>(
-    'audio'
-  );
+  const [activeView, setActiveView] = useState<'audio' | 'ar'>('audio');
   const { theme, setTheme } = useTheme();
   const { locale, setLocale } = useLocale();
   const [mounted, setMounted] = useState(false);
