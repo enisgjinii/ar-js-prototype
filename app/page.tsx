@@ -26,6 +26,14 @@ import {
 } from '@/components/ui/select';
 import ARHelpModal from '@/components/ar-help-modal';
 
+interface Voice {
+  id: string;
+  name: string;
+  description: string | null;
+  file_url: string;
+  is_active: boolean;
+}
+
 export default function Home() {
   const router = useRouter();
   const [activeView, setActiveView] = useState<'audio' | 'ar'>('audio');
@@ -34,12 +42,44 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [voices, setVoices] = useState<Voice[]>([]);
+  const [selectedVoice, setSelectedVoice] = useState<Voice | null>(null);
+  const [loadingVoices, setLoadingVoices] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   // useEffect only runs on the client, so now we can safely show the UI
   useEffect(() => {
     setMounted(true);
+    fetchVoices();
   }, []);
+
+  // Fetch voices from Supabase
+  const fetchVoices = async () => {
+    setLoadingVoices(true);
+    try {
+      const response = await fetch('/api/voices');
+      if (response.ok) {
+        const data = await response.json();
+        setVoices(data.voices || []);
+        if (data.voices && data.voices.length > 0) {
+          setSelectedVoice(data.voices[0]);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch voices:', error);
+    } finally {
+      setLoadingVoices(false);
+    }
+  };
+
+  // Update audio source when voice changes
+  useEffect(() => {
+    if (selectedVoice && audioRef.current) {
+      audioRef.current.src = selectedVoice.file_url;
+      audioRef.current.load();
+      setIsAudioPlaying(false);
+    }
+  }, [selectedVoice]);
 
   const t = useT();
 
@@ -97,12 +137,6 @@ export default function Home() {
     <main className="relative w-full min-h-screen bg-background">
       {/* Persistent audio element that survives tab switches */}
       <audio ref={audioRef} onEnded={() => setIsAudioPlaying(false)}>
-        <source src="/sample-audio.mp3" type="audio/mpeg" />
-        {/* Fallback for browsers that don't support MP3 or if the file is missing */}
-        <source
-          src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFd2xqZ2VjXl1bWFdVU1FPTkxLSklIR0ZFRENCQUA/Pj08Ozo5ODc2NTQzMjEwLy4tLCsqKSgnJiUkIyIhIB8eHRwbGhkYFxYVFBMSERAPDg0MCwoJCAcGBQQDAgEA"
-          type="audio/wav"
-        />
         {t('audio.audioFallback')}
       </audio>
 
@@ -112,6 +146,10 @@ export default function Home() {
         onPause={handleAudioPause}
         onStop={handleAudioReset}
         showARView={activeView === 'ar'}
+        voices={voices}
+        selectedVoice={selectedVoice}
+        onVoiceChange={setSelectedVoice}
+        loadingVoices={loadingVoices}
       />
 
       {/* Middle left sidebar for theme, language switchers, and audio controls */}

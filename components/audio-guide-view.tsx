@@ -15,12 +15,24 @@ import ModelARLauncherButton from '@/components/model-ar-launcher';
 import { detectPlatform, isARSupported } from '@/lib/ar-utils';
 import { Badge } from '@/components/ui/badge';
 
+interface Voice {
+  id: string;
+  name: string;
+  description: string | null;
+  file_url: string;
+  is_active: boolean;
+}
+
 interface AudioGuideViewProps {
   onPause?: () => void;
   onStop?: () => void;
   onPlay?: () => void;
   isPlaying?: boolean;
   showARView?: boolean; // Controlled by Navigation component
+  voices?: Voice[];
+  selectedVoice?: Voice | null;
+  onVoiceChange?: (voice: Voice) => void;
+  loadingVoices?: boolean;
 }
 
 interface Model {
@@ -39,6 +51,10 @@ export default function AudioGuideView({
   onPlay,
   isPlaying = false,
   showARView = false, // Controlled by parent (Navigation)
+  voices = [],
+  selectedVoice = null,
+  onVoiceChange,
+  loadingVoices = false,
 }: AudioGuideViewProps) {
   const t = useT();
   const [models, setModels] = useState<Model[]>([]);
@@ -115,28 +131,77 @@ export default function AudioGuideView({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Voice Selector */}
+              {voices.length > 1 && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">{t('audio.currentTrack')}:</label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {voices.map((voice) => (
+                      <button
+                        key={voice.id}
+                        onClick={() => onVoiceChange?.(voice)}
+                        className={`p-3 rounded-lg border text-left transition-all ${selectedVoice?.id === voice.id
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-background hover:bg-muted border-border'
+                          }`}
+                      >
+                        <div className="font-medium text-sm truncate">
+                          {voice.name}
+                        </div>
+                        {voice.description && (
+                          <div className="text-xs opacity-80 truncate mt-1">
+                            {voice.description}
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
                 <div className="text-center space-y-2">
                   <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
                     <Volume2 className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
                   </div>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    {t('audio.sampleContent')}
-                  </p>
+                  {loadingVoices ? (
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      {t('common.loading')}
+                    </p>
+                  ) : selectedVoice ? (
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      {selectedVoice.name}
+                    </p>
+                  ) : voices.length === 0 ? (
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      {t('audio.noAudioAvailable')}
+                    </p>
+                  ) : (
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      {t('audio.sampleContent')}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <h3 className="font-semibold text-base sm:text-lg">
-                  {t('audio.overviewTitle')}
-                </h3>
-                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                  {t('audio.overviewText')}
-                </p>
-              </div>
+              {selectedVoice && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-base sm:text-lg">
+                    {selectedVoice.name}
+                  </h3>
+                  <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                    {selectedVoice.description || t('audio.overviewText')}
+                  </p>
+                </div>
+              )}
 
               <div className="flex gap-2">
-                <Button onClick={toggleAudio} className="flex-1 gap-2" size="lg">
+                <Button
+                  onClick={toggleAudio}
+                  className="flex-1 gap-2"
+                  size="lg"
+                  disabled={!selectedVoice || loadingVoices}
+                >
                   {isPlaying ? (
                     <>
                       <Pause className="w-5 h-5" />
