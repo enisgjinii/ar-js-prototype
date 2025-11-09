@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
+import ARCameraView from '@/components/ar-camera-view';
 
 export default function ARPage() {
   const router = useRouter();
@@ -17,13 +18,9 @@ export default function ARPage() {
         </button>
       </div>
 
-      <iframe
-        src="/ar-location.html"
-        title="AR Location"
-        className="w-full h-full border-0"
-        style={{ display: 'block' }}
-        allow="camera; geolocation; accelerometer; fullscreen"
-      />
+      {/* Render the in-repo Babylon.js WebXR AR camera view which includes
+          markerless placement (hit-test, reticle, anchors) and tap-to-place behavior */}
+      <ARCameraView onBack={() => router.back()} />
     </div>
   );
 }
