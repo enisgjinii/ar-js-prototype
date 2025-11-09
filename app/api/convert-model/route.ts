@@ -86,14 +86,21 @@ export async function POST(request: NextRequest) {
                 })
                 .eq('id', modelId);
 
-            throw conversionError;
+            return NextResponse.json(
+                {
+                    error: conversionError.message || 'Conversion failed',
+                    details: 'Check server logs for more information',
+                    modelId,
+                },
+                { status: 500 }
+            );
         }
     } catch (error: any) {
-        console.error('Conversion error:', error);
+        console.error('❌ API error:', error);
         return NextResponse.json(
             {
                 error: error.message || 'Conversion failed',
-                details: 'Install three.js: npm install three@latest',
+                details: 'Check server logs for more information',
             },
             { status: 500 }
         );
@@ -104,33 +111,48 @@ export async function POST(request: NextRequest) {
  * Convert GLB to USDZ using available methods
  */
 async function convertGLBtoUSDZ(glbUrl: string): Promise<Buffer> {
+    const errors: string[] = [];
+
     // Method 1: Three.js (JavaScript-based, works everywhere)
     if (process.env.USE_THREEJS_CONVERTER !== 'false') {
-        console.log('🎨 Using Three.js converter');
+        console.log('🎨 Trying Three.js converter...');
         try {
             return await convertWithThreeJS(glbUrl);
         } catch (error: any) {
-            console.warn('Three.js conversion failed:', error.message);
+            console.warn('⚠️ Three.js conversion failed:', error.message);
+            errors.push(`Three.js: ${error.message}`);
             // Continue to other methods
         }
     }
 
     // Method 2: External Conversion API (if configured)
     if (process.env.CONVERSION_API_URL && process.env.CONVERSION_API_KEY) {
-        console.log('📡 Using external conversion API');
-        return await convertWithExternalAPI(glbUrl);
+        console.log('📡 Trying external conversion API...');
+        try {
+            return await convertWithExternalAPI(glbUrl);
+        } catch (error: any) {
+            console.warn('⚠️ External API conversion failed:', error.message);
+            errors.push(`External API: ${error.message}`);
+        }
     }
 
     // Method 3: Reality Converter CLI (Mac only)
     if (process.platform === 'darwin') {
-        console.log('🍎 Using Reality Converter CLI (Mac)');
-        return await convertWithRealityConverter(glbUrl);
+        console.log('🍎 Trying Reality Converter CLI (Mac)...');
+        try {
+            return await convertWithRealityConverter(glbUrl);
+        } catch (error: any) {
+            console.warn('⚠️ Reality Converter failed:', error.message);
+            errors.push(`Reality Converter: ${error.message}`);
+        }
     }
 
-    // No conversion method available
-    throw new Error(
-        'No conversion method available. Install three.js: npm install three@latest'
-    );
+    // No conversion method worked
+    const errorMessage = errors.length > 0
+        ? `All conversion methods failed:\n${errors.join('\n')}`
+        : 'No conversion method available';
+
+    throw new Error(errorMessage);
 }
 
 /**
@@ -138,21 +160,40 @@ async function convertGLBtoUSDZ(glbUrl: string): Promise<Buffer> {
  */
 async function convertWithThreeJS(glbUrl: string): Promise<Buffer> {
     try {
+        console.log('📥 Downloading GLB file from:', glbUrl);
+
+        // Fetch GLB file
+        const response = await fetch(glbUrl);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch GLB: ${response.status} ${response.statusText}`);
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        console.log(`✅ Downloaded ${arrayBuffer.byteLength} bytes`);
+
+        console.log('📦 Loading Three.js modules...');
+
+        // Polyfill browser globals for Node.js environment
+        // USDZExporter expects these to exist
+        if (typeof self === 'undefined') {
+            (global as any).self = global;
+        }
+        if (typeof window === 'undefined') {
+            (global as any).window = global;
+        }
+        if (typeof document === 'undefined') {
+            (global as any).document = {
+                createElement: () => ({}),
+                createElementNS: () => ({}),
+            };
+        }
+
         // Dynamic import Three.js
         const THREE = await import('three');
         const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
         const { USDZExporter } = await import('three/examples/jsm/exporters/USDZExporter.js');
 
-        console.log('📥 Downloading GLB file...');
-
-        // Fetch GLB file
-        const response = await fetch(glbUrl);
-        if (!response.ok) {
-            throw new Error(`Failed to fetch GLB: ${response.statusText}`);
-        }
-        const arrayBuffer = await response.arrayBuffer();
-
-        console.log('📦 Parsing GLB with Three.js...');
+        console.log('✅ Three.js modules loaded');
+        console.log('📦 Parsing GLB with GLTFLoader...');
 
         // Parse GLB using GLTFLoader
         const loader = new GLTFLoader();
@@ -160,23 +201,39 @@ async function convertWithThreeJS(glbUrl: string): Promise<Buffer> {
             loader.parse(
                 arrayBuffer,
                 '',
-                (gltf: any) => resolve(gltf),
-                (error: any) => reject(error)
+                (gltf: any) => {
+                    console.log('✅ GLB parsed successfully');
+                    resolve(gltf);
+                },
+                (error: any) => {
+                    console.error('❌ GLB parsing error:', error);
+                    reject(error);
+                }
             );
         });
 
-        console.log('✨ Exporting to USDZ...');
+        console.log('✨ Exporting to USDZ format...');
 
         // Export to USDZ
         const exporter = new USDZExporter();
         const usdzArrayBuffer = await exporter.parseAsync(gltf.scene);
 
-        console.log('✅ Three.js conversion complete!');
+        console.log(`✅ USDZ export complete! Size: ${usdzArrayBuffer.byteLength} bytes`);
 
         return Buffer.from(usdzArrayBuffer);
     } catch (error: any) {
-        console.error('Three.js conversion error:', error);
-        throw new Error(`Three.js conversion failed: ${error.message}. Make sure three.js is installed: npm install three@latest`);
+        console.error('❌ Three.js conversion error:', error);
+
+        // Provide more specific error messages
+        if (error.message?.includes('fetch')) {
+            throw new Error(`Failed to download GLB file: ${error.message}`);
+        } else if (error.message?.includes('parse')) {
+            throw new Error(`Failed to parse GLB file: ${error.message}`);
+        } else if (error.message?.includes('Cannot find module')) {
+            throw new Error('Three.js modules not found. Run: npm install three@latest');
+        } else {
+            throw new Error(`Three.js conversion failed: ${error.message}`);
+        }
     }
 }
 
