@@ -45,13 +45,15 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 4. Paste it in the Supabase SQL Editor
 5. Click **Run**
 
-### Step 4: Create Storage Bucket (30 seconds)
+### Step 4: Create Storage Bucket (30 seconds) ⚠️ IMPORTANT
 
 1. In Supabase dashboard, go to **Storage**
 2. Click **Create a new bucket**
-3. Name: `voices`
-4. Make it **Public** ✅
+3. Name: `voices` (must be exactly this)
+4. **Make it Public** ✅ **CHECK THIS BOX** (very important!)
 5. Click **Create bucket**
+
+**Note:** If you skip this step, you'll get a 400 error when uploading files!
 
 ### Step 5: Add Storage Policies (30 seconds)
 

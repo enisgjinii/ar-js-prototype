@@ -41,9 +41,15 @@ export default function NewVoicePage() {
 
             const { error: uploadError } = await supabase.storage
                 .from('voices')
-                .upload(filePath, file)
+                .upload(filePath, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                })
 
-            if (uploadError) throw uploadError
+            if (uploadError) {
+                console.error('Upload error:', uploadError)
+                throw new Error(uploadError.message || 'Failed to upload file to storage')
+            }
 
             const { data: { publicUrl } } = supabase.storage
                 .from('voices')
@@ -66,7 +72,19 @@ export default function NewVoicePage() {
             router.push('/admin/voices')
             router.refresh()
         } catch (error: any) {
-            toast.error(error.message || 'Failed to upload voice')
+            console.error('Upload error:', error)
+            const errorMessage = error.message || 'Failed to upload voice'
+
+            // Provide helpful error messages
+            if (errorMessage.includes('not found') || errorMessage.includes('does not exist')) {
+                toast.error('Storage bucket not found. Please create the "voices" bucket in Supabase Storage.')
+            } else if (errorMessage.includes('policy')) {
+                toast.error('Storage policy error. Please check your storage policies in Supabase.')
+            } else if (errorMessage.includes('authenticated')) {
+                toast.error('Authentication error. Please log out and log in again.')
+            } else {
+                toast.error(errorMessage)
+            }
         } finally {
             setUploading(false)
         }
@@ -97,7 +115,7 @@ export default function NewVoicePage() {
                             <Input
                                 id="name"
                                 value={name}
-                                onChange={(e) => setName(e.target.value)}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
                                 placeholder="e.g., Welcome Message"
                                 required
                                 disabled={uploading}
@@ -109,7 +127,7 @@ export default function NewVoicePage() {
                             <Textarea
                                 id="description"
                                 value={description}
-                                onChange={(e) => setDescription(e.target.value)}
+                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
                                 placeholder="Optional description of this voice file"
                                 rows={3}
                                 disabled={uploading}
