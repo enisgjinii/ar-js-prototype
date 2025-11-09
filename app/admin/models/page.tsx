@@ -1,53 +1,57 @@
-import { createClient } from '@/lib/supabase/server'
-import { VoiceList } from '@/components/admin/voice-list'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { ModelList } from '@/components/admin/model-list'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Plus, Mic, Activity, Clock, TrendingUp } from 'lucide-react'
+import { Plus, Box, Activity, Clock, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 
-export default async function VoicesPage() {
-    const supabase = await createClient()
+export default async function ModelsPage() {
+    const supabaseAdmin = createAdminClient()
 
-    const { data: voices, error } = await supabase
-        .from('voices')
+    const { data: models, error } = await supabaseAdmin
+        .from('models')
         .select('*')
         .order('created_at', { ascending: false })
 
+    if (error) {
+        console.error('Error fetching models:', error)
+    }
+
     // Calculate statistics
-    const totalVoices = voices?.length || 0
-    const activeVoices = voices?.filter((v) => v.is_active).length || 0
-    const inactiveVoices = totalVoices - activeVoices
-    const recentVoices = voices?.filter((v) => {
+    const totalModels = models?.length || 0
+    const activeModels = models?.filter((m) => m.is_active).length || 0
+    const inactiveModels = totalModels - activeModels
+    const recentModels = models?.filter((m) => {
         const dayAgo = new Date()
         dayAgo.setDate(dayAgo.getDate() - 1)
-        return new Date(v.created_at) > dayAgo
+        return new Date(m.created_at) > dayAgo
     }).length || 0
 
     const stats = [
         {
-            title: 'Total Voices',
-            value: totalVoices,
-            icon: Mic,
-            description: 'All uploaded files',
-            color: 'text-blue-500',
-        },
-        {
-            title: 'Active',
-            value: activeVoices,
-            icon: Activity,
-            description: 'Currently published',
+            title: 'Total Models',
+            value: totalModels,
+            icon: Box,
+            description: 'All uploaded models',
             color: 'text-green-500',
         },
         {
+            title: 'Active',
+            value: activeModels,
+            icon: Activity,
+            description: 'Currently published',
+            color: 'text-blue-500',
+        },
+        {
             title: 'Inactive',
-            value: inactiveVoices,
+            value: inactiveModels,
             icon: Clock,
-            description: 'Unpublished files',
+            description: 'Unpublished models',
             color: 'text-gray-500',
         },
         {
             title: 'Recent',
-            value: recentVoices,
+            value: recentModels,
             icon: TrendingUp,
             description: 'Added in last 24h',
             color: 'text-purple-500',
@@ -59,13 +63,13 @@ export default async function VoicesPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold">Voice Management</h1>
-                    <p className="text-gray-500">Manage audio files for your application</p>
+                    <h1 className="text-3xl font-bold">3D Model Management</h1>
+                    <p className="text-gray-500">Upload and manage GLB/GLTF 3D models</p>
                 </div>
-                <Link href="/admin/voices/new">
+                <Link href="/admin/models/new">
                     <Button size="lg">
                         <Plus className="mr-2 h-4 w-4" />
-                        Upload Voice
+                        Upload Model
                     </Button>
                 </Link>
             </div>
@@ -86,8 +90,8 @@ export default async function VoicesPage() {
                 ))}
             </div>
 
-            {/* Voice List */}
-            <VoiceList voices={voices || []} />
+            {/* Model List */}
+            <ModelList models={models || []} />
         </div>
     )
 }

@@ -10,6 +10,7 @@ import {
     Settings,
     LogOut,
     User,
+    Box,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -52,6 +53,18 @@ export function Sidebar({ user }: SidebarProps) {
             icon: Mic,
             href: '/admin/voices',
             color: 'text-violet-500',
+        },
+        {
+            label: '3D Models',
+            icon: Box,
+            href: '/admin/models',
+            color: 'text-green-500',
+        },
+        {
+            label: 'Users',
+            icon: User,
+            href: '/admin/users',
+            color: 'text-orange-500',
         },
         {
             label: 'Settings',
