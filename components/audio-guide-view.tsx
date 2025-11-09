@@ -107,7 +107,7 @@ export default function AudioGuideView({
   };
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 pb-28 sm:pb-32 md:pb-36 bg-gradient-to-b from-background to-secondary/20">
+    <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 pb-28 sm:pb-32 md:pb-36 bg-gradient-to-b from-background to-secondary/20 relative z-0">
       <div className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-balance">
