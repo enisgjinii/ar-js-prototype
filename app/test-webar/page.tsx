@@ -37,13 +37,22 @@ export default function TestWebARPage() {
                         handles WebXR on Android and falls back to native AR on iOS. It's the best free solution!
                     </p>
                 </div>
+
+                <div className="mt-4 p-4 bg-gray-800 rounded-lg">
+                    <h3 className="text-sm font-semibold mb-2">Troubleshooting:</h3>
+                    <ul className="text-xs text-gray-400 space-y-1">
+                        <li>• <strong>Black screen?</strong> Model is loading, wait a few seconds</li>
+                        <li>• <strong>Opens Google AR?</strong> WebXR not enabled, see console</li>
+                        <li>• <strong>Enable WebXR:</strong> chrome://flags → search "webxr" → enable all</li>
+                        <li>• <strong>Check console:</strong> Open DevTools to see AR mode</li>
+                    </ul>
+                </div>
             </div>
 
             {showAR && (
                 <ModelViewerWebAR
-                    modelUrl="/models/sample.glb"
-                    usdzUrl="/models/sample.usdz"
-                    modelTitle="Sample 3D Model"
+                    modelUrl="/models/Cesium_Man.glb"
+                    modelTitle="Cesium Man - 3D Character"
                     onClose={() => setShowAR(false)}
                 />
             )}
