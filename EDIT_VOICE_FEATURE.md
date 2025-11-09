@@ -7,6 +7,7 @@ A complete edit page for voices at `/admin/voices/[id]/edit`
 ## 🎨 Features
 
 ### Edit Form (Left Side)
+
 - **Name Field** - Update voice name
 - **Description Field** - Update description (multiline)
 - **Active Status Toggle** - Publish/unpublish voice
@@ -14,11 +15,13 @@ A complete edit page for voices at `/admin/voices/[id]/edit`
 - **Cancel Button** - Return without saving
 
 ### Audio Preview (Right Sidebar)
+
 - **Play/Pause Button** - Preview the audio
 - **Audio Player** - Native HTML5 audio controls
 - **Visual Feedback** - Button changes when playing
 
 ### File Information (Right Sidebar)
+
 - **File ID** - Full UUID
 - **File Path** - Storage location
 - **Created Date** - When uploaded (with time)
@@ -28,9 +31,11 @@ A complete edit page for voices at `/admin/voices/[id]/edit`
 ## 🎯 User Flow
 
 ### 1. Access Edit Page
+
 From voice list, click the edit icon (✏️) on any voice card.
 
 ### 2. Edit Details
+
 ```
 ┌─────────────────────────────────────┐
 │ Voice Details                       │
@@ -49,6 +54,7 @@ From voice list, click the edit icon (✏️) on any voice card.
 ```
 
 ### 3. Preview Audio
+
 ```
 ┌─────────────────────────────────────┐
 │ Audio Preview                       │
@@ -61,6 +67,7 @@ From voice list, click the edit icon (✏️) on any voice card.
 ```
 
 ### 4. View File Info
+
 ```
 ┌─────────────────────────────────────┐
 │ File Information                    │
@@ -85,19 +92,23 @@ From voice list, click the edit icon (✏️) on any voice card.
 ## 🔧 Technical Details
 
 ### Loading State
+
 Shows a spinner while fetching voice data from database.
 
 ### Error Handling
+
 - If voice not found, shows error and back button
 - If update fails, shows error toast
 - If load fails, redirects to voice list
 
 ### Auto-save
+
 - Updates `updated_at` timestamp automatically
 - Preserves file URL and path
 - Only updates editable fields
 
 ### Audio Preview
+
 - Two ways to play: button or native controls
 - Stops previous audio when starting new
 - Cleans up audio on component unmount
@@ -105,6 +116,7 @@ Shows a spinner while fetching voice data from database.
 ## 📱 Responsive Layout
 
 ### Desktop (1024px+)
+
 ```
 ┌─────────────────────┬──────────────┐
 │                     │              │
@@ -115,6 +127,7 @@ Shows a spinner while fetching voice data from database.
 ```
 
 ### Mobile (< 1024px)
+
 ```
 ┌─────────────────────┐
 │   Edit Form         │
@@ -129,11 +142,13 @@ Shows a spinner while fetching voice data from database.
 ## 🎯 What You Can Edit
 
 ### Editable Fields
+
 - ✅ Name
 - ✅ Description
 - ✅ Active status
 
 ### Read-Only Fields
+
 - ❌ File URL (cannot change)
 - ❌ File path (cannot change)
 - ❌ Created date (historical)
@@ -142,6 +157,7 @@ Shows a spinner while fetching voice data from database.
 ## 🚀 Usage
 
 ### Edit a Voice
+
 1. Go to `/admin/voices`
 2. Click edit icon (✏️) on any voice
 3. Update name, description, or status
@@ -149,11 +165,13 @@ Shows a spinner while fetching voice data from database.
 5. Redirected back to voice list
 
 ### Preview Audio
+
 1. Click "Play Audio" button
 2. Or use native audio controls
 3. Audio plays in browser
 
 ### Copy URL
+
 1. Scroll to "File Information"
 2. Click "Copy URL" button
 3. URL copied to clipboard
@@ -162,17 +180,20 @@ Shows a spinner while fetching voice data from database.
 ## ✨ Features
 
 ### Visual Feedback
+
 - Loading spinner while fetching
 - Disabled buttons while saving
 - Toast notifications for actions
 - Play/pause button state
 
 ### Navigation
+
 - Back arrow to voice list
 - Cancel button to voice list
 - Auto-redirect after save
 
 ### Data Validation
+
 - Name is required
 - Description is optional
 - Active status is boolean
@@ -180,6 +201,7 @@ Shows a spinner while fetching voice data from database.
 ## 🎊 Summary
 
 The edit page provides:
+
 - ✅ Easy voice editing
 - ✅ Audio preview
 - ✅ File information

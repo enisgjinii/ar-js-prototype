@@ -17,15 +17,15 @@ Then follow [START_HERE.md](START_HERE.md) for Supabase setup.
 
 ## 📍 Routes
 
-| Route | Description |
-|-------|-------------|
-| `/auth/login` | Login page |
-| `/auth/signup` | Signup page |
-| `/admin` | Dashboard |
-| `/admin/voices` | Voice management |
-| `/admin/voices/new` | Upload voice |
-| `/admin/settings` | Settings |
-| `/api/voices` | Public API (GET) |
+| Route               | Description      |
+| ------------------- | ---------------- |
+| `/auth/login`       | Login page       |
+| `/auth/signup`      | Signup page      |
+| `/admin`            | Dashboard        |
+| `/admin/voices`     | Voice management |
+| `/admin/voices/new` | Upload voice     |
+| `/admin/settings`   | Settings         |
+| `/api/voices`       | Public API (GET) |
 
 ## 🔑 Environment Variables
 
@@ -39,16 +39,19 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ## 🗄️ Database Tables
 
 ### profiles
+
 - User profile data
 - Auto-created on signup
 
 ### voices
+
 - Audio file metadata
 - Links to Supabase Storage
 
 ## 📦 Storage
 
 ### voices bucket
+
 - Public bucket
 - Audio files (MP3, WAV, OGG, M4A)
 - User-organized folders
@@ -56,10 +59,12 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ## 🔐 Authentication
 
 ### Email/Password
+
 - Built-in, enabled by default
 - Email verification required
 
 ### Google OAuth
+
 - Optional
 - Requires Google Cloud setup
 - See [SUPABASE_SETUP.md](SUPABASE_SETUP.md)
@@ -67,23 +72,27 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ## 🎯 Common Tasks
 
 ### Upload Voice
+
 1. Go to `/admin/voices`
 2. Click "Upload Voice"
 3. Fill form and select file
 4. Click "Upload Voice"
 
 ### Toggle Active/Inactive
+
 1. Go to `/admin/voices`
 2. Use switch next to voice
 3. Changes save automatically
 
 ### Delete Voice
+
 1. Go to `/admin/voices`
 2. Click trash icon
 3. Confirm deletion
 4. File removed from storage + database
 
 ### Preview Audio
+
 1. Go to `/admin/voices`
 2. Click play button
 3. Click again to pause
@@ -91,16 +100,18 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ## 🌐 API Usage
 
 ### Get Active Voices
+
 ```javascript
-const response = await fetch('/api/voices')
-const { voices } = await response.json()
+const response = await fetch('/api/voices');
+const { voices } = await response.json();
 
 voices.forEach(voice => {
-  console.log(voice.name, voice.file_url)
-})
+  console.log(voice.name, voice.file_url);
+});
 ```
 
 ### Response Format
+
 ```json
 {
   "voices": [
@@ -119,52 +130,61 @@ voices.forEach(voice => {
 ## 🛠️ Supabase Setup
 
 ### 1. Database Migration
+
 Run in SQL Editor:
+
 ```sql
 -- Copy from supabase/migrations/001_initial_schema.sql
 ```
 
 ### 2. Create Storage Bucket
+
 - Name: `voices`
 - Public: ✅
 
 ### 3. Storage Policies
+
 Run in SQL Editor:
+
 ```sql
 -- Copy storage policies from migration file
 ```
 
 ## 🐛 Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| "Invalid API key" | Check `.env.local`, restart server |
-| "relation does not exist" | Run SQL migration |
-| "Storage bucket not found" | Create `voices` bucket |
-| Can't access admin | Check if logged in |
-| Upload fails | Check storage policies |
+| Issue                      | Solution                           |
+| -------------------------- | ---------------------------------- |
+| "Invalid API key"          | Check `.env.local`, restart server |
+| "relation does not exist"  | Run SQL migration                  |
+| "Storage bucket not found" | Create `voices` bucket             |
+| Can't access admin         | Check if logged in                 |
+| Upload fails               | Check storage policies             |
 
 ## 📚 Documentation
 
-| File | Purpose |
-|------|---------|
-| [START_HERE.md](START_HERE.md) | ⭐ Start here! |
-| [QUICK_START.md](QUICK_START.md) | 5-minute guide |
-| [INSTALLATION.md](INSTALLATION.md) | Detailed setup |
-| [SUPABASE_SETUP.md](SUPABASE_SETUP.md) | Supabase config |
-| [README_ADMIN.md](README_ADMIN.md) | Features |
-| [SETUP_CHECKLIST.md](SETUP_CHECKLIST.md) | Verify setup |
+| File                                     | Purpose         |
+| ---------------------------------------- | --------------- |
+| [START_HERE.md](START_HERE.md)           | ⭐ Start here!  |
+| [QUICK_START.md](QUICK_START.md)         | 5-minute guide  |
+| [INSTALLATION.md](INSTALLATION.md)       | Detailed setup  |
+| [SUPABASE_SETUP.md](SUPABASE_SETUP.md)   | Supabase config |
+| [README_ADMIN.md](README_ADMIN.md)       | Features        |
+| [SETUP_CHECKLIST.md](SETUP_CHECKLIST.md) | Verify setup    |
 
 ## 🎨 Customization
 
 ### Change Sidebar Title
+
 Edit `components/admin/sidebar.tsx`:
+
 ```tsx
 <h1 className="text-2xl font-bold">Your Title</h1>
 ```
 
 ### Add Navigation Link
+
 Edit `components/admin/sidebar.tsx`:
+
 ```tsx
 {
   label: 'New Page',
@@ -175,11 +195,13 @@ Edit `components/admin/sidebar.tsx`:
 ```
 
 ### Modify Colors
+
 Edit Tailwind classes in components
 
 ## 🚀 Deployment
 
 ### Vercel
+
 ```bash
 git push origin main
 # Import in Vercel
@@ -188,7 +210,9 @@ git push origin main
 ```
 
 ### Environment Variables (Production)
+
 Same as local, but update:
+
 ```env
 NEXT_PUBLIC_APP_URL=https://yourapp.vercel.app
 ```

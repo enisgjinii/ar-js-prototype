@@ -3,6 +3,7 @@
 ## ❌ Error: 400 Bad Request on Upload
 
 If you're seeing this error when trying to upload a voice file:
+
 ```
 POST https://xxx.supabase.co/storage/v1/object/voices/... 400 (Bad Request)
 ```
@@ -80,25 +81,30 @@ CREATE POLICY "Anyone can view voice files"
 ### Still getting 400 error?
 
 **Check 1: Bucket Name**
+
 - Must be exactly `voices` (lowercase, no spaces)
 - Check in Supabase Storage that bucket exists
 
 **Check 2: Bucket is Public**
+
 - Go to Storage > voices bucket
 - Check that "Public" badge is visible
 - If not, edit bucket and make it public
 
 **Check 3: Policies Exist**
+
 - Go to Storage > voices > Policies
 - Should see 4 policies
 - If not, run the SQL commands above
 
 **Check 4: Authentication**
+
 - Make sure you're logged in
 - Try logging out and back in
 - Check browser console for auth errors
 
 **Check 5: Environment Variables**
+
 - Verify `.env.local` has correct Supabase URL and keys
 - Restart dev server after changing `.env.local`
 
@@ -143,6 +149,7 @@ After setup, test with this:
 ## 📸 Visual Guide
 
 ### Creating Bucket
+
 ```
 Supabase Dashboard
   └─ Storage
@@ -153,6 +160,7 @@ Supabase Dashboard
 ```
 
 ### Adding Policies
+
 ```
 Supabase Dashboard
   └─ Storage
@@ -164,12 +172,14 @@ Supabase Dashboard
 ## 🆘 Still Having Issues?
 
 ### Check Supabase Logs
+
 1. Go to Supabase Dashboard
 2. Click **Logs** in sidebar
 3. Select **Storage Logs**
 4. Look for errors related to your upload
 
 ### Check Browser Console
+
 1. Open browser DevTools (F12)
 2. Go to Console tab
 3. Try upload again
@@ -177,17 +187,18 @@ Supabase Dashboard
 
 ### Common Error Messages
 
-| Error | Cause | Fix |
-|-------|-------|-----|
-| "Bucket not found" | Bucket doesn't exist | Create `voices` bucket |
-| "Policy violation" | Missing policies | Run SQL policy commands |
-| "Not authenticated" | Not logged in | Log in again |
-| "Invalid bucket" | Wrong bucket name | Must be exactly `voices` |
-| "File too large" | File size limit | Increase limit in bucket settings |
+| Error               | Cause                | Fix                               |
+| ------------------- | -------------------- | --------------------------------- |
+| "Bucket not found"  | Bucket doesn't exist | Create `voices` bucket            |
+| "Policy violation"  | Missing policies     | Run SQL policy commands           |
+| "Not authenticated" | Not logged in        | Log in again                      |
+| "Invalid bucket"    | Wrong bucket name    | Must be exactly `voices`          |
+| "File too large"    | File size limit      | Increase limit in bucket settings |
 
 ## ✅ Success!
 
 Once setup is complete, you should be able to:
+
 - ✅ Upload audio files
 - ✅ See files in Supabase Storage
 - ✅ Play audio in admin panel

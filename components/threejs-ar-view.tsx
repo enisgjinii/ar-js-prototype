@@ -236,27 +236,55 @@ export default function ThreeJSARView({ onBack }: ThreeJSARViewProps) {
           try {
             const raw = sessionStorage.getItem('ar_placements');
             if (raw) {
-              const stored = JSON.parse(raw) as Array<{ id: string; anchored: boolean; matrix?: number[] }>;
+              const stored = JSON.parse(raw) as Array<{
+                id: string;
+                anchored: boolean;
+                matrix?: number[];
+              }>;
               if (Array.isArray(stored) && stored.length > 0) {
-                stored.forEach((p) => {
+                stored.forEach(p => {
                   try {
                     const boxGeoStored = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-                    const boxMatStored = new THREE.MeshStandardMaterial({ color: new THREE.Color(Math.random(), Math.random(), Math.random()), metalness: 0.3, roughness: 0.4 });
-                    const boxMeshStored = new THREE.Mesh(boxGeoStored, boxMatStored);
-                    if (p.matrix && Array.isArray(p.matrix) && p.matrix.length === 16) {
+                    const boxMatStored = new THREE.MeshStandardMaterial({
+                      color: new THREE.Color(
+                        Math.random(),
+                        Math.random(),
+                        Math.random()
+                      ),
+                      metalness: 0.3,
+                      roughness: 0.4,
+                    });
+                    const boxMeshStored = new THREE.Mesh(
+                      boxGeoStored,
+                      boxMatStored
+                    );
+                    if (
+                      p.matrix &&
+                      Array.isArray(p.matrix) &&
+                      p.matrix.length === 16
+                    ) {
                       boxMeshStored.matrixAutoUpdate = false;
                       boxMeshStored.matrix.fromArray(p.matrix);
-                      boxMeshStored.matrix.decompose(boxMeshStored.position, boxMeshStored.quaternion, boxMeshStored.scale);
+                      boxMeshStored.matrix.decompose(
+                        boxMeshStored.position,
+                        boxMeshStored.quaternion,
+                        boxMeshStored.scale
+                      );
                     }
                     scene.add(boxMeshStored);
-                    runtimePlacementsRef.current.set(p.id, { mesh: boxMeshStored });
+                    runtimePlacementsRef.current.set(p.id, {
+                      mesh: boxMeshStored,
+                    });
                   } catch (e) {
                     // ignore per-placement errors
                   }
                 });
                 // update count
-                setObjectsPlaced((c) => c + stored.length);
-                console.log('✅ Recreated persisted placements:', stored.length);
+                setObjectsPlaced(c => c + stored.length);
+                console.log(
+                  '✅ Recreated persisted placements:',
+                  stored.length
+                );
               }
             }
           } catch (e) {
@@ -310,23 +338,31 @@ export default function ThreeJSARView({ onBack }: ThreeJSARViewProps) {
               boxMesh.scale
             );
             scene.add(boxMesh);
-                anchors.push({ anchor, mesh: boxMesh });
-                // create a persistent placement record
-                const id = String(Date.now());
-                runtimePlacementsRef.current.set(id, { anchor, mesh: boxMesh });
-                const matrix = boxMesh.matrix ? Array.from(boxMesh.matrix.toArray ? boxMesh.matrix.toArray() : (boxMesh.matrix.elements || [])) : undefined;
-                const record = { id, anchored: true, matrix };
-                setPlacements((prev) => {
-                  const next = [...prev, record];
-                  try { sessionStorage.setItem('ar_placements', JSON.stringify(next)); } catch (e) {}
-                  return next;
-                });
-                setObjectsPlaced(tapCount);
-                console.log('🎯 Anchor created and cube placed');
-                // show placement feedback
-                setPlacementType('anchored');
-                setPlacementMessage('Placed (anchored)');
-                setTimeout(() => setPlacementMessage(null), 2000);
+            anchors.push({ anchor, mesh: boxMesh });
+            // create a persistent placement record
+            const id = String(Date.now());
+            runtimePlacementsRef.current.set(id, { anchor, mesh: boxMesh });
+            const matrix = boxMesh.matrix
+              ? Array.from(
+                  boxMesh.matrix.toArray
+                    ? boxMesh.matrix.toArray()
+                    : boxMesh.matrix.elements || []
+                )
+              : undefined;
+            const record = { id, anchored: true, matrix };
+            setPlacements(prev => {
+              const next = [...prev, record];
+              try {
+                sessionStorage.setItem('ar_placements', JSON.stringify(next));
+              } catch (e) {}
+              return next;
+            });
+            setObjectsPlaced(tapCount);
+            console.log('🎯 Anchor created and cube placed');
+            // show placement feedback
+            setPlacementType('anchored');
+            setPlacementMessage('Placed (anchored)');
+            setTimeout(() => setPlacementMessage(null), 2000);
             return;
           } catch (e) {
             console.warn(
@@ -350,10 +386,16 @@ export default function ThreeJSARView({ onBack }: ThreeJSARViewProps) {
         const id = String(Date.now());
         runtimePlacementsRef.current.set(id, { mesh: box });
         const m = box.matrix && (box.matrix.elements || null);
-        const record = { id, anchored: false, matrix: m ? Array.from(m) : undefined };
-        setPlacements((prev) => {
+        const record = {
+          id,
+          anchored: false,
+          matrix: m ? Array.from(m) : undefined,
+        };
+        setPlacements(prev => {
           const next = [...prev, record];
-          try { sessionStorage.setItem('ar_placements', JSON.stringify(next)); } catch (e) {}
+          try {
+            sessionStorage.setItem('ar_placements', JSON.stringify(next));
+          } catch (e) {}
           return next;
         });
         setObjectsPlaced(tapCount);

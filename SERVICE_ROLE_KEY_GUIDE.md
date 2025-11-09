@@ -98,6 +98,7 @@ Should now show the users page! ✅
 ## 🎨 What Each Key Does
 
 ### ANON KEY (Public)
+
 ```
 ✅ Safe to expose in browser
 ✅ Used for client-side operations
@@ -106,6 +107,7 @@ Should now show the users page! ✅
 ```
 
 ### SERVICE ROLE KEY (Secret)
+
 ```
 ⚠️ Must be kept secret
 ⚠️ Only used server-side
@@ -115,44 +117,50 @@ Should now show the users page! ✅
 
 ## 📊 Key Comparison
 
-| Feature | Anon Key | Service Role Key |
-|---------|----------|------------------|
-| **Visibility** | Public | Secret |
-| **Usage** | Client & Server | Server only |
-| **Permissions** | Limited | Full admin |
-| **RLS** | Enforced | Bypassed |
-| **Prefix** | `NEXT_PUBLIC_` | No prefix |
+| Feature         | Anon Key        | Service Role Key |
+| --------------- | --------------- | ---------------- |
+| **Visibility**  | Public          | Secret           |
+| **Usage**       | Client & Server | Server only      |
+| **Permissions** | Limited         | Full admin       |
+| **RLS**         | Enforced        | Bypassed         |
+| **Prefix**      | `NEXT_PUBLIC_`  | No prefix        |
 
 ## 🚨 Common Mistakes
 
 ### ❌ Wrong: Using Anon Key
+
 ```env
 SUPABASE_SERVICE_ROLE_KEY=eyJ...anon-key...
 ```
 
 ### ✅ Correct: Using Service Role Key
+
 ```env
 SUPABASE_SERVICE_ROLE_KEY=eyJ...service-role-key...
 ```
 
 ### ❌ Wrong: Extra Spaces
+
 ```env
 SUPABASE_SERVICE_ROLE_KEY= eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ... 
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
 ```
 
 ### ✅ Correct: No Spaces
+
 ```env
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
 ```
 
 ### ❌ Wrong: Quotes
+
 ```env
 SUPABASE_SERVICE_ROLE_KEY="eyJ..."
 SUPABASE_SERVICE_ROLE_KEY='eyJ...'
 ```
 
 ### ✅ Correct: No Quotes
+
 ```env
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
 ```
@@ -160,24 +168,31 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...
 ## 🔍 How to Verify
 
 ### Check 1: File Exists
+
 ```bash
 ls -la .env.local
 ```
+
 Should show the file.
 
 ### Check 2: Key is Set
+
 Add this to a server component temporarily:
+
 ```typescript
-console.log('Has service key:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+console.log('Has service key:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
 ```
+
 Should print: `Has service key: true`
 
 ### Check 3: Users Page Works
+
 Visit `/admin/users` - should show users list.
 
 ## 🎊 Success Indicators
 
 When correctly set up:
+
 - ✅ No "User not allowed" error
 - ✅ Users page loads
 - ✅ User list displays
@@ -193,6 +208,7 @@ When correctly set up:
 ---
 
 **Quick Summary:**
+
 1. Get service_role key from Supabase Dashboard → Settings → API
 2. Add to `.env.local`: `SUPABASE_SERVICE_ROLE_KEY=your-key`
 3. Restart server: `npm run dev`

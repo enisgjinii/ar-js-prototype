@@ -35,6 +35,7 @@
 ### 1. Authentication Pages
 
 #### Login Page (`/auth/login`)
+
 ```
 ┌─────────────────────────────────┐
 │      Admin Login                │
@@ -49,6 +50,7 @@
 ```
 
 #### Signup Page (`/auth/signup`)
+
 ```
 ┌─────────────────────────────────┐
 │      Create Account             │
@@ -227,6 +229,7 @@
 ## 📊 Data Flow
 
 ### Voice Upload Flow
+
 ```
 User Input
     │
@@ -259,6 +262,7 @@ User Input
 ```
 
 ### Voice Retrieval Flow
+
 ```
 Client Request
     │
@@ -372,6 +376,7 @@ App
 ## 🚀 Summary
 
 The admin panel is organized into:
+
 - **3 main sections:** Auth, Admin, API
 - **5 pages:** Login, Signup, Dashboard, Voices, Settings
 - **2 layouts:** Auth layout, Admin layout with sidebar

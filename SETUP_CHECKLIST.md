@@ -122,24 +122,31 @@ Use this checklist to ensure your admin panel is properly configured.
 ## Common Issues
 
 ### ❌ "Invalid API key"
+
 **Fix:** Check `.env.local` values, restart dev server
 
 ### ❌ "relation does not exist"
+
 **Fix:** Run SQL migration in Supabase
 
 ### ❌ "Storage bucket not found"
+
 **Fix:** Create `voices` bucket in Supabase Storage
 
 ### ❌ "Row Level Security policy violation"
+
 **Fix:** Verify all policies created, check user is authenticated
 
 ### ❌ "Failed to upload"
+
 **Fix:** Check storage policies, verify bucket is public
 
 ### ❌ Can't access admin panel
+
 **Fix:** Verify user is logged in, check middleware configuration
 
 ### ❌ Google OAuth not working
+
 **Fix:** Verify redirect URI, check credentials in Supabase
 
 ## Need Help?
@@ -157,6 +164,7 @@ If you're stuck on any step:
 ## All Done? 🎉
 
 If all boxes are checked, you're ready to:
+
 - Customize the admin panel
 - Add more features
 - Deploy to production

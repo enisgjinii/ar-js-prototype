@@ -1,7 +1,9 @@
 # 🚨 Quick Fix: Upload Error (400 Bad Request)
 
 ## The Problem
+
 You're seeing this error when trying to upload a voice file:
+
 ```
 POST https://xxx.supabase.co/storage/v1/object/voices/... 400 (Bad Request)
 ```
@@ -9,6 +11,7 @@ POST https://xxx.supabase.co/storage/v1/object/voices/... 400 (Bad Request)
 ## The Solution (2 minutes)
 
 ### Step 1: Create Storage Bucket
+
 1. Go to [supabase.com](https://supabase.com) → Your Project
 2. Click **Storage** in left sidebar
 3. Click **Create a new bucket**
@@ -18,6 +21,7 @@ POST https://xxx.supabase.co/storage/v1/object/voices/... 400 (Bad Request)
 5. Click **Create bucket**
 
 ### Step 2: Add Storage Policies
+
 1. Go to **SQL Editor** in Supabase
 2. Copy and paste this SQL:
 
@@ -46,6 +50,7 @@ CREATE POLICY "Anyone can view voice files"
 3. Click **Run**
 
 ### Step 3: Test Upload
+
 1. Go back to your app: `http://localhost:3000/admin/voices/new`
 2. Try uploading again
 3. Should work now! ✅
@@ -53,6 +58,7 @@ CREATE POLICY "Anyone can view voice files"
 ## Still Not Working?
 
 ### Check These:
+
 - [ ] Bucket name is exactly `voices` (lowercase)
 - [ ] Bucket is marked as **Public**
 - [ ] You ran ALL 4 policy commands
@@ -60,6 +66,7 @@ CREATE POLICY "Anyone can view voice files"
 - [ ] Your `.env.local` has correct Supabase credentials
 
 ### Get More Help:
+
 - See [STORAGE_SETUP_GUIDE.md](STORAGE_SETUP_GUIDE.md) for detailed troubleshooting
 - See [START_HERE.md](START_HERE.md) for complete setup guide
 

@@ -3,6 +3,7 @@
 ## 🚨 The Error
 
 When accessing `/admin/users`, you see:
+
 ```
 AuthApiError: User not allowed
 ```
@@ -63,6 +64,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ## ⚠️ Important Security Notes
 
 ### Service Role Key
+
 - **Has admin privileges** - can bypass Row Level Security
 - **Must be kept secret** - never commit to git
 - **Server-side only** - never expose to client
@@ -70,36 +72,41 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 ### What Each Key Does
 
-| Key | Purpose | Where Used | Security |
-|-----|---------|------------|----------|
-| **ANON_KEY** | Public API access | Client & Server | Public, safe to expose |
-| **SERVICE_ROLE_KEY** | Admin operations | Server only | Secret, never expose |
+| Key                  | Purpose           | Where Used      | Security               |
+| -------------------- | ----------------- | --------------- | ---------------------- |
+| **ANON_KEY**         | Public API access | Client & Server | Public, safe to expose |
+| **SERVICE_ROLE_KEY** | Admin operations  | Server only     | Secret, never expose   |
 
 ## 🔍 Troubleshooting
 
 ### Still getting "User not allowed"?
 
 **Check 1: Correct Key**
+
 - Make sure you copied the **service_role** key, not the anon key
 - Service role keys are usually longer
 - They start with `eyJ...`
 
 **Check 2: No Extra Spaces**
+
 - Remove any spaces before/after the key
 - No quotes around the key
 - Just: `SUPABASE_SERVICE_ROLE_KEY=eyJ...`
 
 **Check 3: Server Restarted**
+
 - Stop dev server completely (Ctrl+C)
 - Start again: `npm run dev`
 - Changes to `.env.local` require restart
 
 **Check 4: File Location**
+
 - `.env.local` must be in project root
 - Same folder as `package.json`
 - Not in a subfolder
 
 **Check 5: File Name**
+
 - Must be exactly `.env.local`
 - Not `.env` or `env.local`
 - The dot at the start is important
@@ -110,7 +117,10 @@ Check your environment variables are loaded:
 
 ```typescript
 // In a server component
-console.log('Service role key exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+console.log(
+  'Service role key exists:',
+  !!process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 ```
 
 Should print: `Service role key exists: true`
@@ -118,11 +128,13 @@ Should print: `Service role key exists: true`
 ## 🎯 Why This Key is Needed
 
 The users page uses:
+
 ```typescript
-await supabase.auth.admin.listUsers()
+await supabase.auth.admin.listUsers();
 ```
 
 This is an **admin function** that:
+
 - Lists all users in your project
 - Bypasses Row Level Security
 - Requires service role privileges
@@ -157,6 +169,7 @@ Supabase Dashboard
 ## 🚀 After Fixing
 
 Once the service role key is added:
+
 - ✅ Users page will load
 - ✅ You'll see all registered users
 - ✅ Search and filters will work

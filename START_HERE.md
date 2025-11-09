@@ -3,6 +3,7 @@
 ## What You Have Now
 
 A complete admin panel with:
+
 - ✅ Email/Password authentication
 - ✅ Google OAuth support
 - ✅ Voice file management
@@ -97,6 +98,7 @@ npm run dev
 ## 🎊 You're Done!
 
 Your admin panel is now running at:
+
 - **Admin Dashboard:** `http://localhost:3000/admin`
 - **Voice Management:** `http://localhost:3000/admin/voices`
 - **Settings:** `http://localhost:3000/admin/settings`
@@ -119,14 +121,14 @@ Your voices are available via API:
 
 ```javascript
 // Fetch active voices
-const response = await fetch('http://localhost:3000/api/voices')
-const { voices } = await response.json()
+const response = await fetch('http://localhost:3000/api/voices');
+const { voices } = await response.json();
 
 // Use the voices
 voices.forEach(voice => {
-  console.log(voice.name, voice.file_url)
+  console.log(voice.name, voice.file_url);
   // Play audio: new Audio(voice.file_url).play()
-})
+});
 ```
 
 ## 📱 Optional: Add Google Login

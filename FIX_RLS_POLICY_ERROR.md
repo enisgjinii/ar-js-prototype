@@ -1,17 +1,20 @@
 # 🚨 Fix: Row-Level Security Policy Error
 
 ## The Error
+
 ```
 Upload error: StorageApiError: new row violates row-level security policy
 ```
 
 ## What This Means
+
 ✅ Good news: Your storage bucket exists!
 ❌ Problem: Storage policies are missing
 
 ## Quick Fix (1 minute)
 
 ### Step 1: Go to Supabase SQL Editor
+
 1. Open your Supabase dashboard
 2. Click **SQL Editor** in the left sidebar
 3. Click **New query**
@@ -43,28 +46,31 @@ CREATE POLICY "Anyone can view voice files"
 ```
 
 ### Step 3: Verify Policies
+
 1. Go to **Storage** in Supabase
 2. Click on **voices** bucket
 3. Click **Policies** tab
 4. You should see 4 policies listed
 
 ### Step 4: Test Upload
+
 1. Go back to your app: `http://localhost:3000/admin/voices/new`
 2. Try uploading again
 3. Should work now! ✅
 
 ## What These Policies Do
 
-| Policy | What It Does |
-|--------|--------------|
-| **INSERT** | Lets authenticated users upload files |
-| **UPDATE** | Lets users update their own files |
-| **DELETE** | Lets users delete their own files |
+| Policy     | What It Does                                          |
+| ---------- | ----------------------------------------------------- |
+| **INSERT** | Lets authenticated users upload files                 |
+| **UPDATE** | Lets users update their own files                     |
+| **DELETE** | Lets users delete their own files                     |
 | **SELECT** | Lets anyone view/download files (for public playback) |
 
 ## Verify Your Setup
 
 After running the SQL, check:
+
 - [ ] 4 policies appear in Storage > voices > Policies
 - [ ] Each policy has a green checkmark
 - [ ] Upload now works without errors
@@ -72,14 +78,17 @@ After running the SQL, check:
 ## Still Getting Errors?
 
 ### Error: "policy already exists"
+
 ✅ Good! This means policies are already created. Try uploading again.
 
 ### Error: "permission denied"
+
 1. Make sure you're logged into the admin panel
 2. Try logging out and back in
 3. Check that your user is authenticated
 
 ### Error: "bucket not found"
+
 1. Go to Storage in Supabase
 2. Verify the `voices` bucket exists
 3. Make sure it's set to **Public**
@@ -97,6 +106,7 @@ Instead of SQL, you can create policies through the UI:
 ## 🎉 Success!
 
 Once policies are set up, you can:
+
 - ✅ Upload audio files
 - ✅ See files in Supabase Storage
 - ✅ Play audio in admin panel
@@ -106,6 +116,7 @@ Once policies are set up, you can:
 ## Next Steps
 
 After fixing this:
+
 1. Upload a test voice file
 2. Check it appears in `/admin/voices`
 3. Try playing the audio

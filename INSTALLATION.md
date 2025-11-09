@@ -19,6 +19,7 @@ yarn install
 ```
 
 This will install:
+
 - `@supabase/supabase-js` - Supabase JavaScript client
 - `@supabase/ssr` - Supabase SSR helpers for Next.js
 - All existing project dependencies
@@ -35,6 +36,7 @@ This will install:
 ### 3. Configure Environment Variables
 
 1. Copy the example file:
+
    ```bash
    cp .env.local.example .env.local
    ```
@@ -55,6 +57,7 @@ This will install:
 4. Paste into the SQL Editor and click **Run**
 
 This creates:
+
 - `profiles` table for user data
 - `voices` table for audio files
 - Row Level Security policies
@@ -97,6 +100,7 @@ CREATE POLICY "Anyone can view voice files"
 ### 7. Configure Authentication Providers
 
 #### Email Authentication (Already Enabled)
+
 Email/password authentication is enabled by default.
 
 #### Google OAuth (Optional)
@@ -150,17 +154,22 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## Verify Installation
 
 ### Check Database Tables
+
 In Supabase dashboard, go to **Table Editor** and verify:
+
 - ✅ `profiles` table exists
 - ✅ `voices` table exists
 - ✅ Your profile was created automatically
 
 ### Check Storage
+
 In Supabase dashboard, go to **Storage** and verify:
+
 - ✅ `voices` bucket exists
 - ✅ Your uploaded file appears in the bucket
 
 ### Check API
+
 Open `http://localhost:3000/api/voices` in your browser.
 You should see JSON with your active voices.
 
@@ -182,6 +191,7 @@ You should see JSON with your active voices.
 ### Other Platforms
 
 The same environment variables work on:
+
 - Netlify
 - Railway
 - Render
@@ -191,24 +201,29 @@ The same environment variables work on:
 ## Troubleshooting
 
 ### "Invalid API key" error
+
 - Double-check your `.env.local` file
 - Make sure there are no extra spaces
 - Restart your dev server after changing `.env.local`
 
 ### "relation does not exist" error
+
 - Make sure you ran the SQL migration
 - Check that tables were created in Supabase Table Editor
 
 ### "Storage bucket not found" error
+
 - Verify the `voices` bucket exists in Supabase Storage
 - Make sure it's set to **Public**
 
 ### Google OAuth not working
+
 - Check redirect URI matches exactly
 - Verify Google provider is enabled in Supabase
 - Make sure Client ID and Secret are correct
 
 ### Email verification not received
+
 - Check spam/junk folder
 - Verify email settings in Supabase Authentication settings
 - Try with a different email provider
@@ -223,6 +238,7 @@ The same environment variables work on:
 ## Support
 
 If you encounter issues:
+
 1. Check the troubleshooting section above
 2. Review Supabase logs in the dashboard
 3. Check browser console for errors

@@ -7,30 +7,37 @@ Your `.env.local` file has been updated with the service role key. You **MUST re
 ## 🔄 How to Restart
 
 ### Step 1: Stop the Server
+
 In your terminal where the dev server is running:
+
 - Press `Ctrl+C` (Windows/Linux)
 - Or `Cmd+C` (Mac)
 
 You should see the server stop.
 
 ### Step 2: Start the Server Again
+
 ```bash
 npm run dev
 ```
 
 Or if you're using pnpm:
+
 ```bash
 pnpm dev
 ```
 
 ### Step 3: Wait for Server to Start
+
 You'll see:
+
 ```
 ✓ Ready in 2.5s
 ○ Local:   http://localhost:3000
 ```
 
 ### Step 4: Test the Users Page
+
 Visit: `http://localhost:3000/admin/users`
 
 Should now work! ✅
@@ -52,6 +59,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ## 🎊 After Restart
 
 Once you restart the server:
+
 - ✅ Service role key will be loaded
 - ✅ Users page will work
 - ✅ You'll see all registered users
@@ -67,6 +75,7 @@ Changes to `.env.local` require a server restart to take effect.
 ---
 
 **Do this now:**
+
 1. Stop server (Ctrl+C)
 2. Start server (`npm run dev`)
 3. Visit `/admin/users`

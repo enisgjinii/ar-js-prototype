@@ -3,6 +3,7 @@
 ## 🎉 Dependencies Installed
 
 The Supabase packages have been successfully installed:
+
 - ✅ `@supabase/supabase-js` v2.80.0
 - ✅ `@supabase/ssr` v0.5.2
 
@@ -37,6 +38,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 5. Click **Run**
 
 This creates:
+
 - `profiles` table
 - `voices` table
 - Row Level Security policies
@@ -98,6 +100,7 @@ The app should now start without errors!
 ## 🎯 Access Your Admin Panel
 
 Once logged in, you can access:
+
 - **Dashboard:** `http://localhost:3000/admin`
 - **Voice Management:** `http://localhost:3000/admin/voices`
 - **Settings:** `http://localhost:3000/admin/settings`
@@ -119,18 +122,19 @@ Once logged in, you can access:
 Fetch active voices via the public API:
 
 ```javascript
-const response = await fetch('http://localhost:3000/api/voices')
-const { voices } = await response.json()
+const response = await fetch('http://localhost:3000/api/voices');
+const { voices } = await response.json();
 
 voices.forEach(voice => {
-  console.log(voice.name, voice.file_url)
+  console.log(voice.name, voice.file_url);
   // Play audio: new Audio(voice.file_url).play()
-})
+});
 ```
 
 ## 📚 Documentation
 
 For detailed guides, see:
+
 - **[START_HERE.md](START_HERE.md)** - Complete setup guide
 - **[QUICK_START.md](QUICK_START.md)** - 5-minute setup
 - **[SUPABASE_SETUP.md](SUPABASE_SETUP.md)** - Supabase configuration
@@ -153,18 +157,22 @@ For detailed guides, see:
 ## 🐛 Troubleshooting
 
 ### Still seeing module errors?
+
 Restart your dev server:
+
 ```bash
 # Stop the server (Ctrl+C)
 npm run dev
 ```
 
 ### "Invalid API key" error?
+
 - Check `.env.local` has correct values
 - No extra spaces or quotes
 - Restart dev server after changing `.env.local`
 
 ### Can't access admin panel?
+
 - Make sure you're logged in
 - Check URL is `http://localhost:3000/admin`
 - Clear browser cache and cookies

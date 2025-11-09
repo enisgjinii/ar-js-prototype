@@ -3,6 +3,7 @@
 ## ✅ Completed Steps
 
 ### 1. Code Implementation
+
 - ✅ All files created
 - ✅ Supabase packages installed
 - ✅ UI components created
@@ -10,6 +11,7 @@
 - ✅ Error handling improved
 
 ### 2. Supabase Project
+
 - ✅ Project created (you have one!)
 - ✅ Environment variables added to `.env.local`
 - ✅ Database migration run (tables created)
@@ -24,6 +26,7 @@
 **Error:** `new row violates row-level security policy`
 
 **What to do:**
+
 1. Open Supabase SQL Editor
 2. Run the 4 policy commands
 3. See [FIX_RLS_POLICY_ERROR.md](FIX_RLS_POLICY_ERROR.md)
@@ -33,12 +36,14 @@
 ## 📋 Remaining Steps
 
 ### 4. Test Upload
+
 - [ ] Upload a test audio file
 - [ ] Verify it appears in voice list
 - [ ] Test audio playback
 - [ ] Test delete functionality
 
 ### 5. Optional: Google OAuth
+
 - [ ] Set up Google Cloud credentials
 - [ ] Configure in Supabase
 - [ ] Test Google login
@@ -61,11 +66,13 @@ Setup Progress:
 ## 📊 Checklist
 
 ### Code Setup
+
 - [x] Dependencies installed
 - [x] Files created
 - [x] No TypeScript errors
 
 ### Supabase Setup
+
 - [x] Project created
 - [x] Credentials in `.env.local`
 - [x] Database migration run
@@ -75,6 +82,7 @@ Setup Progress:
 - [ ] Policies verified
 
 ### Testing
+
 - [ ] Can signup/login
 - [ ] Can access admin panel
 - [ ] Can upload voice file
@@ -97,6 +105,7 @@ Setup Progress:
 ## 🎊 Almost There!
 
 You're 80% done! Just need to:
+
 1. ⏳ Add storage policies (1 minute)
 2. ⏳ Test upload (30 seconds)
 3. ✅ Done!

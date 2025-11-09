@@ -3,6 +3,7 @@
 ## 📁 Complete File Structure
 
 ### Authentication Files
+
 ```
 app/auth/
 ├── login/
@@ -14,6 +15,7 @@ app/auth/
 ```
 
 ### Admin Panel Files
+
 ```
 app/admin/
 ├── layout.tsx                # Admin layout with sidebar
@@ -27,6 +29,7 @@ app/admin/
 ```
 
 ### API Files
+
 ```
 app/api/
 └── voices/
@@ -34,6 +37,7 @@ app/api/
 ```
 
 ### Supabase Integration
+
 ```
 lib/supabase/
 ├── client.ts                 # Browser Supabase client
@@ -44,6 +48,7 @@ middleware.ts                 # Next.js middleware for route protection
 ```
 
 ### Components
+
 ```
 components/admin/
 ├── sidebar.tsx               # Admin sidebar with navigation
@@ -56,6 +61,7 @@ components/ui/
 ```
 
 ### Database
+
 ```
 supabase/migrations/
 └── 001_initial_schema.sql    # Database schema and policies
@@ -65,6 +71,7 @@ types/
 ```
 
 ### Configuration
+
 ```
 .env.local                    # Environment variables (YOU NEED TO ADD KEYS)
 .env.local.example            # Example environment file
@@ -72,6 +79,7 @@ package.json                  # Updated with Supabase dependencies
 ```
 
 ### Documentation
+
 ```
 START_HERE.md                 # ⭐ START WITH THIS FILE
 QUICK_START.md                # 5-minute setup guide
@@ -99,17 +107,21 @@ FILES_CREATED.md              # This file
 ## 🎯 Key Files to Know
 
 ### Must Configure
+
 1. `.env.local` - Add your Supabase credentials here
 
 ### Must Run
+
 1. `supabase/migrations/001_initial_schema.sql` - Run in Supabase SQL Editor
 
 ### Entry Points
+
 1. `app/auth/login/page.tsx` - Login page
 2. `app/auth/signup/page.tsx` - Signup page
 3. `app/admin/page.tsx` - Admin dashboard
 
 ### Core Logic
+
 1. `lib/supabase/client.ts` - Client-side Supabase
 2. `lib/supabase/server.ts` - Server-side Supabase
 3. `middleware.ts` - Route protection
@@ -119,11 +131,13 @@ FILES_CREATED.md              # This file
 ## 🔧 Modified Files
 
 ### Updated
+
 - `package.json` - Added Supabase dependencies:
   - `@supabase/supabase-js`
   - `@supabase/ssr`
 
 ### Not Modified
+
 - `.gitignore` - Already ignores `.env*` files ✅
 - All other existing files remain unchanged
 
@@ -139,6 +153,7 @@ FILES_CREATED.md              # This file
 ## 🎨 UI Components Used
 
 From your existing setup:
+
 - Button
 - Input
 - Label
@@ -148,6 +163,7 @@ From your existing setup:
 - ScrollArea
 
 Newly created:
+
 - Badge
 - Textarea
 - AlertDialog
@@ -155,11 +171,13 @@ Newly created:
 ## 🗄️ Database Tables
 
 ### profiles
+
 - Stores user profile information
 - Auto-created on signup
 - Links to Supabase auth.users
 
 ### voices
+
 - Stores voice metadata
 - Links to Supabase Storage files
 - Tracks active/inactive status
@@ -167,9 +185,11 @@ Newly created:
 ## 📡 API Endpoints
 
 ### Public
+
 - `GET /api/voices` - Returns all active voices
 
 ### Protected (via Supabase)
+
 - All admin routes require authentication
 - Middleware redirects to login if not authenticated
 
@@ -201,6 +221,7 @@ It has step-by-step instructions to get everything running in 5 minutes.
 ## 💡 File Purposes
 
 ### Authentication Flow
+
 1. User visits `/auth/signup` or `/auth/login`
 2. Credentials sent to Supabase
 3. OAuth redirects to `/auth/callback`
@@ -209,6 +230,7 @@ It has step-by-step instructions to get everything running in 5 minutes.
 6. User accesses `/admin`
 
 ### Voice Upload Flow
+
 1. User navigates to `/admin/voices/new`
 2. Selects file and fills form
 3. File uploaded to Supabase Storage
@@ -217,6 +239,7 @@ It has step-by-step instructions to get everything running in 5 minutes.
 6. Voice appears in list
 
 ### Voice Management Flow
+
 1. List fetched from `voices` table
 2. User can toggle active/inactive
 3. User can play audio preview
@@ -226,6 +249,7 @@ It has step-by-step instructions to get everything running in 5 minutes.
 ## 🎉 Summary
 
 You have a complete, production-ready admin panel with:
+
 - Full authentication system
 - Voice file management
 - Secure storage

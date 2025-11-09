@@ -51,6 +51,7 @@ npm run dev
 ## Done! 🎉
 
 You now have a fully functional admin panel with:
+
 - ✅ Authentication (Email + Google OAuth)
 - ✅ Voice file management
 - ✅ File upload to Supabase Storage

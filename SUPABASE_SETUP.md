@@ -114,6 +114,7 @@ For production, add these to your hosting platform (Vercel, Netlify, etc.)
 ## API Endpoints
 
 ### Get Active Voices (Public)
+
 ```
 GET /api/voices
 ```
@@ -123,6 +124,7 @@ Returns all active voices that should be displayed to users.
 ## Database Schema
 
 ### profiles
+
 - `id` (UUID, Primary Key)
 - `email` (TEXT)
 - `full_name` (TEXT)
@@ -132,6 +134,7 @@ Returns all active voices that should be displayed to users.
 - `updated_at` (TIMESTAMP)
 
 ### voices
+
 - `id` (UUID, Primary Key)
 - `name` (TEXT)
 - `description` (TEXT)
@@ -145,19 +148,23 @@ Returns all active voices that should be displayed to users.
 ## Troubleshooting
 
 ### "Invalid API key" error
+
 - Check that your environment variables are correct
 - Restart your dev server after updating `.env.local`
 
 ### "Row Level Security policy violation"
+
 - Make sure you ran all the SQL migrations
 - Check that the policies are created in Supabase dashboard
 
 ### Google OAuth not working
+
 - Verify redirect URI in Google Cloud Console
 - Check that Google provider is enabled in Supabase
 - Make sure Client ID and Secret are correct
 
 ### File upload fails
+
 - Verify the `voices` bucket exists and is public
 - Check storage policies are created
 - Ensure user is authenticated

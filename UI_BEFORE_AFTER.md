@@ -3,6 +3,7 @@
 ## 📊 Before (Basic UI)
 
 ### Voice List
+
 ```
 ┌─────────────────────────────────────────┐
 │ [▶️] Welcome Message      [Active]      │
@@ -14,6 +15,7 @@
 ```
 
 **Features:**
+
 - Basic play button
 - Name and description
 - Simple date
@@ -22,6 +24,7 @@
 ## 🎨 After (Enhanced UI)
 
 ### Statistics Dashboard
+
 ```
 ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
 │ Total Voices │ │ Active       │ │ Inactive     │ │ Recent       │
@@ -32,6 +35,7 @@
 ```
 
 ### Enhanced Voice Card
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  [▶️]  Welcome Message                         [Active]     │
@@ -49,6 +53,7 @@
 ```
 
 **New Features:**
+
 - ✅ Statistics cards at top
 - ✅ Larger play button
 - ✅ Multiple timestamps (date, time, relative)
@@ -62,24 +67,25 @@
 
 ## 📈 Comparison
 
-| Feature | Before | After |
-|---------|--------|-------|
-| **Statistics** | ❌ None | ✅ 4 stat cards |
-| **Timestamps** | ❌ Date only | ✅ Date, time, relative |
-| **Duration** | ❌ No | ✅ Yes (MM:SS) |
-| **Progress Bar** | ❌ No | ✅ Yes |
-| **Copy URL** | ❌ No | ✅ Yes |
-| **Download** | ❌ No | ✅ Yes |
-| **Open in Tab** | ❌ No | ✅ Yes |
-| **File Info** | ❌ No | ✅ ID & path |
-| **Updated Time** | ❌ No | ✅ Yes |
-| **Icons** | ❌ Minimal | ✅ Rich icons |
-| **Layout** | ❌ Basic | ✅ Advanced |
-| **Hover Effects** | ❌ No | ✅ Yes |
+| Feature           | Before       | After                   |
+| ----------------- | ------------ | ----------------------- |
+| **Statistics**    | ❌ None      | ✅ 4 stat cards         |
+| **Timestamps**    | ❌ Date only | ✅ Date, time, relative |
+| **Duration**      | ❌ No        | ✅ Yes (MM:SS)          |
+| **Progress Bar**  | ❌ No        | ✅ Yes                  |
+| **Copy URL**      | ❌ No        | ✅ Yes                  |
+| **Download**      | ❌ No        | ✅ Yes                  |
+| **Open in Tab**   | ❌ No        | ✅ Yes                  |
+| **File Info**     | ❌ No        | ✅ ID & path            |
+| **Updated Time**  | ❌ No        | ✅ Yes                  |
+| **Icons**         | ❌ Minimal   | ✅ Rich icons           |
+| **Layout**        | ❌ Basic     | ✅ Advanced             |
+| **Hover Effects** | ❌ No        | ✅ Yes                  |
 
 ## 🎯 Information Density
 
 ### Before
+
 - Name
 - Description
 - Created date
@@ -89,6 +95,7 @@
 **Total: 5 pieces of information**
 
 ### After
+
 - Name
 - Description
 - Created date
@@ -107,6 +114,7 @@
 ## 🎨 Visual Improvements
 
 ### Before
+
 ```
 Simple card
 ├─ Play button (small)
@@ -115,6 +123,7 @@ Simple card
 ```
 
 ### After
+
 ```
 Enhanced card
 ├─ Statistics dashboard (new)
@@ -129,20 +138,26 @@ Enhanced card
 ## 🚀 User Experience
 
 ### Before
+
 **Actions:** 3
+
 - Toggle active/inactive
 - Edit
 - Delete
 
 **Information:** Basic
+
 - Name, description, date
 
 **Feedback:** Minimal
+
 - No progress indicator
 - No duration info
 
 ### After
+
 **Actions:** 6
+
 - Toggle active/inactive
 - Copy URL
 - Download file
@@ -151,6 +166,7 @@ Enhanced card
 - Delete
 
 **Information:** Comprehensive
+
 - Name, description
 - Multiple timestamps
 - Duration
@@ -158,6 +174,7 @@ Enhanced card
 - Statistics
 
 **Feedback:** Rich
+
 - Progress bar
 - Toast notifications
 - Hover effects
@@ -166,10 +183,12 @@ Enhanced card
 ## 📱 Responsive Design
 
 ### Before
+
 - Basic responsive layout
 - Same on all devices
 
 ### After
+
 - Advanced responsive layout
 - Optimized for desktop, tablet, mobile
 - Adaptive information display
@@ -178,6 +197,7 @@ Enhanced card
 ## 🎊 Summary
 
 ### What Changed
+
 1. ✅ Added statistics dashboard
 2. ✅ Enhanced voice cards
 3. ✅ More timestamps and metadata
@@ -190,6 +210,7 @@ Enhanced card
 10. ✅ Better user feedback
 
 ### Impact
+
 - **Information:** 5 → 12+ pieces per voice
 - **Actions:** 3 → 6 per voice
 - **Visual Appeal:** Basic → Advanced

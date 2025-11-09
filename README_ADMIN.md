@@ -3,6 +3,7 @@
 ## Quick Start
 
 1. **Install dependencies:**
+
    ```bash
    npm install
    # or
@@ -21,6 +22,7 @@
    - Add your Supabase credentials
 
 4. **Run the development server:**
+
    ```bash
    npm run dev
    ```
@@ -33,6 +35,7 @@
 ## Features
 
 ### Authentication
+
 - ✅ Email/Password sign up and login
 - ✅ Google OAuth integration
 - ✅ Protected admin routes
@@ -40,6 +43,7 @@
 - ✅ Session management
 
 ### Voice Management
+
 - ✅ Upload audio files to Supabase Storage
 - ✅ View all uploaded voices
 - ✅ Toggle active/inactive status
@@ -49,6 +53,7 @@
 - ✅ Automatic file cleanup on delete
 
 ### Admin Dashboard
+
 - ✅ Statistics overview
 - ✅ Sidebar navigation
 - ✅ User profile display
@@ -94,11 +99,13 @@ supabase/
 ### Tables
 
 **profiles**
+
 - User profile information
 - Automatically created on sign up
 - Links to auth.users
 
 **voices**
+
 - Audio file metadata
 - Links to Supabase Storage
 - Active/inactive status
@@ -107,6 +114,7 @@ supabase/
 ### Storage
 
 **voices bucket**
+
 - Public bucket for audio files
 - Organized by user ID
 - Automatic cleanup on delete
@@ -116,11 +124,13 @@ supabase/
 ### Public API
 
 **GET /api/voices**
+
 - Returns all active voices
 - No authentication required
 - Used by client-side application
 
 Example response:
+
 ```json
 {
   "voices": [
@@ -152,6 +162,7 @@ Example response:
 ### Other Platforms
 
 Add the same environment variables to your hosting platform:
+
 - Netlify
 - Railway
 - Render

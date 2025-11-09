@@ -21,6 +21,7 @@
 6. Click **Run**
 
 This creates:
+
 - `models` table
 - Row Level Security policies
 - Triggers for timestamps
@@ -87,21 +88,25 @@ supabase/migrations/
 ## 🎯 Access Points
 
 ### From Sidebar
+
 Click **"3D Models"** in the admin sidebar (green box icon 📦)
 
 ### Direct URLs
+
 - **Models List:** `http://localhost:3000/admin/models`
 - **Upload:** `http://localhost:3000/admin/models/new`
 
 ## 🎨 Features Available
 
 ### Drag and Drop
+
 - Drag GLB/GLTF files onto upload zone
 - Visual feedback when dragging
 - File validation
 - Auto-naming from filename
 
 ### File Management
+
 - View all models
 - Toggle active/inactive
 - Copy public URL
@@ -110,6 +115,7 @@ Click **"3D Models"** in the admin sidebar (green box icon 📦)
 - Delete models
 
 ### Statistics
+
 - Total models count
 - Active models count
 - Inactive models count
@@ -118,12 +124,14 @@ Click **"3D Models"** in the admin sidebar (green box icon 📦)
 ## 📊 Supported Files
 
 ### GLB Files
+
 - **Extension:** `.glb`
 - **Type:** Binary
 - **Best for:** Web delivery
 - **Size:** Typically smaller
 
 ### GLTF Files
+
 - **Extension:** `.gltf`
 - **Type:** JSON + assets
 - **Best for:** Editing
@@ -132,16 +140,19 @@ Click **"3D Models"** in the admin sidebar (green box icon 📦)
 ## ⚠️ Important Notes
 
 ### File Size Limit
+
 - Default: 50MB per file
 - Can be increased in Supabase settings
 - Larger files take longer to upload
 
 ### Storage Bucket
+
 - Must be named exactly `models`
 - Must be set to **Public**
 - Policies must be created
 
 ### File Types
+
 - Only GLB and GLTF accepted
 - Other formats will be rejected
 - Validation happens on upload
@@ -149,15 +160,19 @@ Click **"3D Models"** in the admin sidebar (green box icon 📦)
 ## 🔍 Troubleshooting
 
 ### "Storage bucket not found"
+
 **Fix:** Create the `models` bucket in Supabase Storage
 
 ### "Policy violation"
+
 **Fix:** Run the storage policy SQL commands
 
 ### "Upload failed"
+
 **Fix:** Check file is GLB or GLTF, under 50MB
 
 ### Can't see models
+
 **Fix:** Make sure you're logged in and bucket is public
 
 ## ✅ Verification Checklist
@@ -185,6 +200,7 @@ Click **"3D Models"** in the admin sidebar (green box icon 📦)
 ## 📚 Where to Get Test Models
 
 Free 3D models in GLB/GLTF format:
+
 - **Sketchfab** - sketchfab.com (download as GLB)
 - **Poly Haven** - polyhaven.com
 - **Google Poly** - Archive available
@@ -193,6 +209,7 @@ Free 3D models in GLB/GLTF format:
 ## 🎊 You're Done!
 
 Your 3D model management system is ready. You can now:
+
 - ✅ Upload GLB/GLTF files
 - ✅ Drag and drop models
 - ✅ Manage model library

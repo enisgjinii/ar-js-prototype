@@ -3,6 +3,7 @@
 ## 🎨 What the Sidebar Footer Looks Like
 
 ### With Google Profile Picture
+
 ```
 ┌────────────────────────────────┐
 │                                │
@@ -16,9 +17,11 @@
 │  🚪 Logout                     │
 └────────────────────────────────┘
 ```
+
 The 📷 will be your actual Google profile picture!
 
 ### Without Profile Picture (Email/Password)
+
 ```
 ┌────────────────────────────────┐
 │                                │
@@ -32,17 +35,20 @@ The 📷 will be your actual Google profile picture!
 │  🚪 Logout                     │
 └────────────────────────────────┘
 ```
+
 Shows user initials (JD = John Doe)
 
 ## 🎯 Features
 
 ### Google OAuth Users
+
 - ✅ **Profile Picture:** Your Google profile photo
 - ✅ **Name:** From your Google account
 - ✅ **Email:** Your Google email
 - ✅ **Auto-sync:** Updates automatically
 
 ### Email/Password Users
+
 - ✅ **Initials:** First letters of your name (e.g., "JD")
 - ✅ **Name:** From signup form
 - ✅ **Email:** Your email address
@@ -51,12 +57,14 @@ Shows user initials (JD = John Doe)
 ## 🎨 Avatar Styles
 
 ### Google Profile Picture
+
 - Circular avatar
 - High-quality image from Google
 - Smooth loading
 - Alt text for accessibility
 
 ### Initials Fallback
+
 - Colored background (primary color)
 - White text
 - Up to 2 letters (first name + last name)
@@ -67,18 +75,21 @@ Shows user initials (JD = John Doe)
 The sidebar footer adapts to different states:
 
 ### Normal State
+
 ```
 [Avatar] Name
          Email
 ```
 
 ### Long Names (Truncated)
+
 ```
 [Avatar] Very Long Name That...
          verylongemail@exam...
 ```
 
 ### Hover State
+
 ```
 [Avatar] Name          ← Slightly highlighted
          Email
@@ -87,12 +98,14 @@ The sidebar footer adapts to different states:
 ## 🔄 How It Updates
 
 ### On Login
+
 1. User logs in with Google
 2. Supabase fetches profile data
 3. Avatar URL stored in database
 4. Sidebar displays profile picture
 
 ### On Page Load
+
 1. Admin layout fetches user data
 2. Checks profile table first
 3. Falls back to user_metadata
@@ -100,6 +113,7 @@ The sidebar footer adapts to different states:
 5. Avatar component renders image
 
 ### On Logout
+
 1. User clicks logout button
 2. Session cleared
 3. Redirected to login page
@@ -107,21 +121,25 @@ The sidebar footer adapts to different states:
 ## 🎨 Customization Examples
 
 ### Change Avatar Size
+
 ```typescript
 <Avatar className="h-12 w-12">
 ```
 
 ### Add Border
+
 ```typescript
 <Avatar className="border-2 border-white shadow-lg">
 ```
 
 ### Change Initials Color
+
 ```typescript
 <AvatarFallback className="bg-blue-500 text-white">
 ```
 
 ### Add Status Indicator
+
 ```typescript
 <div className="relative">
   <Avatar>...</Avatar>
@@ -132,26 +150,31 @@ The sidebar footer adapts to different states:
 ## 🧪 Testing Scenarios
 
 ### Test 1: Google Login
+
 1. Click "Continue with Google"
 2. Authorize with Google
 3. Check sidebar - should show Google profile picture
 
 ### Test 2: Email Signup
+
 1. Sign up with email/password
 2. Enter name: "John Doe"
 3. Check sidebar - should show "JD"
 
 ### Test 3: No Name
+
 1. Sign up with just email
 2. Check sidebar - should show first letter of email
 
 ### Test 4: Image Load Failure
+
 1. If Google image fails to load
 2. Automatically shows initials fallback
 
 ## 📊 Data Priority
 
 The sidebar uses this priority for avatar:
+
 1. **Profile table avatar_url** (if user uploaded custom)
 2. **Google avatar_url** (from user_metadata)
 3. **Google picture** (from user_metadata)
@@ -162,6 +185,7 @@ The sidebar uses this priority for avatar:
 ## ✨ Visual Examples
 
 ### Example 1: Google User
+
 ```
 ┌──────────────────────────┐
 │  ┌────┐                  │
@@ -171,6 +195,7 @@ The sidebar uses this priority for avatar:
 ```
 
 ### Example 2: Email User
+
 ```
 ┌──────────────────────────┐
 │  ┌────┐                  │
@@ -180,6 +205,7 @@ The sidebar uses this priority for avatar:
 ```
 
 ### Example 3: No Name
+
 ```
 ┌──────────────────────────┐
 │  ┌────┐                  │
@@ -191,6 +217,7 @@ The sidebar uses this priority for avatar:
 ## 🎊 Summary
 
 Your sidebar now:
+
 - ✅ Shows Google profile pictures automatically
 - ✅ Falls back to beautiful initials
 - ✅ Displays full name and email
