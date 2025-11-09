@@ -105,10 +105,16 @@ export function Sidebar({ user }: SidebarProps) {
 
   const publicRoutes: Route[] = [
     {
+      label: 'AR Experience',
+      icon: Box,
+      href: '/ar-experience',
+      color: 'text-blue-500',
+    },
+    {
       label: 'AR Viewer',
       icon: Eye,
       href: '/ar-viewer',
-      color: 'text-blue-500',
+      color: 'text-green-500',
     },
     {
       label: 'Model Gallery',

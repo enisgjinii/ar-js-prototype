@@ -10,7 +10,17 @@
     "toggleTheme": "Design wechseln",
     "stop": "Stopp",
     "reset": "Zurücksetzen",
-    "back": "Zurück"
+    "back": "Zurück",
+    "select": "Auswählen",
+    "close": "Schließen",
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "view": "Ansehen",
+    "upload": "Hochladen",
+    "download": "Herunterladen"
   },
   "settings": {
     "themeLabel": "Design",
@@ -34,9 +44,87 @@
     "play": "Audioguide abspielen",
     "pause": "Audio pausieren",
     "sampleContent": "Beispielinhalt des Audioguides",
-    "audioFallback": "Dein Browser unterstützt das Audio-Element nicht."
+    "audioFallback": "Dein Browser unterstützt das Audio-Element nicht.",
+    "controls": "Audio-Steuerung",
+    "volume": "Lautstärke",
+    "mute": "Stumm schalten",
+    "unmute": "Ton einschalten",
+    "skipForward": "Vorwärts springen",
+    "skipBackward": "Rückwärts springen",
+    "currentTrack": "Aktueller Titel",
+    "noAudioAvailable": "Kein Audio verfügbar"
   },
   "ar": {
-    "pointAtSurface": "Tippen Sie auf den Bildschirm, um AR-Objekte zu platzieren"
+    "title": "AR-Erlebnis",
+    "subtitle": "3D-Modelle in Augmented Reality betrachten",
+    "initializing": "AR-Ansicht wird initialisiert",
+    "allow": "Bitte erlaube Kamera- und Standortzugriff",
+    "unavailableTitle": "AR nicht verfügbar",
+    "retry": "Erneut versuchen",
+    "pointHint": "Richte deine Kamera herum, um das 3D-Denkmal zu sehen. Das Modell erscheint an den GPS-Koordinaten in Düsseldorf.",
+    "pointAtSurface": "Tippe auf den Bildschirm, um AR-Objekte zu platzieren",
+    "coords": "51°12'42.4\"N 6°13'07.3\"E",
+    "viewInAR": "In AR ansehen",
+    "selectModel": "Modell auswählen",
+    "modelDetails": "Modelldetails",
+    "aboutModel": "Über dieses Modell",
+    "noModelsAvailable": "Keine 3D-Modelle verfügbar",
+    "uploadModels": "Modelle über Admin-Panel hochladen",
+    "loadingModels": "Modelle werden geladen...",
+    "platform": "Plattform",
+    "platformInfo": {
+      "android": "Verwendet Google AR (Scene Viewer)",
+      "ios": "Verwendet AR Quick Look",
+      "desktop": "Auf Mobilgerät öffnen für AR"
+    },
+    "arReady": "AR bereit!",
+    "mobileRequired": "Mobilgerät erforderlich",
+    "mobileRequiredDesc": "Öffne diese Seite auf deinem iPhone oder Android-Handy, um AR zu nutzen",
+    "conversionStatus": {
+      "converting": "Wird zu USDZ für iOS konvertiert...",
+      "pending": "USDZ-Konvertierung ausstehend",
+      "failed": "USDZ-Konvertierung fehlgeschlagen",
+      "completed": "Bereit für AR"
+    },
+    "modelFormat": "Format",
+    "modelStatus": "Status",
+    "active": "Aktiv",
+    "inactive": "Inaktiv"
+  },
+  "locationTest": {
+    "title": "Standorttest",
+    "description": "Geolokalisierungsfunktion testen",
+    "getLocation": "Meinen Standort abrufen",
+    "getting": "Standort wird abgerufen...",
+    "locationFound": "Standort gefunden",
+    "error": "Fehler",
+    "tipsTitle": "Tipps zur Fehlerbehebung:",
+    "tips": [
+      "Stelle sicher, dass Standortdienste auf deinem Gerät aktiviert sind",
+      "Überprüfe, ob dein Browser Standortberechtigungen hat",
+      "Versuche, die Seite zu aktualisieren und Berechtigungen zu erteilen, wenn du dazu aufgefordert wirst",
+      "Wenn du ein Mobilgerät verwendest, versuche GPS zu aktivieren"
+    ],
+    "tipsFallback": [
+      "Stelle sicher, dass Standortdienste auf deinem Gerät aktiviert sind",
+      "Überprüfe, ob dein Browser Standortberechtigungen hat"
+    ]
+  },
+  "arInfo": "AR-Informationen",
+  "models": {
+    "title": "3D-Modelle",
+    "subtitle": "Durchsuche unsere Sammlung von 3D-Modellen",
+    "available": "Verfügbare Modelle",
+    "noModels": "Keine Modelle verfügbar",
+    "selectToView": "Wähle ein Modell zum Ansehen",
+    "viewDetails": "Details ansehen",
+    "description": "Beschreibung"
+  },
+  "navigation": {
+    "home": "Startseite",
+    "gallery": "Galerie",
+    "arViewer": "AR-Betrachter",
+    "about": "Über uns",
+    "help": "Hilfe"
   }
 }

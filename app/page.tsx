@@ -45,14 +45,9 @@ export default function Home() {
 
   // Handle view change without automatically pausing audio
   const handleViewChange = (view: 'audio' | 'ar') => {
-    // If user selects AR, navigate to the dedicated AR page
-    if (view === 'ar') {
-      // Navigate to the in-app AR page that embeds the AR.js location demo
-      router.push('/ar');
-      return;
-    }
+    // Switch between audio and AR view without navigation
     // Audio will continue playing in the background
-    // Users can control it through the navigation controls
+    // Users can control it through the sidebar controls
     setActiveView(view);
   };
 
@@ -111,14 +106,13 @@ export default function Home() {
         {t('audio.audioFallback')}
       </audio>
 
-      {activeView === 'audio' && (
-        <AudioGuideView
-          isPlaying={isAudioPlaying}
-          onPlay={handleAudioPlay}
-          onPause={handleAudioPause}
-          onStop={handleAudioReset}
-        />
-      )}
+      <AudioGuideView
+        isPlaying={isAudioPlaying}
+        onPlay={handleAudioPlay}
+        onPause={handleAudioPause}
+        onStop={handleAudioReset}
+        showARView={activeView === 'ar'}
+      />
 
       {/* Middle left sidebar for theme, language switchers, and audio controls */}
       <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-50 flex flex-col gap-3 items-center">

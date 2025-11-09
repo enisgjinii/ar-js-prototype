@@ -1,7 +1,7 @@
 {
   "nav": {
     "audio": "Audio Guide",
-    "ar": "AR view",
+    "ar": "AR View",
     "cameraAR": "Camera AR"
   },
   "common": {
@@ -10,7 +10,17 @@
     "toggleTheme": "Toggle theme",
     "stop": "Stop",
     "reset": "Reset",
-    "back": "Back"
+    "back": "Back",
+    "select": "Select",
+    "close": "Close",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "upload": "Upload",
+    "download": "Download"
   },
   "settings": {
     "themeLabel": "Theme",
@@ -34,16 +44,52 @@
     "play": "Play Audio Guide",
     "pause": "Pause Audio",
     "sampleContent": "Sample audio guide content",
-    "audioFallback": "Your browser does not support the audio element."
+    "audioFallback": "Your browser does not support the audio element.",
+    "controls": "Audio Controls",
+    "volume": "Volume",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "skipForward": "Skip Forward",
+    "skipBackward": "Skip Backward",
+    "currentTrack": "Current Track",
+    "noAudioAvailable": "No audio available"
   },
   "ar": {
+    "title": "AR Experience",
+    "subtitle": "View 3D models in augmented reality",
     "initializing": "Initializing AR View",
     "allow": "Please allow camera and location access",
     "unavailableTitle": "AR Unavailable",
     "retry": "Retry",
     "pointHint": "Point your camera around to see the 3D monument. The model appears at the GPS coordinates in Düsseldorf.",
     "pointAtSurface": "Tap on the screen to place AR objects",
-    "coords": "51°12'42.4\"N 6°13'07.3\"E"
+    "coords": "51°12'42.4\"N 6°13'07.3\"E",
+    "viewInAR": "View in AR",
+    "selectModel": "Select Model",
+    "modelDetails": "Model Details",
+    "aboutModel": "About this model",
+    "noModelsAvailable": "No 3D models available",
+    "uploadModels": "Upload models via admin panel",
+    "loadingModels": "Loading models...",
+    "platform": "Platform",
+    "platformInfo": {
+      "android": "Uses Google AR (Scene Viewer)",
+      "ios": "Uses AR Quick Look",
+      "desktop": "Open on mobile device for AR"
+    },
+    "arReady": "AR Ready!",
+    "mobileRequired": "Mobile Device Required",
+    "mobileRequiredDesc": "Open this page on your iPhone or Android phone to view in AR",
+    "conversionStatus": {
+      "converting": "Converting to USDZ for iOS...",
+      "pending": "USDZ conversion pending",
+      "failed": "USDZ conversion failed",
+      "completed": "Ready for AR"
+    },
+    "modelFormat": "Format",
+    "modelStatus": "Status",
+    "active": "Active",
+    "inactive": "Inactive"
   },
   "locationTest": {
     "title": "Location Test",
@@ -64,6 +110,21 @@
       "Check that your browser has location permissions"
     ]
   },
-
-  "arInfo": "AR Information"
+  "arInfo": "AR Information",
+  "models": {
+    "title": "3D Models",
+    "subtitle": "Browse our collection of 3D models",
+    "available": "Available Models",
+    "noModels": "No models available",
+    "selectToView": "Select a model to view",
+    "viewDetails": "View Details",
+    "description": "Description"
+  },
+  "navigation": {
+    "home": "Home",
+    "gallery": "Gallery",
+    "arViewer": "AR Viewer",
+    "about": "About",
+    "help": "Help"
+  }
 }
