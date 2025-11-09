@@ -16,10 +16,12 @@ import {
   Clock,
   FileType,
   HardDrive,
+  Eye,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -234,6 +236,15 @@ export function ModelList({ models: initialModels }: { models: Model[] }) {
                             toggleActive(model.id, model.is_active)
                           }
                         />
+                        <Link href={`/ar-viewer?model=${model.id}`} target="_blank">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="View in AR"
+                          >
+                            <Eye className="h-4 w-4 text-blue-500" />
+                          </Button>
+                        </Link>
                         <Button
                           variant="ghost"
                           size="icon"

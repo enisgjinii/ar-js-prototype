@@ -87,8 +87,18 @@ export function launchAndroidAR(model: ARModel): void {
  */
 export function launchIOSAR(model: ARModel): void {
     try {
-        // Use provided USDZ URL or convert GLB to USDZ
-        const usdzUrl = model.usdzUrl || model.glbUrl.replace(/\.(glb|gltf)$/i, '.usdz');
+        // Use provided USDZ URL or try to find USDZ version
+        let usdzUrl = model.usdzUrl;
+
+        if (!usdzUrl) {
+            // Try to replace .glb with .usdz
+            usdzUrl = model.glbUrl.replace(/\.glb$/i, '.usdz');
+
+            // If still no USDZ, show error
+            if (!usdzUrl.endsWith('.usdz')) {
+                throw new Error('USDZ file not available. Please convert your model or wait for automatic conversion.');
+            }
+        }
 
         console.log('🍎 Launching iOS AR Quick Look:', usdzUrl);
 
@@ -107,7 +117,7 @@ export function launchIOSAR(model: ARModel): void {
         document.body.removeChild(anchor);
     } catch (error) {
         console.error('Failed to launch iOS AR:', error);
-        throw new Error('Failed to launch AR Quick Look. Make sure you have a .usdz file.');
+        throw new Error('Failed to launch AR Quick Look. USDZ file not available.');
     }
 }
 
