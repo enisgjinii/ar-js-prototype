@@ -21,6 +21,7 @@ export default function ThreeJSARView({ onBack }: ThreeJSARViewProps) {
     const [isARActive, setIsARActive] = useState(false);
     const [objectsPlaced, setObjectsPlaced] = useState(0);
     const [surfacesDetected, setSurfacesDetected] = useState(false);
+    const [placementMessage, setPlacementMessage] = useState<string | null>(null);
 
     useEffect(() => {
         return () => {
@@ -194,6 +195,9 @@ export default function ThreeJSARView({ onBack }: ThreeJSARViewProps) {
                         anchors.push({ anchor, mesh: boxMesh });
                         setObjectsPlaced(tapCount);
                         console.log('🎯 Anchor created and cube placed');
+                        // show placement feedback
+                        setPlacementMessage('Placed (anchored)');
+                        setTimeout(() => setPlacementMessage(null), 2000);
                         return;
                     } catch (e) {
                         console.warn('Failed to create anchor, falling back to non-anchored placement', e);
@@ -208,6 +212,8 @@ export default function ThreeJSARView({ onBack }: ThreeJSARViewProps) {
                 scene.add(box);
                 setObjectsPlaced(tapCount);
                 console.log('🎯 Cube placed at:', box.position);
+                setPlacementMessage('Placed (floating)');
+                setTimeout(() => setPlacementMessage(null), 2000);
 
                 // Add a small bob/rotation animation
                 let time = 0;
@@ -404,6 +410,14 @@ export default function ThreeJSARView({ onBack }: ThreeJSARViewProps) {
                             <p className="text-xs opacity-60">Look for spinning red cube!</p>
                         </div>
                     </div>
+                    {/* Placement toast */}
+                    {placementMessage && (
+                        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-50">
+                            <div className="bg-black/90 text-white px-4 py-2 rounded-md text-sm">
+                                {placementMessage}
+                            </div>
+                        </div>
+                    )}
                 </>
             )}
         </div>
